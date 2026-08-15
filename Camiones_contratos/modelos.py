@@ -89,9 +89,9 @@ class ContratoBase(BaseModel):
     destino : str = Field(..., min_length= 3, description="Dirección o comuna de destino")
 
     # 2. Fechas
-    f_estimada_salida : datetime
-    f_estimada_llegada : datetime
-    f_cierre_postulaciones : datetime
+    f_estimada_salida : AwareDatetime
+    f_estimada_llegada : AwareDatetime
+    f_cierre_postulaciones : AwareDatetime
 
     # 3. Carga y vehiculos (Este apartado puede ser cambiado a carga minima y maxima pero por el momento solo se ocuparan estos ejemplos base)
     """
@@ -155,11 +155,12 @@ class ContratoBase(BaseModel):
         if self.origen == self.destino:
             raise ValueError("El origen y destino no pueden ser identicos")
 
-        limite_peso = CAPACIDAD_MAX.get(self.tipo_camion_requerido, 0.0)
-        if self.peso_total > limite_peso:
-            raise ValueError(
-                f"El peso ({self.peso_total} kg) excede la capacidad del vehiculo ({self.tipo_camion_requerido.value}: {limite_peso} kg )   "
-            )
+        # FIXME: ARREGLAR
+        # limite_peso = CAPACIDAD_MAX.get()
+        # if self.peso_total > limite_peso:
+        #     raise ValueError(
+        #         f"El peso ({self.peso_total} kg) excede la capacidad del vehiculo ({self.tipo_camion_requerido.value}: {limite_peso} kg )   "
+        #     )
 
         if self.tipo_carga == TipoCarga.REFRIGERADA and not self.requiere_termo:
             raise ValueError("Carga refrigerada, requiere Termo")
@@ -182,12 +183,13 @@ class ContratoCrear(ContratoBase):
 
 class ContratoModelo(ContratoBase):
     """
-        Esquema completo
-        ID, asignaciones y estado actual
+        Define la estructura completa de datos del contrato
     """
 
-    id : UUID = Field(default_factory=uuid4)
+    #id: con UUID4 se genera un identificador unico
+    id : UUID = Field(default_factory=uuid4) 
     estado : EstadoContrato = EstadoContrato.BORRADOR
+    # NOTE: Esta parte hay que definirla correctamente, si sera llamada id_transportista o Rut
     id_transportista : Optional[UUID] = None
     id_camion : Optional[UUID] = None
     fecha_publicacion : Optional[datetime] = None
@@ -198,4 +200,75 @@ class ContratoModelo(ContratoBase):
 # =====================
 
 class MaquinaEstadosContrato:
-    pass
+    """Clase encargada de controlar y permitir transiciones 
+    válidas de estado."""
+
+    """
+    Valga la redundancia este apartado define las transiciones permitidas
+    Aunque hay que destacar los estados cancelado y finalizado ocupan un
+    "set()" para que no se puedan alterar las transiciones nuevamente
+    """
+    TRANSICIONES_PERMITIDAS = {
+        EstadoContrato.BORRADOR: {
+            EstadoContrato.PUBLICADO, 
+            EstadoContrato.CANCELADO
+            },
+        EstadoContrato.PUBLICADO: {
+            EstadoContrato.EN_POSTULACION, 
+            EstadoContrato.CANCELADO
+            },
+        EstadoContrato.EN_POSTULACION: {
+            EstadoContrato.ADJUDICADO, 
+            EstadoContrato.CANCELADO
+            },
+        EstadoContrato.ADJUDICADO: {
+            EstadoContrato.EN_TRANSITO, 
+            EstadoContrato.CANCELADO
+            },
+        EstadoContrato.EN_TRANSITO: {
+            EstadoContrato.ENTREGADO, 
+            EstadoContrato.EN_DISPUTA
+            },
+        EstadoContrato.ENTREGADO: {
+            EstadoContrato.FINALIZADO, 
+            EstadoContrato.EN_DISPUTA
+            },
+        EstadoContrato.CANCELADO: set(),
+        EstadoContrato.FINALIZADO: set(),
+        EstadoContrato.EN_DISPUTA: {
+            EstadoContrato.FINALIZADO, 
+            EstadoContrato.CANCELADO
+            },
+    }
+
+    @classmethod
+    def cambiar_estado(
+        cls,
+        contrato: ContratoModelo,
+        nuevo_estado: EstadoContrato,
+        id_transportista: Optional[UUID] = None,
+        id_camion: Optional[UUID] = None,
+    ) -> ContratoModelo:
+
+        estados_posibles = cls.TRANSICIONES_PERMITIDAS.get(contrato.estado, set())
+
+        # Verifica si la trancision esta dentro del diccionario, si no ValueError
+        if nuevo_estado not in estados_posibles:
+            raise ValueError(
+                f"TRansición de estado no permitida, no se puede pasar de {contrato.estado.value} a {nuevo_estado.value}"
+            )
+
+        # Aqui verifica si el cambio a publicado lleva informacion relevante id del camion y transportista
+        if nuevo_estado == EstadoContrato.PUBLICADO:
+            if contrato.id_transportista is not None:
+                raise ValueError("Un contrato en estado 'publicado' no puede tener un transportista asignado.")
+            contrato.fecha_publicacion = datetime.now(timezone.utc)
+
+        elif nuevo_estado == EstadoContrato.ADJUDICADO:
+            if not id_transportista or not id_camion:
+                raise ValueError("Para adjudicar un contrato se requiere indicar obligatoriamente el 'id_transportista' y 'id_camion'")
+            contrato.id_transportista = id_transportista
+            contrato.id_camion = id_camion
+
+        contrato.estado = nuevo_estado
+        return contrato
