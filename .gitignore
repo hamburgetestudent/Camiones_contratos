@@ -7,6 +7,9 @@ venv/
 ENV/
 env/
 .python-version
+src/
+principal_borrador.py
+modelos_borrador.py
 
 # Node.js
 node_modules/

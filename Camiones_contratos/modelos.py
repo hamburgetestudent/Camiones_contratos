@@ -84,14 +84,14 @@ class ContratoBase(BaseModel):
     # 1. Identificadores basicos 
     # NOTE: Los 3 puntos obliga a dar ese valor, min_length a valor minimo de cadena 
     # Ingresada
-    id_empresa_generadora = UUID
+    id_empresa_generadora: UUID = Field(..., description= "ID de la empresa")
     origen : str = Field(...,min_length= 3, description="Dirección o comuna de origen")
     destino : str = Field(..., min_length= 3, description="Dirección o comuna de destino")
 
     # 2. Fechas
-    f_estimada_salida : AwareDatetime
-    f_estimada_llegada : AwareDatetime
-    f_cierre_postulaciones : AwareDatetime
+    f_estimada_salida : AwareDatetime = Field(..., description="Fecha y hora estimada de salida")
+    f_estimada_llegada : AwareDatetime = Field(..., description="Fecha y hora de llegada estimada")
+    f_cierre_postulaciones : AwareDatetime = Field(..., description="Fecha y hora limite de postulacion")
 
     # 3. Carga y vehiculos (Este apartado puede ser cambiado a carga minima y maxima pero por el momento solo se ocuparan estos ejemplos base)
     """
@@ -101,19 +101,19 @@ class ContratoBase(BaseModel):
     lt = menor que
     le = menor o igual 
     """
-    tipo_carga : TipoCarga
+    tipo_carga : TipoCarga = Field(..., description="Tipo de carga transportada")
     peso_total: float = Field(..., gt = 0, description = "Peso en Kg")
-    volumen_m3 : Optional[float] = Field(None, gt= 0)
-    tipo_camion_requerido = TipoCamion
+    volumen_m3 : Optional[float] = Field(None, gt= 0, description= "Volumen en metros cubicos")
+    tipo_camion_requerido : TipoCamion = Field(..., description= "Tipo de camion requerido")
 
     # Requerimientos especiales , agregar despues
-    requiere_termo : bool = False
+    requiere_termo : bool = Field(default= False, description="Indica si el camion requiere refrigeracion/termo")
 
     # 4. Economicos
-    moneda : Moneda = Moneda.CLP
-    monto_neto : float = Field(..., gt= 0)
-    monto_iva : float = Field(..., ge= 0)
-    monto_total : float = Field(..., gt = 0)
+    moneda : Moneda = Field(default=Moneda.CLP, description= "Moneda de pago del contrato")
+    monto_neto : float = Field(..., gt= 0, description= "Monto neto sin IVA")
+    monto_iva : float = Field(..., ge= 0, description= "Monto IVA")
+    monto_total : float = Field(..., gt = 0, description= "Monto total: Monto IVA + Neto")
 
     # ====================
     # Validaciones de campo unico y sanitizacion
@@ -127,6 +127,10 @@ class ContratoBase(BaseModel):
     @field_validator("origen", "destino", mode="before")
     @classmethod
     def sanitizar_texto(cls, valor : str) -> str:
+        """
+        Limpia los espacios innecesarios en las cadenas de texto y convierte a Mayus para evitar
+        duplicados y mantener la consistencia en los datos
+        """
         if isinstance(valor, str):
             return " ".join(valor.strip().split()).upper()
         return valor
@@ -136,8 +140,10 @@ class ContratoBase(BaseModel):
     # Validaciones Cruzadas
     # ============================
 
+
     @model_validator(mode = "after")
     def validar_reglas_de_negocio(self) -> "ContratoBase":
+
         ahora = datetime.now(timezone.utc)
 
         # 1. Validacion de Fechas
@@ -155,12 +161,13 @@ class ContratoBase(BaseModel):
         if self.origen == self.destino:
             raise ValueError("El origen y destino no pueden ser identicos")
 
-        # FIXME: ARREGLAR
-        # limite_peso = CAPACIDAD_MAX.get()
-        # if self.peso_total > limite_peso:
-        #     raise ValueError(
-        #         f"El peso ({self.peso_total} kg) excede la capacidad del vehiculo ({self.tipo_camion_requerido.value}: {limite_peso} kg )   "
-        #     )
+        limite_peso = CAPACIDAD_MAX.get(self.tipo_camion_requerido)
+        if limite_peso is not None and self.peso_total > limite_peso:
+            raise ValueError(
+
+                f"El peso ({self.peso_total} kg) excede la capacidad maxima del vehiculo"
+                f"({self.tipo_camion_requerido.value}: {limite_peso} kg)"
+            )
 
         if self.tipo_carga == TipoCarga.REFRIGERADA and not self.requiere_termo:
             raise ValueError("Carga refrigerada, requiere Termo")
@@ -178,7 +185,8 @@ class ContratoBase(BaseModel):
 
 
 class ContratoCrear(ContratoBase):
-    """Esquema para recibir peticiones de creación"""
+    """Esquema para recibir peticiones de creación a travez de las funciones de la clase padre
+    ContratoBase"""
     pass
 
 class ContratoModelo(ContratoBase):
@@ -188,7 +196,7 @@ class ContratoModelo(ContratoBase):
 
     #id: con UUID4 se genera un identificador unico
     id : UUID = Field(default_factory=uuid4) 
-    estado : EstadoContrato = EstadoContrato.BORRADOR
+    estado : EstadoContrato = Field(EstadoContrato.BORRADOR, description="Estado actual con ciclo de vida del contrato")
     # NOTE: Esta parte hay que definirla correctamente, si sera llamada id_transportista o Rut
     id_transportista : Optional[UUID] = None
     id_camion : Optional[UUID] = None

@@ -1,8 +1,7 @@
-from datetime import datetime, timezone
-from typing import Dict
+from typing import Dict, List
 from uuid import uuid4, UUID # Maneja los identificadores unicos
 from fastapi import FastAPI, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 # Clases de "modelos.py"
 from modelos import (
@@ -17,7 +16,7 @@ Apartados que maneja la api actualmente
 """
 app = FastAPI(
     title = "API - Contratos Camiones",
-    version = "0.0.1",
+    version = "0.0.2",
     description= "Backend centralizado, ciclo de vida de contratos"
 )
 
@@ -31,8 +30,8 @@ db_contratos: dict[UUID, ContratoModelo] = {}
 # Estos son los datos finales que maneja el frontend
 class SolicitudCambioEstado(BaseModel):
     nuevo_estado: EstadoContrato # Obligatorio
-    id_transportista: str | None = None # Opcional
-    id_camion: str | None = None # Opcional
+    id_transportista: UUID | None = None # Opcional
+    id_camion: UUID | None = None # Opcional
 
 # ======================
 # Endpoints (Rutas Api)
@@ -56,7 +55,7 @@ def crear_contrato(datos_contrato: ContratoCrear):
         # Guarda en la BD
         db_contratos[nuevo_contrato.id] = nuevo_contrato
         return nuevo_contrato
-    except ValueError as error:
+    except (ValueError, ValidationError) as error:
         raise HTTPException(
             status_code= status.HTTP_400_BAD_REQUEST,
             detail = f"Error en validacion de contrato: {str(error)}"
@@ -76,10 +75,19 @@ def obtener_contrato(contrato_id : UUID):
         )
     return db_contratos[contrato_id]
 
+@app.get (
+        "/contratos",
+        response_model= List[ContratoModelo],
+        summary= "Listar todos los contratos registrados"
+)
+def listar_contratos():
+    # Retorna TODOS los contratos
+    return list(db_contratos.values())
+
 
 # patch: esta parte se utiliza cuando se modifica parte del contrato
 @app.patch(
-    "/contratos/{contrato.id}/estado",
+    "/contratos/{contrato_id}/estado",
     response_model= ContratoModelo,
     summary= "Transicion de estado del contrato",
 )
@@ -98,23 +106,19 @@ def cambiar_estado_contrato(contrato_id: UUID, payload: SolicitudCambioEstado):
 
     contrato = db_contratos[contrato_id]
 
-    # Parseo de ids / NOTE: Modificar despues
-    id_transportista_uuid = UUID(payload.id_transportista) if payload.id_transportista else None
-    id_camion_uuid = UUID(payload.id_camion) if payload.id_camion else None
-
     # 2. Transición controlada por maquina de estados
     try:
         contrato_actualizado = MaquinaEstadosContrato.cambiar_estado(
             contrato= contrato,
             nuevo_estado= payload.nuevo_estado,
-            id_transportista= id_transportista_uuid,
-            id_camion= id_camion_uuid,
+            id_transportista= payload.id_transportista,
+            id_camion= payload.id_camion,
         )
 
         # Guardar cambio
         db_contratos[contrato_id] = contrato_actualizado
         return contrato_actualizado
-    except ValueError as error:
+    except (ValueError, ValidationError) as error:
         # Transiciones invalidas / datos faltantes
         raise HTTPException(
             status_code= status.HTTP_400_BAD_REQUEST,
@@ -129,3 +133,16 @@ def cambiar_estado_contrato(contrato_id: UUID, payload: SolicitudCambioEstado):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host= "127.0.0.1", port = 8000)
+
+
+# Cambios y arreglos 
+
+"""
+- Asignacion correcta en los endpoints (Error al escribir variables de ruta)
+
+- Configuracion en las variables de ContratoBase
+- Muchas de estas no tenian la debida configuracion , donde las variables se definian como default
+automaticamente
+- Descripcion mas detallada de variables dentro de las description=
+
+"""
