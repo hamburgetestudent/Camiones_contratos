@@ -9,13 +9,36 @@ Pero es esta la principal
 
 from datetime import datetime, timedelta, timezone
 from enum import Enum, StrEnum
-from typing import Optional
+from typing import Optional, Annotated
 from uuid import UUID, uuid4
-from pydantic import BaseModel, Field, field_validator, model_validator, AwareDatetime
+from pydantic import BaseModel, Field, model_validator, AwareDatetime, BeforeValidator
 
 # ================================
 # Enumeraciones de estados y tipos
 # ================================
+
+def sanitizar_texto(valor : str) -> str:
+    # Limpia el texto de espacios y evita duplicados con mayus
+    if isinstance(valor, str):
+        return " ".join(valor.strip().split()).upper()
+    return valor
+
+# Tipo retulizable 
+TextoNormalizado = Annotated[str, BeforeValidator(sanitizar_texto)]
+
+class ReglasNegocio:
+    """
+    Parametros globales de las monedas y sus configuraciones
+    NOTE: Por cambiar si el contrato esta fuera de Chile
+    """
+
+    IVA_PORCENTAJE: float = 0.19
+
+    # Tolerancia maxima permitida en discrepancia en numeros financieros flotantes
+    TOLERANCIA_MAX: float = 0.01
+
+    # Tiempo de anticipacion minima para agendar la hora de salida
+    HORAS_ANTICIÁCION_MINIMA: int = 2
 
 class EstadoContrato(StrEnum):
     BORRADOR = "BORRADOR"
@@ -58,12 +81,6 @@ class TipoCamion(StrEnum):
     CAMION_3_EJES = "CAMION_3_EJES"
     TRAILER = "TRAILER"
 
-# Valores en KG 
-CAPACIDAD_MAX = {
-    TipoCamion.CAMIONETA : 3500,
-    TipoCamion.CAMION_3_EJES : 15000,
-    TipoCamion.TRAILER : 30000,
-}
 #----------------------------------
 class Moneda(StrEnum):
     CLP = "CLP"
@@ -85,13 +102,13 @@ class ContratoBase(BaseModel):
     # NOTE: Los 3 puntos obliga a dar ese valor, min_length a valor minimo de cadena 
     # Ingresada
     id_empresa_generadora: UUID = Field(..., description= "ID de la empresa")
-    origen : str = Field(...,min_length= 3, description="Dirección o comuna de origen")
-    destino : str = Field(..., min_length= 3, description="Dirección o comuna de destino")
+    origen: str = Field(...,min_length= 3, description="Dirección o comuna de origen")
+    destino: str = Field(..., min_length= 3, description="Dirección o comuna de destino")
 
     # 2. Fechas
-    f_estimada_salida : AwareDatetime = Field(..., description="Fecha y hora estimada de salida")
-    f_estimada_llegada : AwareDatetime = Field(..., description="Fecha y hora de llegada estimada")
-    f_cierre_postulaciones : AwareDatetime = Field(..., description="Fecha y hora limite de postulacion")
+    f_estimada_salida: AwareDatetime = Field(..., description="Fecha y hora estimada de salida")
+    f_estimada_llegada: AwareDatetime = Field(..., description="Fecha y hora de llegada estimada")
+    f_cierre_postulaciones: AwareDatetime = Field(..., description="Fecha y hora limite de postulacion")
 
     # 3. Carga y vehiculos (Este apartado puede ser cambiado a carga minima y maxima pero por el momento solo se ocuparan estos ejemplos base)
     """
@@ -101,6 +118,7 @@ class ContratoBase(BaseModel):
     lt = menor que
     le = menor o igual 
     """
+    input_camionKG: float = Field(..., gt= 0, description= "Capacidad en KG")
     tipo_carga : TipoCarga = Field(..., description="Tipo de carga transportada")
     peso_total: float = Field(..., gt = 0, description = "Peso en Kg")
     volumen_m3 : Optional[float] = Field(None, gt= 0, description= "Volumen en metros cubicos")
@@ -109,45 +127,27 @@ class ContratoBase(BaseModel):
     # Requerimientos especiales , agregar despues
     requiere_termo : bool = Field(default= False, description="Indica si el camion requiere refrigeracion/termo")
 
+    numero_onu: Optional[str] = Field(default= None, description= "Los numeros onu de 4 digitos son hechas para cuando la carga es peligrosa")
+    indicaciones_embalaje: Optional[str] = Field(default= None,min_length=10, description="Instrucciones especificas de emabalaje")
+    requiere_blindaje: bool = Field(default= False, description= "Requerimiento de blindaje")
     # 4. Economicos
     moneda : Moneda = Field(default=Moneda.CLP, description= "Moneda de pago del contrato")
-    monto_neto : float = Field(..., gt= 0, description= "Monto neto sin IVA")
+    monto_neto : float = Field(..., gt= 0, description= "Monto Neto")
     monto_iva : float = Field(..., ge= 0, description= "Monto IVA")
     monto_total : float = Field(..., gt = 0, description= "Monto total: Monto IVA + Neto")
-
-    # ====================
-    # Validaciones de campo unico y sanitizacion
-    # ====================
-
-    """
-    Separa el texto, limpia espacios y separa palabras para luego dejarlas
-    en minuscula para evitar duplicados. cls llama a al modelo base
-    """
-
-    @field_validator("origen", "destino", mode="before")
-    @classmethod
-    def sanitizar_texto(cls, valor : str) -> str:
-        """
-        Limpia los espacios innecesarios en las cadenas de texto y convierte a Mayus para evitar
-        duplicados y mantener la consistencia en los datos
-        """
-        if isinstance(valor, str):
-            return " ".join(valor.strip().split()).upper()
-        return valor
-
 
     # ============================
     # Validaciones Cruzadas
     # ============================
 
-
     @model_validator(mode = "after")
     def validar_reglas_de_negocio(self) -> "ContratoBase":
 
         ahora = datetime.now(timezone.utc)
+        limite_salida = ahora + timedelta(hours=ReglasNegocio.HORAS_ANTICIÁCION_MINIMA)
 
-        # 1. Validacion de Fechas
-        if self.f_estimada_salida <= ahora + timedelta(hours=2):
+        # A. Validacion de Fechas
+        if self.f_estimada_salida <= limite_salida:
             raise ValueError("La fecha estimada de salida debe programarse con al menos 2 horas de anticipación")
 
         if self.f_estimada_llegada <= self.f_estimada_salida:
@@ -156,32 +156,66 @@ class ContratoBase(BaseModel):
         if self.f_cierre_postulaciones > self.f_estimada_salida:
             raise ValueError("El cierre de postulaciones no puede ser posterior a la fecha de salida")
 
-
-        # 2. Validacion Geografica y de carga
+        # B. Validacion Geografica y de carga
         if self.origen == self.destino:
             raise ValueError("El origen y destino no pueden ser identicos")
 
-        limite_peso = CAPACIDAD_MAX.get(self.tipo_camion_requerido)
-        if limite_peso is not None and self.peso_total > limite_peso:
+        # C. Validacion de Vehiculo
+        if self.peso_total > self.input_camionKG:
             raise ValueError(
-
-                f"El peso ({self.peso_total} kg) excede la capacidad maxima del vehiculo"
-                f"({self.tipo_camion_requerido.value}: {limite_peso} kg)"
+                f"El valor de la carga supera a la capacidad del camion por {self.peso_total - self.input_camionKG}"
             )
 
+        # D. Configuraciones especiales / extras
+
+        # 1. Carga refrigerada
         if self.tipo_carga == TipoCarga.REFRIGERADA and not self.requiere_termo:
-            raise ValueError("Carga refrigerada, requiere Termo")
+            raise ValueError("Requiere carga refrigerada requiere activar la opcion termo")
 
-        # 3. Validación financiera (Margen de tolerancia para floats)
-        # NOTE: Los valores economicos deben ser evitados para manejarlos
-        # o es ocupar alguna libreria que maneje los decimales bien o buscar
-        # un metodo logico para utilizarlo con python (aunque claro en este apartado no es necesario)
+        # 2. Carga peligrosa
+        if self.tipo_carga == TipoCarga.PELIGROSA:
+            if not self.numero_onu:
+                raise ValueError("Las cargas peligrosas requieren de un numero ONU")
+            onu_limpio = self.numero_onu.strip().upper()
+            es_valido = (
+                (onu_limpio.startswith("UN") and len(onu_limpio) == 6 and onu_limpio[2:].isdigit()) or
+                (len(onu_limpio) == 4 and onu_limpio.isdigit())
+            )
+            if not es_valido:
+                raise ValueError(
+                    f"Codigo ONU {self.numero_onu} invalido. Debe ser de solo 4 digitos ej: (1234)"
+                )
 
-        diferencia = abs((self.monto_neto + self.monto_iva) - self.monto_total)
-        if diferencia > 0.01:
-            raise ValueError("El monto total no coincide con la suma del monto neto y el IVA")
+        # 3. Blindaje
+        if self.tipo_carga == TipoCarga.VALORES and not self.requiere_blindaje:
+            raise ValueError(
+                f"Las cargas de valores requieren un camion con blindaje"
+            )
 
+        # 4. Fragil
+        if self.tipo_carga == TipoCarga.FRAGIL:
+            if not self.indicaciones_embalaje or len(self.indicaciones_embalaje.strip()) < 10:
+                raise ValueError(
+                    f"Carga fragil requiere una especificacion de al menos 10 caracteres."
+                )
+
+        # E. Coherencia financiera
+        diferencia = abs((self.monto_neto + self.monto_iva)- self.monto_total)
+        if diferencia > ReglasNegocio.TOLERANCIA_MAX:
+            raise ValueError(
+                f"El monto total: ({self.monto_total}) no coincide con la suma del neto e iva"
+            )
+
+        if self.moneda == Moneda.CLP:
+            iva_esperado = self.monto_neto * ReglasNegocio.IVA_PORCENTAJE
+            diferencia_iva = abs(self.monto_iva - iva_esperado)
+            # Tolerancia de 5 pesos por redondeo
+            if diferencia_iva > 5.0:
+                raise ValueError(
+                    f"El monto del IVA ({self.monto_iva}) no corresponde al {ReglasNegocio.IVA_PORCENTAJE * 100}%"
+                )
         return self
+
 
 
 class ContratoCrear(ContratoBase):
