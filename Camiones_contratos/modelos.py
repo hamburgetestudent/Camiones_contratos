@@ -8,23 +8,23 @@ Pero es esta la principal
 """
 
 from datetime import datetime, timedelta, timezone
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import Optional, Annotated
 from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, model_validator, AwareDatetime, BeforeValidator
 
-# ================================
-# Enumeraciones de estados y tipos
-# ================================
+# =========================================
+# Enumeraciones de estados y tipos de datos
+# =========================================
 
-def sanitizar_texto(valor : str) -> str:
-    # Limpia el texto de espacios y evita duplicados con mayus
+def limpiar_texto(valor : str) -> str:
+    # Limpieza de texto, convierte palabras a string para eliminar espacios y evitar duplicados
     if isinstance(valor, str):
         return " ".join(valor.strip().split()).upper()
     return valor
 
-# Tipo retulizable 
-TextoNormalizado = Annotated[str, BeforeValidator(sanitizar_texto)]
+# Tipo retulizable de limpiar texto
+TextoNormalizado = Annotated[str, BeforeValidator(limpiar_texto)]
 
 class ReglasNegocio:
     """
@@ -38,7 +38,7 @@ class ReglasNegocio:
     TOLERANCIA_MAX: float = 0.01
 
     # Tiempo de anticipacion minima para agendar la hora de salida
-    HORAS_ANTICIÁCION_MINIMA: int = 2
+    ANTICIPACION_MIN_H: int = 2
 
 class EstadoContrato(StrEnum):
     BORRADOR = "BORRADOR"
@@ -68,35 +68,23 @@ class TipoCarga(StrEnum):
     VALORES = "VALORES" # Req: Las cargas con valores requieren en su mayoria automoviles blindados
     VEHICULAR = "VEHICULAR" # Req: tipo de camion cigueña/nodriza
 
-# -----------------------------------
-
-# =======================================
-# TODO: Se definio solo 3 tipos de camiones este apartado hay que mejorarlo
-# Despues se puede agregar mas o definirlo solamente como carga mi nima y maxima
-# que determine el usuario, por lo que queda todavia a discución
-# =======================================
-
-class TipoCamion(StrEnum):
-    CAMIONETA = "CAMIONETA"
-    CAMION_3_EJES = "CAMION_3_EJES"
-    TRAILER = "TRAILER"
-
-#----------------------------------
 class Moneda(StrEnum):
     CLP = "CLP"
     UF = "UF"
     UTM = "UTM"
 
-    # Monedas extranjeras
+    # Monedas extranjeras / En general no utilizables todavia
     USD = "USD" # Dolar
     EUR = "EUR" # Euro
     CNY = "CNY" # Yuan Chino
     BRL = "BRL" # Real Brasileño
 
 
-# ===============
-# Pydantic esquema
-# ===============
+# ================================
+# Esquema general de los contratos
+# ================================
+
+
 class ContratoBase(BaseModel):
     # 1. Identificadores basicos 
     # NOTE: Los 3 puntos obliga a dar ese valor, min_length a valor minimo de cadena 
@@ -122,15 +110,14 @@ class ContratoBase(BaseModel):
     tipo_carga : TipoCarga = Field(..., description="Tipo de carga transportada")
     peso_total: float = Field(..., gt = 0, description = "Peso en Kg")
     volumen_m3 : Optional[float] = Field(None, gt= 0, description= "Volumen en metros cubicos")
-    tipo_camion_requerido : TipoCamion = Field(..., description= "Tipo de camion requerido")
 
-    # Requerimientos especiales , agregar despues
+    # 4. Requerimientos especiales
     requiere_termo : bool = Field(default= False, description="Indica si el camion requiere refrigeracion/termo")
-
     numero_onu: Optional[str] = Field(default= None, description= "Los numeros onu de 4 digitos son hechas para cuando la carga es peligrosa")
-    indicaciones_embalaje: Optional[str] = Field(default= None,min_length=10, description="Instrucciones especificas de emabalaje")
-    requiere_blindaje: bool = Field(default= False, description= "Requerimiento de blindaje")
-    # 4. Economicos
+    req_embalaje: Optional[str] = Field(default= None,min_length=10, description="Instrucciones especificas de emabalaje")
+    req_blindaje: bool = Field(default= False, description= "Requerimiento de blindaje")
+
+    # 5. Economicos
     moneda : Moneda = Field(default=Moneda.CLP, description= "Moneda de pago del contrato")
     monto_neto : float = Field(..., gt= 0, description= "Monto Neto")
     monto_iva : float = Field(..., ge= 0, description= "Monto IVA")
@@ -144,7 +131,7 @@ class ContratoBase(BaseModel):
     def validar_reglas_de_negocio(self) -> "ContratoBase":
 
         ahora = datetime.now(timezone.utc)
-        limite_salida = ahora + timedelta(hours=ReglasNegocio.HORAS_ANTICIÁCION_MINIMA)
+        limite_salida = ahora + timedelta(hours=ReglasNegocio.ANTICIPACION_MIN_H)
 
         # A. Validacion de Fechas
         if self.f_estimada_salida <= limite_salida:
@@ -187,14 +174,14 @@ class ContratoBase(BaseModel):
                 )
 
         # 3. Blindaje
-        if self.tipo_carga == TipoCarga.VALORES and not self.requiere_blindaje:
+        if self.tipo_carga == TipoCarga.VALORES and not self.req_blindaje:
             raise ValueError(
                 f"Las cargas de valores requieren un camion con blindaje"
             )
 
         # 4. Fragil
         if self.tipo_carga == TipoCarga.FRAGIL:
-            if not self.indicaciones_embalaje or len(self.indicaciones_embalaje.strip()) < 10:
+            if not self.req_embalaje or len(self.req_embalaje.strip()) < 10:
                 raise ValueError(
                     f"Carga fragil requiere una especificacion de al menos 10 caracteres."
                 )
@@ -216,26 +203,23 @@ class ContratoBase(BaseModel):
                 )
         return self
 
-
-
 class ContratoCrear(ContratoBase):
-    """Esquema para recibir peticiones de creación a travez de las funciones de la clase padre
-    ContratoBase"""
+    """
+    Modelo de contrato para la creación de contratos
+    """
     pass
 
 class ContratoModelo(ContratoBase):
     """
         Define la estructura completa de datos del contrato
     """
-
-    #id: con UUID4 se genera un identificador unico
-    id : UUID = Field(default_factory=uuid4) 
-    estado : EstadoContrato = Field(EstadoContrato.BORRADOR, description="Estado actual con ciclo de vida del contrato")
     # NOTE: Esta parte hay que definirla correctamente, si sera llamada id_transportista o Rut
-    id_transportista : Optional[UUID] = None
-    id_camion : Optional[UUID] = None
-    fecha_publicacion : Optional[datetime] = None
-
+    #id: con UUID4 se genera un identificador unico
+    id : UUID = Field(default_factory=uuid4, description="ID único del contrato") 
+    estado : EstadoContrato = Field(EstadoContrato.BORRADOR, description="Estado del contrato")
+    id_transportista : Optional[UUID] = Field(default=None, description="Transportista asignado")
+    id_camion : Optional[UUID] = Field(default=None, description="ID del camion asignado")
+    fecha_publicacion : Optional[datetime] = Field(default=None, description="Fecha de la publicación del contrato")
 
 # =====================
 # Maquina de estados (transiciones y cambios)
@@ -297,7 +281,7 @@ class MaquinaEstadosContrato:
         # Verifica si la trancision esta dentro del diccionario, si no ValueError
         if nuevo_estado not in estados_posibles:
             raise ValueError(
-                f"TRansición de estado no permitida, no se puede pasar de {contrato.estado.value} a {nuevo_estado.value}"
+                f"Transición de estado no permitida, no se puede pasar de {contrato.estado.value} a {nuevo_estado.value}"
             )
 
         # Aqui verifica si el cambio a publicado lleva informacion relevante id del camion y transportista

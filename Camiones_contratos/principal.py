@@ -8,7 +8,8 @@ from modelos import (
     ContratoCrear,
     ContratoModelo,
     EstadoContrato,
-    MaquinaEstadosContrato
+    MaquinaEstadosContrato,
+    ReglasNegocio
 )
 """
 Apartados que maneja la api actualmente
@@ -16,7 +17,7 @@ Apartados que maneja la api actualmente
 """
 app = FastAPI(
     title = "API - Contratos Camiones",
-    version = "0.0.2",
+    version = "0.0.3",
     description= "Backend centralizado, ciclo de vida de contratos"
 )
 
@@ -33,9 +34,62 @@ class SolicitudCambioEstado(BaseModel):
     id_transportista: UUID | None = None # Opcional
     id_camion: UUID | None = None # Opcional
 
+class ActualizarConfiguracionNegocio(BaseModel):
+    iva_porcentaje: float | None = None
+    tolerancia_max: float | None = None
+    anticipacion_min_h: int | None = None
+
 # ======================
-# Endpoints (Rutas Api)
+# Endpoint de configuracion de negocio
 # ======================
+
+@app.get(
+    "/configuracion",
+    summary= "Obtener las reglas de negocio actuales",
+    tags= ["Configuración"],
+)
+def get_configuracion():
+    return {
+        "iva_porcentaje": ReglasNegocio.IVA_PORCENTAJE,
+        "tolerancia_max": ReglasNegocio.TOLERANCIA_MAX,
+        "anticipacion_min_h": ReglasNegocio.ANTICIPACION_MIN_H,
+    }
+
+@app.patch(
+        "/configuracion",
+        summary="Modificar las reglas de negocio en ejecución",
+        tags=["Configuración"],
+)
+def actualizar_configuracion(payload: ActualizarConfiguracionNegocio):
+    if payload.iva_porcentaje is not None:
+        if not (0 <= payload.iva_porcentaje <= 1):
+            raise HTTPException(
+                status_code= status.HTTP_400_BAD_REQUEST,
+                detail= "El porcentaje del IVA debe estar entre 0 y 1"
+            )
+        ReglasNegocio.IVA_PORCENTAJE = payload.iva_porcentaje
+
+    if payload.tolerancia_max is not None:
+        if payload.tolerancia_max < 0:
+            raise HTTPException(
+                status_code= status.HTTP_400_BAD_REQUEST,
+                detail= "La tolerancia financiera no puede ser negativa",
+            )
+        ReglasNegocio.TOLERANCIA_MAX = payload.tolerancia_max
+
+    if payload.anticipacion_min_h is not None:
+        if payload.anticipacion_min_h < 0:
+            raise HTTPException(
+                status_code= status.HTTP_400_BAD_REQUEST,
+                detail = "La anticipación minima no puede ser negativa"
+            )
+        ReglasNegocio.ANTICIPACION_MIN_H = payload.anticipacion_min_h
+
+    return get_configuracion()
+
+# =======================
+# Endpoints de contratos
+# =======================
 
 @app.post(
     "/contratos",
@@ -84,8 +138,6 @@ def listar_contratos():
     # Retorna TODOS los contratos
     return list(db_contratos.values())
 
-
-# patch: esta parte se utiliza cuando se modifica parte del contrato
 @app.patch(
     "/contratos/{contrato_id}/estado",
     response_model= ContratoModelo,
@@ -125,24 +177,7 @@ def cambiar_estado_contrato(contrato_id: UUID, payload: SolicitudCambioEstado):
             detail= str(error),
         )
 
-
-
-
-
 # Esta parte es lo mismo que ejecutar el comando en la terminal 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host= "127.0.0.1", port = 8000)
-
-
-# Cambios y arreglos 
-
-"""
-- Asignacion correcta en los endpoints (Error al escribir variables de ruta)
-
-- Configuracion en las variables de ContratoBase
-- Muchas de estas no tenian la debida configuracion , donde las variables se definian como default
-automaticamente
-- Descripcion mas detallada de variables dentro de las description=
-
-"""
