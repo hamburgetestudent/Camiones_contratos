@@ -51,3 +51,19 @@ uvicorn main:app --reload --host 127.0.0.1 --port 8000
 cd ../frontend
 npm install
 npm run dev
+```
+
+## Arquitectura del sistema
+
+- **Frontend:** Desarrollado con **Electron** y **TypeScript**...
+- **Backend:** Construido sobre **Python** utilizando **FastAPI**...
+
+### Diagrama de arquitectura
+
+```mermaid
+flowchart TD
+    A[Usuario] --> B[Frontend<br/>Electron + TypeScript]
+    B --> C[Backend<br/>Python + FastAPI]
+    C --> D[principal.py]
+    D --> E[modelos.py<br/>(Contratos y Validaciones)]
+    D --> F[Almacenamiento temporal<br/>dict de contratos]
