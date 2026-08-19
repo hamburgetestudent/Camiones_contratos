@@ -26,8 +26,8 @@ Para el despliegue local en entorno de desarrollo se requiere:
 
 ### 1. Clonar el Repositorio
 ```bash
-git clone https://github.com/tu-usuario/tu-repositorio.git
-cd tu-repositorio
+git clone https://github.com/hamburgetestudent/Camiones_contratos.git
+cd Camiones_contratos
 ```
 
 ### 2. Configuración del Backend (FastAPI)
