@@ -55,15 +55,19 @@ npm run dev
 
 ## Arquitectura del sistema
 
-- **Frontend:** Desarrollado con **Electron** y **TypeScript**...
-- **Backend:** Construido sobre **Python** utilizando **FastAPI**...
+La arquitectura del sistema está estructurada mediante una separación clara de responsabilidades:
+
+- **Frontend:** Desarrollado con **Electron** y **TypeScript**, proporciona la interfaz de usuario de escritorio.
+- **Backend:** Construido con **Python** y **FastAPI**, se encarga de los endpoints, la lógica de negocio y la validación de los contratos.
+- **Modelos:** El archivo `modelos.py` contiene la estructura de los contratos y sus validaciones.
+- **Almacenamiento:** Actualmente los contratos se almacenan temporalmente en un diccionario de Python, utilizado como almacenamiento en memoria.
 
 ### Diagrama de arquitectura
 
 ```mermaid
 flowchart TD
-    A[Usuario] --> B[Frontend<br/>Electron + TypeScript]
-    B --> C[Backend<br/>Python + FastAPI]
-    C --> D[principal.py]
-    D --> E[modelos.py<br/>(Contratos y Validaciones)]
-    D --> F[Almacenamiento temporal<br/>dict de contratos]
+    A[Usuario] --> B["Frontend<br/>Electron + TypeScript"]
+    B --> C["Backend<br/>Python + FastAPI"]
+    C --> D["principal.py"]
+    D --> E["modelos.py<br/>Contratos y Validaciones"]
+    D --> F["Almacenamiento temporal<br/>dict de contratos"]
