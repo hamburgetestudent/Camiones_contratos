@@ -8,8 +8,11 @@ ENV/
 env/
 .python-version
 src/
-principal_borrador.py
-modelos_borrador.py
+
+# Test y borradores
+test_refactor_borrador.py
+
+
 
 # Node.js
 node_modules/
