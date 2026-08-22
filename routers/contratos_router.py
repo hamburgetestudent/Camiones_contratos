@@ -7,10 +7,10 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, ValidationError
 
-from Camiones_contratos.domain.modelos import ContratoCrear, ContratoModelo
-from Camiones_contratos.domain.maquina_estados import EstadoContrato
+from domain.modelos import ContratoCrear, ContratoModelo
+from domain.maquina_estados import EstadoContrato
 from dao.contrato_dao import ContratoDAOInMemory
-from services.contrato_service_borrador import ContratoService
+from services.contrato_service import ContratoService
 
 router = APIRouter(prefix="/contratos", tags=["Contratos"])
 
