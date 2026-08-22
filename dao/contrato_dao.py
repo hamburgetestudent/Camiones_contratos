@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 from uuid import UUID
 
 from dao.base_dao import BD_DAO
-from Camiones_contratos.domain.modelos import ContratoModelo
+from domain.modelos import ContratoModelo
 
 
 class ContratoDAOInMemory(BD_DAO[ContratoModelo, UUID]):

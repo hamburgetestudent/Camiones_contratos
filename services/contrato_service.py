@@ -7,8 +7,8 @@ from typing import List, Optional
 from uuid import UUID
 
 from dao.base_dao import BD_DAO
-from Camiones_contratos.domain.modelos import ContratoCrear, ContratoModelo
-from Camiones_contratos.domain.maquina_estados import EstadoContrato, MaquinaEstadosContrato
+from domain.modelos import ContratoCrear, ContratoModelo
+from domain.maquina_estados import EstadoContrato, MaquinaEstadosContrato
 
 
 class ContratoService:

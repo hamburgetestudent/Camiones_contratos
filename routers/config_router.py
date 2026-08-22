@@ -4,7 +4,7 @@ Router HTTP para la configuracion y reglas de negocio globales.
 
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
-from Camiones_contratos.domain.reglas import ReglasNegocio
+from domain.reglas import ReglasNegocio
 
 router = APIRouter(prefix="/configuracion", tags=["Configuración"])
 

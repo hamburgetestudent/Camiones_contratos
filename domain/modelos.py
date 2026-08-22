@@ -9,8 +9,8 @@ from typing import Optional, Annotated
 from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, model_validator, AwareDatetime, BeforeValidator
 
-from Camiones_contratos.domain.reglas import ReglasNegocio
-from Camiones_contratos.domain.maquina_estados import EstadoContrato
+from domain.reglas import ReglasNegocio
+from domain.maquina_estados import EstadoContrato
 
 
 # =========================================
