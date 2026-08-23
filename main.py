@@ -9,7 +9,7 @@ from routers.contratos_router import router as contratos_router
 
 app = FastAPI(
     title="API - Contratos Camiones (Refactorizado)",
-    version="0.1.0",
+    version="0.1.1",
     description="Backend modular",
 )
 
