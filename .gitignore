@@ -7,6 +7,12 @@ venv/
 ENV/
 env/
 .python-version
+src/
+
+# Test y borradores
+test_refactor_borrador.py
+
+
 
 # Node.js
 node_modules/

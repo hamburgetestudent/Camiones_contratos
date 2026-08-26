@@ -19,6 +19,9 @@ Para el despliegue local en entorno de desarrollo se requiere:
 * **Node.js**:  POR DEFINIR 
 * **npm**: POR DEFINIR
 * **Python**: v3.14.0 o superior
+* **fastapi**: ==0.141.1
+* **uvicorn**: ==0.52.1
+* **pydantic**: ==2.13.4
 
 ---
 
