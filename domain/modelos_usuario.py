@@ -3,8 +3,8 @@ from uuid import UUID, uuid4
 from enum import StrEnum
 
 class RolUsuario(StrEnum):
-    GENERADOR = "GENERADOR"
-    TRANSPORTISTA = "TRANSPORTISTA"
+    INDEPENDIENTE = "INDEPENDIENTE"
+    EMPRESA = "EMPRESA"
     ADMIN = "ADMIN"
 
 class UsuarioBase(BaseModel):
