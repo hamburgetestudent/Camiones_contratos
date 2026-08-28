@@ -4,19 +4,15 @@ Router HTTP para los endpoints de ciclo de vida de los Contratos.
 
 from typing import List, Optional
 from uuid import UUID
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from pydantic import BaseModel, ValidationError
 
 from domain.modelos import ContratoCrear, ContratoModelo
 from domain.maquina_estados import EstadoContrato
-from dao.contrato_dao import ContratoDAOInMemory
 from services.contrato_service import ContratoService
+from services.dependencies import get_contrato_service
 
 router = APIRouter(prefix="/contratos", tags=["Contratos"])
-
-# Instancia singleton del DAO y Servicio de Contratos para la aplicacion
-contrato_dao = ContratoDAOInMemory()
-contrato_service = ContratoService(dao=contrato_dao)
 
 
 class SolicitudCambioEstado(BaseModel):
@@ -31,7 +27,10 @@ class SolicitudCambioEstado(BaseModel):
     status_code=status.HTTP_201_CREATED,
     summary="Crear un nuevo contrato (Borrador)",
 )
-def crear_contrato(datos_contrato: ContratoCrear):
+def crear_contrato(
+    datos_contrato: ContratoCrear,
+    contrato_service: ContratoService = Depends(get_contrato_service),
+):
     """Crea un contrato aplicando las validaciones de negocio en el modelo Pydantic y persistiendo via DAO."""
     try:
         return contrato_service.crear_contrato(datos_contrato)
@@ -47,7 +46,10 @@ def crear_contrato(datos_contrato: ContratoCrear):
     response_model=ContratoModelo,
     summary="Obtener un contrato por ID",
 )
-def obtener_contrato(contrato_id: UUID):
+def obtener_contrato(
+    contrato_id: UUID,
+    contrato_service: ContratoService = Depends(get_contrato_service),
+):
     """Recupera los detalles de un contrato por su ID unico."""
     try:
         return contrato_service.obtener_contrato(contrato_id)
@@ -63,7 +65,9 @@ def obtener_contrato(contrato_id: UUID):
     response_model=List[ContratoModelo],
     summary="Listar todos los contratos registrados",
 )
-def listar_contratos():
+def listar_contratos(
+    contrato_service: ContratoService = Depends(get_contrato_service),
+):
     """Retorna la lista de todos los contratos almacenados en el DAO."""
     return contrato_service.listar_contratos()
 
@@ -73,7 +77,11 @@ def listar_contratos():
     response_model=ContratoModelo,
     summary="Transicion de estado del contrato",
 )
-def cambiar_estado_contrato(contrato_id: UUID, payload: SolicitudCambioEstado):
+def cambiar_estado_contrato(
+    contrato_id: UUID,
+    payload: SolicitudCambioEstado,
+    contrato_service: ContratoService = Depends(get_contrato_service),
+):
     """Aplica la maquina de estados para avanzar el contrato a un nuevo estado."""
     try:
         return contrato_service.cambiar_estado(

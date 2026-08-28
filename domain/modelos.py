@@ -119,8 +119,8 @@ class ContratoBase(BaseModel):
             raise ValueError(f"El peso de la carga supera la capacidad del camion por {exceso} KG")
 
     def _validar_requerimientos_especiales(self) -> None:
-        if self.tipo_carga == TipoCarga.REFRIGERADA and not self.requiere_termo:
-            raise ValueError("La carga refrigerada requiere activar la opcion de termo/refrigeracion")
+        if self.tipo_carga in (TipoCarga.REFRIGERADA, TipoCarga.PERECEDERA) and not self.requiere_termo:
+            raise ValueError(f"La carga {self.tipo_carga.value} requiere activar la opcion de termo/refrigeracion")
 
         if self.tipo_carga == TipoCarga.PELIGROSA:
             if not self.numero_onu:

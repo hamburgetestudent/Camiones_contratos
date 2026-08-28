@@ -22,7 +22,7 @@ class EstadoContrato(StrEnum):
 
 
 class MaquinaEstadosContrato:
-    """Clase encargada de controlar y permitir transiciones válidas de estado, por cada estado"""
+    """Clase encargada de controlar y permitir transiciones válidas de estado."""
 
     TRANSICIONES_PERMITIDAS: Dict[EstadoContrato, Set[EstadoContrato]] = {
         EstadoContrato.BORRADOR: {
@@ -88,12 +88,12 @@ class MaquinaEstadosContrato:
         """
         if not cls.validar_transicion(contrato_data.estado, nuevo_estado):
             raise ValueError(
-                f"Transición de estado no permitida, no se puede pasar de {contrato_data.estado.value} a {nuevo_estado.value}"
+                f"Transicion de estado no permitida, no se puede pasar de {contrato_data.estado.value} a {nuevo_estado.value}"
             )
 
         if nuevo_estado in (EstadoContrato.PUBLICADO, EstadoContrato.EN_SUBASTA):
             if contrato_data.id_transportista is not None:
-                raise ValueError("Un contrato en subasta/publicado no puede tener un transportista asignado previo.")
+                raise ValueError("Un contrato en subasta o publicado no puede tener un transportista asignado previo.")
             if not getattr(contrato_data, "fecha_publicacion", None):
                 contrato_data.fecha_publicacion = datetime.now(timezone.utc)
 
