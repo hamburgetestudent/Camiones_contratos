@@ -10,7 +10,7 @@ from routers.subasta_router import router as subasta_router
 
 app = FastAPI(
     title="API - Contratos Camiones y Motor de Subastas",
-    version="0.1.2",
+    version="0.1.3",
     description="Backend modular con Motor de Contratos, Postulaciones y Subastas",
 )
 

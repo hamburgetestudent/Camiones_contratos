@@ -6,7 +6,7 @@ Orquesta los modelos de dominio, la maquina de estados y la capa DAO.
 from typing import List, Optional
 from uuid import UUID
 
-from dao.base_dao import BD_DAO
+from dao.contrato_dao import ContratoDAO
 from domain.modelos import ContratoCrear, ContratoModelo
 from domain.maquina_estados import EstadoContrato, MaquinaEstadosContrato
 
@@ -14,7 +14,7 @@ from domain.maquina_estados import EstadoContrato, MaquinaEstadosContrato
 class ContratoService:
     """Servicio que encapsula los casos de uso principales de Contratos."""
 
-    def __init__(self, dao: BD_DAO[ContratoModelo, UUID]):
+    def __init__(self, dao: ContratoDAO):
         self.dao = dao
 
     def crear_contrato(self, datos: ContratoCrear) -> ContratoModelo:

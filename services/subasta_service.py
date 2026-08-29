@@ -5,8 +5,8 @@ Servicio de Negocio para el Motor de Postulaciones y Subastas.
 from typing import List, Optional
 from uuid import UUID
 
-from dao.base_dao import BD_DAO
-from dao.postulacion_dao import PostulacionDAOInMemory
+from dao.contrato_dao import ContratoDAO
+from dao.postulacion_dao import PostulacionDAO
 from domain.modelos import ContratoModelo
 from domain.maquina_estados import EstadoContrato, MaquinaEstadosContrato
 from domain.postulacion import PostulacionCrear, PostulacionModelo, EstadoPostulacion
@@ -15,7 +15,7 @@ from domain.postulacion import PostulacionCrear, PostulacionModelo, EstadoPostul
 class SubastaService:
     """Orquesta la exploración de cargas, envío de ofertas y adjudicación de subastas."""
 
-    def __init__(self, contrato_dao: BD_DAO[ContratoModelo, UUID], postulacion_dao: PostulacionDAOInMemory):
+    def __init__(self, contrato_dao: ContratoDAO, postulacion_dao: PostulacionDAO):
         self.contrato_dao = contrato_dao
         self.postulacion_dao = postulacion_dao
 
