@@ -1,6 +1,6 @@
-/* ============================= */
-/* CONFIGURACIÓN GENERAL          */
-/* ============================= */
+/* ================================= */
+/* CONFIGURACIÓN GENERAL              */
+/* ================================= */
 
 * {
     box-sizing: border-box;
@@ -13,13 +13,14 @@ body {
     font-family: Arial, sans-serif;
 
     background-color: white;
+
     color: #292929;
 }
 
 
-/* ============================= */
-/* CONTENEDOR PRINCIPAL           */
-/* ============================= */
+/* ================================= */
+/* CONTENEDOR PRINCIPAL               */
+/* ================================= */
 
 .contenedor {
     width: 100%;
@@ -29,9 +30,9 @@ body {
 }
 
 
-/* ============================= */
-/* TÍTULO                         */
-/* ============================= */
+/* ================================= */
+/* TÍTULO                             */
+/* ================================= */
 
 .titulo {
     position: absolute;
@@ -56,9 +57,9 @@ body {
 }
 
 
-/* ============================= */
-/* FORMULARIO                     */
-/* ============================= */
+/* ================================= */
+/* FORMULARIO                         */
+/* ================================= */
 
 .formulario {
     position: absolute;
@@ -70,9 +71,16 @@ body {
 }
 
 
-/* ============================= */
-/* ETIQUETAS                      */
-/* ============================= */
+/* ================================= */
+/* CAMPOS                             */
+/* ================================= */
+
+.campo {
+    margin-bottom: 18px;
+}
+
+
+/* Etiquetas */
 
 label {
     display: block;
@@ -83,19 +91,14 @@ label {
 }
 
 
-/* ============================= */
-/* CAMPOS                         */
-/* ============================= */
-
-.campo {
-    margin-bottom: 18px;
-}
+/* Inputs */
 
 input {
     width: 235px;
     height: 30px;
 
     border: 1px solid #ddd;
+
     border-radius: 6px;
 
     padding: 0 12px;
@@ -110,15 +113,16 @@ input:focus {
 }
 
 
-/* ============================= */
-/* BOTÓN LOGIN                    */
-/* ============================= */
+/* ================================= */
+/* BOTÓN LOGIN                        */
+/* ================================= */
 
 .boton-login {
     width: 235px;
     height: 29px;
 
     border: none;
+
     border-radius: 5px;
 
     background-color: #2d2d2d;
@@ -128,6 +132,8 @@ input:focus {
     font-size: 12px;
 
     cursor: pointer;
+
+    transition: background-color 0.2s;
 }
 
 .boton-login:hover {
@@ -135,9 +141,18 @@ input:focus {
 }
 
 
-/* ============================= */
-/* RECUPERAR CONTRASEÑA           */
-/* ============================= */
+/* Icono de usuario */
+
+.icono-usuario {
+    margin-left: 5px;
+
+    font-size: 14px;
+}
+
+
+/* ================================= */
+/* RECUPERAR CONTRASEÑA                */
+/* ================================= */
 
 .forgot {
     display: block;
@@ -154,44 +169,194 @@ input:focus {
 }
 
 
-/* ============================= */
-/* ICONOS                         */
-/* ============================= */
+/* ================================= */
+/* SEPARADOR                          */
+/* ================================= */
 
-.iconos {
-    display: flex;
-
-    align-items: center;
-
-    gap: 18px;
-
-    margin-top: 38px;
-}
-
-.icono {
-    width: 28px;
-    height: 28px;
+.separador {
+    width: 235px;
 
     display: flex;
 
     align-items: center;
+
     justify-content: center;
 
-    font-size: 15px;
+    gap: 12px;
 
-    color: #4b4b53;
-}
-
-.icono.activo {
-    background-color: #f0f0f0;
-
-    border-radius: 50%;
+    margin-top: 35px;
 }
 
 
-/* ============================= */
-/* CONTENEDOR DE LA IMAGEN       */
-/* ============================= */
+/* Líneas */
+
+.separador span {
+    height: 1px;
+
+    flex: 1;
+
+    background-color: #cfcfcf;
+}
+
+
+/* Texto */
+
+.separador p {
+    margin: 0;
+
+    white-space: nowrap;
+
+    font-size: 12px;
+
+    color: #292929;
+}
+
+
+/* ================================= */
+/* BOTONES SOCIALES                   */
+/* ================================= */
+
+.botones-sociales {
+    display: flex;
+
+    justify-content: space-between;
+
+    width: 235px;
+
+    margin-top: 20px;
+}
+
+
+/* Botón individual */
+
+.boton-social {
+    width: 70px;
+    height: 78px;
+
+    background-color: white;
+
+    border: 1px solid #ddd;
+
+    border-radius: 12px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 7px;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s,
+        border-color 0.2s;
+}
+
+.boton-social:hover {
+    background-color: #f7f7f7;
+
+    border-color: #aaa;
+}
+
+
+/* Texto del botón */
+
+.boton-social > span {
+    font-size: 11px;
+}
+
+
+/* ================================= */
+/* LOGO GOOGLE                        */
+/* ================================= */
+
+.logo-google {
+    font-size: 28px;
+
+    font-weight: bold;
+
+    font-family: Arial, sans-serif;
+}
+
+
+/* ================================= */
+/* LOGO MICROSOFT                     */
+/* ================================= */
+
+.logo-microsoft {
+    width: 23px;
+    height: 23px;
+
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    grid-template-rows: 1fr 1fr;
+
+    gap: 2px;
+}
+
+
+/* Cuadrados de Microsoft */
+
+.logo-microsoft span {
+    display: block;
+}
+
+
+/* ================================= */
+/* LOGO APPLE                         */
+/* ================================= */
+
+.logo-apple {
+    width: 25px;
+    height: 25px;
+
+    font-size: 26px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+}
+
+
+/* ================================= */
+/* REGISTRO                           */
+/* ================================= */
+
+.registro {
+    width: 235px;
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    margin-top: 48px;
+
+    font-size: 12px;
+}
+
+
+.registro a {
+    color: #292929;
+
+    text-decoration: underline;
+
+    cursor: pointer;
+}
+
+
+/* ================================= */
+/* IMAGEN DERECHA                     */
+/* ================================= */
 
 .imagen-container {
     position: absolute;
@@ -204,9 +369,7 @@ input:focus {
 }
 
 
-/* ============================= */
-/* IMAGEN                         */
-/* ============================= */
+/* Imagen */
 
 .imagen-login {
     width: 100%;

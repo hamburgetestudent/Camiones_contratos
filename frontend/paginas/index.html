@@ -12,24 +12,33 @@
 
     <title>Inicio de Sesión</title>
 
-    <!-- Archivo CSS -->
+    <!-- Archivo de estilos -->
     <link rel="stylesheet" href="style.css">
 
 </head>
+
 
 <body>
 
     <!-- Contenedor principal -->
     <main class="contenedor">
 
-        <!-- Título -->
+
+        <!-- ================================= -->
+        <!-- TÍTULO                            -->
+        <!-- ================================= -->
+
         <div class="titulo">
             Inicio de Sesion
         </div>
 
 
-        <!-- Formulario -->
+        <!-- ================================= -->
+        <!-- FORMULARIO                        -->
+        <!-- ================================= -->
+
         <section class="formulario">
+
 
             <!-- Email -->
             <div class="campo">
@@ -63,49 +72,140 @@
             </div>
 
 
-            <!-- Botón -->
+            <!-- ================================= -->
+            <!-- BOTÓN INICIAR SESIÓN              -->
+            <!-- ================================= -->
+
             <button
                 id="btnLogin"
                 class="boton-login"
             >
-                Sign In ♙
+                Sign In
+                <span class="icono-usuario">♙</span>
             </button>
 
 
-            <!-- Recuperar contraseña -->
+            <!-- ================================= -->
+            <!-- RECUPERAR CONTRASEÑA               -->
+            <!-- ================================= -->
+
             <a
                 href="#"
+                id="forgotPassword"
                 class="forgot"
             >
                 Forgot password?
             </a>
 
 
-            <!-- Iconos -->
-            <div class="iconos">
+            <!-- ================================= -->
+            <!-- SEPARADOR                         -->
+            <!-- ================================= -->
 
-                <div class="icono">
-                    ☆
-                </div>
+            <div class="separador">
 
-                <div class="icono activo">
-                    ▦
-                </div>
+                <span></span>
 
-                <div class="icono">
-                    ★
-                </div>
+                <p>O continuar con</p>
 
-                <div class="icono">
-                    ★
-                </div>
+                <span></span>
 
             </div>
+
+
+            <!-- ================================= -->
+            <!-- INICIO DE SESIÓN SOCIAL            -->
+            <!-- ================================= -->
+
+            <div class="botones-sociales">
+
+
+                <!-- GOOGLE -->
+                <button
+                    class="boton-social"
+                    id="btnGoogle"
+                >
+
+                    <div class="logo-google">
+                        G
+                    </div>
+
+                    <span>
+                        Google
+                    </span>
+
+                </button>
+
+
+                <!-- MICROSOFT -->
+                <button
+                    class="boton-social"
+                    id="btnMicrosoft"
+                >
+
+                    <div class="logo-microsoft">
+
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+
+                    </div>
+
+                    <span>
+                        Microsoft
+                    </span>
+
+                </button>
+
+
+                <!-- APPLE -->
+                <button
+                    class="boton-social"
+                    id="btnApple"
+                >
+
+                    <div class="logo-apple">
+                        ●
+                    </div>
+
+                    <span>
+                        Apple
+                    </span>
+
+                </button>
+
+
+            </div>
+
+
+            <!-- ================================= -->
+            <!-- REGISTRO                           -->
+            <!-- ================================= -->
+
+            <div class="registro">
+
+                <span>
+                    ¿No tienes cuenta?
+                </span>
+
+                <a
+                    href="#"
+                    id="btnRegistro"
+                >
+                    Regístrate
+                </a>
+
+            </div>
+
 
         </section>
 
 
-        <!-- Imagen -->
+        <!-- ================================= -->
+        <!-- IMAGEN DERECHA                    -->
+        <!-- ================================= -->
+
         <section class="imagen-container">
 
             <img
@@ -115,6 +215,7 @@
             >
 
         </section>
+
 
     </main>
 
