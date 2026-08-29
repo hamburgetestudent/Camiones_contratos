@@ -1,14 +1,40 @@
 """
-Modulo de control de estados y transiciones permitidas para los contratos.
+Modulo de control de estados y transiciones permitidas del dominio.
+Proporciona una clase base generica para maquinas de estados y la logica de contratos.
 """
 
-from enum import StrEnum
-from typing import Optional, Set, Dict, Any
 from datetime import datetime, timezone
+from enum import StrEnum
+from typing import Any, Dict, Generic, Optional, Set, TypeVar
 from uuid import UUID
+
+S = TypeVar("S", bound=StrEnum)
+
+
+class MaquinaEstadosBase(Generic[S]):
+    """Clase base reutilizable para control de transiciones de estados."""
+
+    TRANSICIONES_PERMITIDAS: Dict[S, Set[S]] = {}
+
+    @classmethod
+    def validar_transicion(cls, estado_actual: S, nuevo_estado: S) -> bool:
+        """Verifica si la transicion entre dos estados esta permitida."""
+        estados_posibles = cls.TRANSICIONES_PERMITIDAS.get(estado_actual, set())
+        return nuevo_estado in estados_posibles
+
+    @classmethod
+    def obtener_siguientes_estados(cls, estado_actual: S) -> Set[S]:
+        """Retorna el conjunto de estados a los que se puede transicionar desde el estado actual."""
+        return cls.TRANSICIONES_PERMITIDAS.get(estado_actual, set()).copy()
+
+    @classmethod
+    def es_estado_terminal(cls, estado: S) -> bool:
+        """Indica si un estado no permite transiciones posteriores."""
+        return len(cls.TRANSICIONES_PERMITIDAS.get(estado, set())) == 0
 
 
 class EstadoContrato(StrEnum):
+    """Estados del ciclo de vida de un contrato de transporte."""
     BORRADOR = "BORRADOR"
     PUBLICADO = "PUBLICADO"
     EN_SUBASTA = "EN_SUBASTA"
@@ -21,8 +47,8 @@ class EstadoContrato(StrEnum):
     EN_DISPUTA = "EN_DISPUTA"
 
 
-class MaquinaEstadosContrato:
-    """Clase encargada de controlar y permitir transiciones válidas de estado."""
+class MaquinaEstadosContrato(MaquinaEstadosBase[EstadoContrato]):
+    """Maquina de estados para el ciclo de vida de Contratos."""
 
     TRANSICIONES_PERMITIDAS: Dict[EstadoContrato, Set[EstadoContrato]] = {
         EstadoContrato.BORRADOR: {
@@ -66,16 +92,6 @@ class MaquinaEstadosContrato:
     }
 
     @classmethod
-    def validar_transicion(
-        cls,
-        estado_actual: EstadoContrato,
-        nuevo_estado: EstadoContrato,
-    ) -> bool:
-        """Verifica si la transicion entre dos estados esta permitida."""
-        estados_posibles = cls.TRANSICIONES_PERMITIDAS.get(estado_actual, set())
-        return nuevo_estado in estados_posibles
-
-    @classmethod
     def cambiar_estado(
         cls,
         contrato_data: Any,
@@ -84,7 +100,7 @@ class MaquinaEstadosContrato:
         id_camion: Optional[UUID] = None,
     ) -> Any:
         """
-        Aplica la transicion de estado validando reglas de negocio requeridas por cada estado.
+        Aplica la transicion de estado validando invariantes y reglas de negocio.
         """
         if not cls.validar_transicion(contrato_data.estado, nuevo_estado):
             raise ValueError(
@@ -92,7 +108,7 @@ class MaquinaEstadosContrato:
             )
 
         if nuevo_estado in (EstadoContrato.PUBLICADO, EstadoContrato.EN_SUBASTA):
-            if contrato_data.id_transportista is not None:
+            if getattr(contrato_data, "id_transportista", None) is not None:
                 raise ValueError("Un contrato en subasta o publicado no puede tener un transportista asignado previo.")
             if not getattr(contrato_data, "fecha_publicacion", None):
                 contrato_data.fecha_publicacion = datetime.now(timezone.utc)

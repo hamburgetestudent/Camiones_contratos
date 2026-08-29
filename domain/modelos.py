@@ -1,24 +1,25 @@
 """
 Modelos de dominio y esquemas de validacion Pydantic para Contratos de Camiones.
-Refactorizados con validaciones modulares y desacoplados para mayor escalabilidad.
+Refactorizados con validaciones modulares y desacoplados para mayor robustez y escalabilidad.
 """
 
 from datetime import datetime, timedelta, timezone
 from enum import StrEnum
-from typing import Optional, Annotated
+import re
+from typing import Annotated, Optional
 from uuid import UUID, uuid4
-from pydantic import BaseModel, Field, model_validator, AwareDatetime, BeforeValidator
+from pydantic import AwareDatetime, BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
-from domain.reglas import ReglasNegocio
 from domain.maquina_estados import EstadoContrato
+from domain.reglas import ReglasNegocio
 
+ONU_REGEX = re.compile(r"^(UN)?\d{4}$", re.IGNORECASE)
+TOLERANCIA_IVA_CLP: float = 5.0
+MIN_LONGITUD_EMBALAJE: int = 10
 
-# =========================================
-# Utilitarios y Sanitizacion de Datos
-# =========================================
 
 def limpiar_texto(valor: str) -> str:
-    """Limpieza de texto: remueve espacios superfluos y convierte a mayúsculas."""
+    """Remueve espacios superfluos y normaliza a mayusculas."""
     if isinstance(valor, str):
         return " ".join(valor.strip().split()).upper()
     return valor
@@ -27,17 +28,11 @@ def limpiar_texto(valor: str) -> str:
 TextoNormalizado = Annotated[str, BeforeValidator(limpiar_texto)]
 
 
-# =========================================
-# Enumeraciones
-# =========================================
-
 class TipoCarga(StrEnum):
-    # Opciones generales
+    """Clasificacion de tipos de carga para transporte terrestre."""
     GENERAL = "GENERAL"
     REFRIGERADA = "REFRIGERADA"
     PELIGROSA = "PELIGROSA"
-
-    # Opciones especiales con requerimientos de negocio
     FRAGIL = "FRAGIL"
     GRANEL_LIQUIDO = "GRANEL_LIQUIDO"
     GRANEL_SOLIDO = "GRANEL_SOLIDO"
@@ -49,6 +44,7 @@ class TipoCarga(StrEnum):
 
 
 class Moneda(StrEnum):
+    """Monedas admitidas para valorizacion de contratos."""
     CLP = "CLP"
     UF = "UF"
     UTM = "UTM"
@@ -58,42 +54,33 @@ class Moneda(StrEnum):
     BRL = "BRL"
 
 
-# =========================================
-# Esquema Base del Contrato y Validaciones
-# =========================================
-
 class ContratoBase(BaseModel):
-    # 1. Identificadores basicos y ubicacion
+    """Esquema base con todas las especificaciones y reglas de validacion de un contrato."""
+
     id_empresa_generadora: UUID = Field(..., description="ID unico de la empresa generadora de carga")
     origen: TextoNormalizado = Field(..., min_length=3, description="Direccion o comuna de origen")
     destino: TextoNormalizado = Field(..., min_length=3, description="Direccion o comuna de destino")
 
-    # 2. Fechas de operacion
     f_estimada_salida: AwareDatetime = Field(..., description="Fecha y hora estimada de salida")
     f_estimada_llegada: AwareDatetime = Field(..., description="Fecha y hora estimada de llegada")
     f_cierre_postulaciones: AwareDatetime = Field(..., description="Fecha y hora limite de postulacion")
 
-    # 3. Especificaciones de carga y capacidad
     input_camionKG: float = Field(..., gt=0, description="Capacidad maxima del camion en KG")
     tipo_carga: TipoCarga = Field(..., description="Tipo de carga transportada")
     peso_total: float = Field(..., gt=0, description="Peso total de la carga en KG")
     volumen_m3: Optional[float] = Field(None, gt=0, description="Volumen estimado en metros cubicos")
 
-    # 4. Requerimientos especiales
     requiere_termo: bool = Field(default=False, description="Indica si requiere equipo de refrigeracion/termo")
     numero_onu: Optional[str] = Field(default=None, description="Codigo ONU de 4 digitos para carga peligrosa")
-    req_embalaje: Optional[str] = Field(default=None, min_length=10, description="Instrucciones detalladas de embalaje")
+    req_embalaje: Optional[str] = Field(default=None, min_length=MIN_LONGITUD_EMBALAJE, description="Instrucciones detalladas de embalaje")
     req_blindaje: bool = Field(default=False, description="Indica si requiere transporte blindado")
 
-    # 5. Aspectos economicos y financieros
     moneda: Moneda = Field(default=Moneda.CLP, description="Moneda de pago del contrato")
     monto_neto: float = Field(..., gt=0, description="Monto Neto del contrato")
     monto_iva: float = Field(..., ge=0, description="Monto del IVA")
     monto_total: float = Field(..., gt=0, description="Monto Total (Neto + IVA)")
 
-    # =========================================
-    # Sub-Validadores Modulares
-    # =========================================
+    model_config = ConfigDict(str_strip_whitespace=True)
 
     def _validar_fechas(self) -> None:
         ahora = datetime.now(timezone.utc)
@@ -125,20 +112,17 @@ class ContratoBase(BaseModel):
         if self.tipo_carga == TipoCarga.PELIGROSA:
             if not self.numero_onu:
                 raise ValueError("Las cargas peligrosas requieren un codigo ONU obligatorio")
-            onu_limpio = self.numero_onu.strip().upper()
-            es_valido = (
-                (onu_limpio.startswith("UN") and len(onu_limpio) == 6 and onu_limpio[2:].isdigit()) or
-                (len(onu_limpio) == 4 and onu_limpio.isdigit())
-            )
-            if not es_valido:
+            if not ONU_REGEX.match(self.numero_onu.strip()):
                 raise ValueError(f"Codigo ONU '{self.numero_onu}' invalido. Debe constar de 4 digitos (ej: 1234 o UN1234)")
 
         if self.tipo_carga == TipoCarga.VALORES and not self.req_blindaje:
             raise ValueError("Las cargas de valores requieren obligatoriamente un camion blindado")
 
         if self.tipo_carga == TipoCarga.FRAGIL:
-            if not self.req_embalaje or len(self.req_embalaje.strip()) < 10:
-                raise ValueError("La carga fragil requiere una especificacion de embalaje de al menos 10 caracteres")
+            if not self.req_embalaje or len(self.req_embalaje.strip()) < MIN_LONGITUD_EMBALAJE:
+                raise ValueError(
+                    f"La carga fragil requiere una especificacion de embalaje de al menos {MIN_LONGITUD_EMBALAJE} caracteres"
+                )
 
     def _validar_coherencia_financiera(self) -> None:
         diferencia = abs((self.monto_neto + self.monto_iva) - self.monto_total)
@@ -150,14 +134,14 @@ class ContratoBase(BaseModel):
         if self.moneda == Moneda.CLP:
             iva_esperado = self.monto_neto * ReglasNegocio.IVA_PORCENTAJE
             diferencia_iva = abs(self.monto_iva - iva_esperado)
-            if diferencia_iva > 5.0:
+            if diferencia_iva > TOLERANCIA_IVA_CLP:
                 raise ValueError(
                     f"El monto del IVA ({self.monto_iva}) no corresponde al {ReglasNegocio.IVA_PORCENTAJE * 100}% del neto"
                 )
 
     @model_validator(mode="after")
     def validar_reglas_de_negocio(self) -> "ContratoBase":
-        """Ejecuta los validadores de dominio en orden logico."""
+        """Ejecuta todos los validadores de dominio en secuencia logica."""
         self._validar_fechas()
         self._validar_carga_y_capacidad()
         self._validar_requerimientos_especiales()
@@ -171,7 +155,7 @@ class ContratoCrear(ContratoBase):
 
 
 class ContratoModelo(ContratoBase):
-    """Modelo completo de persistencia y entidad del contrato."""
+    """Modelo de entidad y persistencia del contrato."""
     id: UUID = Field(default_factory=uuid4, description="ID unico del contrato")
     estado: EstadoContrato = Field(default=EstadoContrato.BORRADOR, description="Estado actual en el ciclo de vida")
     id_transportista: Optional[UUID] = Field(default=None, description="ID del transportista asignado")

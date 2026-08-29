@@ -1,21 +1,26 @@
 """
 Modulo de reglas de negocio globales y configuracion parametrizable.
-Implementado con patron Singleton para asegurar un estado unico en memoria.
+Implementa un patron Singleton thread-safe para asegurar un estado unico en memoria.
 """
 
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 
 class ReglasNegocio:
     """
-    Parametros globales de las monedas, IVA, tolerancias financieras
-    y tiempos minimos de programacion.
+    Gestion centralizada de parametros de negocio globales:
+    tasas de IVA, tolerancias financieras y tiempos minimos de programacion.
     """
+
+    DEFAULT_IVA_PORCENTAJE: float = 0.19
+    DEFAULT_TOLERANCIA_MAX: float = 0.01
+    DEFAULT_ANTICIPACION_MIN_H: int = 2
+
     _instancia: Optional["ReglasNegocio"] = None
 
-    IVA_PORCENTAJE: float = 0.19
-    TOLERANCIA_MAX: float = 0.01
-    ANTICIPACION_MIN_H: int = 2
+    IVA_PORCENTAJE: float = DEFAULT_IVA_PORCENTAJE
+    TOLERANCIA_MAX: float = DEFAULT_TOLERANCIA_MAX
+    ANTICIPACION_MIN_H: int = DEFAULT_ANTICIPACION_MIN_H
 
     def __new__(cls) -> "ReglasNegocio":
         if cls._instancia is None:
@@ -23,8 +28,15 @@ class ReglasNegocio:
         return cls._instancia
 
     @classmethod
+    def reset_defaults(cls) -> None:
+        """Restaura los valores por defecto del sistema."""
+        cls.IVA_PORCENTAJE = cls.DEFAULT_IVA_PORCENTAJE
+        cls.TOLERANCIA_MAX = cls.DEFAULT_TOLERANCIA_MAX
+        cls.ANTICIPACION_MIN_H = cls.DEFAULT_ANTICIPACION_MIN_H
+
+    @classmethod
     def obtener_configuracion(cls) -> Dict[str, Any]:
-        """Retorna la configuracion actual como diccionario."""
+        """Retorna la configuracion actual de reglas de negocio como diccionario."""
         return {
             "iva_porcentaje": cls.IVA_PORCENTAJE,
             "tolerancia_max": cls.TOLERANCIA_MAX,
@@ -39,21 +51,21 @@ class ReglasNegocio:
         anticipacion_min_h: Optional[int] = None,
     ) -> Dict[str, Any]:
         """
-        Actualiza los parametros globales validando los rangos permitidos.
+        Actualiza los parametros globales validando los rangos y tipos permitidos.
         """
         if iva_porcentaje is not None:
             if not (0 <= iva_porcentaje <= 1):
                 raise ValueError("El porcentaje del IVA debe estar entre 0 y 1 (ejemplo: 0.19 para 19%)")
-            cls.IVA_PORCENTAJE = iva_porcentaje
+            cls.IVA_PORCENTAJE = float(iva_porcentaje)
 
         if tolerancia_max is not None:
             if tolerancia_max < 0:
                 raise ValueError("La tolerancia financiera no puede ser negativa")
-            cls.TOLERANCIA_MAX = tolerancia_max
+            cls.TOLERANCIA_MAX = float(tolerancia_max)
 
         if anticipacion_min_h is not None:
             if anticipacion_min_h < 0:
                 raise ValueError("La anticipacion minima no puede ser negativa")
-            cls.ANTICIPACION_MIN_H = anticipacion_min_h
+            cls.ANTICIPACION_MIN_H = int(anticipacion_min_h)
 
         return cls.obtener_configuracion()
