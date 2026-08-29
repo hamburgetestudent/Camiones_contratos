@@ -355,7 +355,7 @@ input:focus {
 
 
 /* ================================= */
-/* IMAGEN DERECHA                     */
+/* IMAGENES                          */
 /* ================================= */
 
 .imagen-container {
@@ -376,4 +376,22 @@ input:focus {
     height: 100%;
 
     object-fit: contain;
+}
+
+/*Logo microsoft*/
+
+.logo-microsoft span:nth-child(1) {
+    background-color: #f25022;
+}
+
+.logo-microsoft span:nth-child(2) {
+    background-color: #7fba00;
+}
+
+.logo-microsoft span:nth-child(3) {
+    background-color: #00a4ef;
+}
+
+.logo-microsoft span:nth-child(4) {
+    background-color: #ffb900;
 }
