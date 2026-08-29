@@ -19,6 +19,9 @@ Para el despliegue local en entorno de desarrollo se requiere:
 * **Node.js**:  POR DEFINIR 
 * **npm**: POR DEFINIR
 * **Python**: v3.14.0 o superior
+* **fastapi**: ==0.141.1
+* **uvicorn**: ==0.52.1
+* **pydantic**: ==2.13.4
 
 ---
 
@@ -26,8 +29,8 @@ Para el despliegue local en entorno de desarrollo se requiere:
 
 ### 1. Clonar el Repositorio
 ```bash
-git clone https://github.com/tu-usuario/tu-repositorio.git
-cd tu-repositorio
+git clone https://github.com/hamburgetestudent/Camiones_contratos.git
+cd Camiones_contratos
 ```
 
 ### 2. Configuración del Backend (FastAPI)
@@ -51,3 +54,23 @@ uvicorn main:app --reload --host 127.0.0.1 --port 8000
 cd ../frontend
 npm install
 npm run dev
+```
+
+## Arquitectura del sistema
+
+La arquitectura del sistema está estructurada mediante una separación clara de responsabilidades:
+
+- **Frontend:** Desarrollado con **Electron** y **TypeScript**, proporciona la interfaz de usuario de escritorio.
+- **Backend:** Construido con **Python** y **FastAPI**, se encarga de los endpoints, la lógica de negocio y la validación de los contratos.
+- **Modelos:** El archivo `modelos.py` contiene la estructura de los contratos y sus validaciones.
+- **Almacenamiento:** Actualmente los contratos se almacenan temporalmente en un diccionario de Python, utilizado como almacenamiento en memoria.
+
+### Diagrama de arquitectura
+
+```mermaid
+flowchart TD
+    A[Usuario] --> B["Frontend<br/>Electron + TypeScript"]
+    B --> C["Backend<br/>Python + FastAPI"]
+    C --> D["principal.py"]
+    D --> E["modelos.py<br/>Contratos y Validaciones"]
+    D --> F["Almacenamiento temporal<br/>dict de contratos"]
