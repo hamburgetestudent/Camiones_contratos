@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "electron": "^44.0.0",
+    "typescript": "^7.0.2"
+  }
+}
