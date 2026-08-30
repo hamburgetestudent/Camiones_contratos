@@ -37,34 +37,37 @@ class PostulacionDAO(BaseDAO[PostulacionModelo, UUID]):
 
 
 class PostulacionDAOMemoria(DAOMemoria[PostulacionModelo, UUID], PostulacionDAO):
-    """Implementacion en memoria de persistencia para PostulacionModelo."""
+    """Implementacion en memoria thread-safe de persistencia para PostulacionModelo."""
 
     def obtener_por_contrato(self, contrato_id: UUID) -> List[PostulacionModelo]:
         """Obtiene todas las postulaciones asociadas a un contrato o carga."""
-        return [
-            postulacion for postulacion in self._almacenamiento.values()
-            if postulacion.carga_id == contrato_id
-        ]
+        with self._lock:
+            return [
+                postulacion for postulacion in self._almacenamiento.values()
+                if postulacion.carga_id == contrato_id
+            ]
 
     def obtener_por_transportista(self, transportista_id: UUID) -> List[PostulacionModelo]:
         """Obtiene todas las postulaciones enviadas por un transportista especifico."""
-        return [
-            postulacion for postulacion in self._almacenamiento.values()
-            if postulacion.transportista_id == transportista_id
-        ]
+        with self._lock:
+            return [
+                postulacion for postulacion in self._almacenamiento.values()
+                if postulacion.transportista_id == transportista_id
+            ]
 
     def rechazar_postulaciones(self, contrato_id: UUID, ganadora_id: UUID) -> List[PostulacionModelo]:
         """
         Marca todas las demas postulaciones de un contrato como RECHAZADA,
-        salvo la postulacion ganadora.
+        salvo la postulacion ganadora de forma atomica.
         """
-        modificadas: List[PostulacionModelo] = []
-        for postulacion in self.obtener_por_contrato(contrato_id):
-            if postulacion.id != ganadora_id and postulacion.estado != EstadoPostulacion.RECHAZADA:
-                postulacion.estado = EstadoPostulacion.RECHAZADA
-                self._almacenamiento[postulacion.id] = postulacion
-                modificadas.append(postulacion)
-        return modificadas
+        with self._lock:
+            modificadas: List[PostulacionModelo] = []
+            for postulacion in self.obtener_por_contrato(contrato_id):
+                if postulacion.id != ganadora_id and postulacion.estado != EstadoPostulacion.RECHAZADA:
+                    postulacion.estado = EstadoPostulacion.RECHAZADA
+                    self._almacenamiento[postulacion.id] = postulacion
+                    modificadas.append(postulacion)
+            return modificadas
 
 
 # Alias para retrocompatibilidad
