@@ -1,19 +1,17 @@
-{
-  "name": "codigo",
-  "version": "1.0.0",
-  "description": "Fletes y Contratos Dashboard",
-  "main": "dist/main.js",
-  "scripts": {
-    "build": "tsc && cp src/index.html dist/index.html && cp src/style.css dist/style.css",
-    "watch": "tsc -w",
-    "start": "npm run build && electron . --no-sandbox"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "electron": "^43.4.0",
-    "typescript": "^5.5.4",
-    "@types/node": "^20.14.9"
-  }
+{ 
+  "name": "Camiones_contratos", 
+  "version": "1.0.0", 
+  "description": "Aplicación de escritorio desarrollada con Electron, Node.js, TypeScript y python", 
+  "main": "dist/main.js", 
+  "author": "", 
+  "license": "MIT", 
+  "scripts": { 
+    "build": "tsc", 
+    "start": "npm run build && electron .", 
+    "dev": "tsc --watch" }, 
+  "devDependencies": { 
+    "@types/node": "^22.0.0", 
+    "electron": "^44.0.0", 
+    "typescript": "^7.0.2" } 
+
 }
