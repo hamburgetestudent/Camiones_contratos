@@ -1,47 +1,99 @@
 """
-Interfaz Abstracta con el Patron: Data Access Object (DAO).
-Permite abstraer el origen de datos (En Memoria, JSON, SQLite, PostgreSQL).
+Modulo base para el patron Data Access Object (DAO).
+Define interfaces abstractas y clases base genericas de acceso a datos en espanol.
 """
 
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar, List, Optional
+import threading
+from typing import Callable, Dict, Generic, List, Optional, TypeVar
 
-E = TypeVar("E") # Entidad
-ID = TypeVar("ID")
+E = TypeVar("E")  # Entidad
+ID = TypeVar("ID")  # Identificador
 
 
-class BD_DAO(ABC, Generic[E, ID]):
-    """Interfaz abstracta genérica para operaciones crudas."""
-
-    # =======================
-    # 1. Recibir informacion
-    # =======================
+class BaseDAO(ABC, Generic[E, ID]):
+    """Interfaz abstracta generica para operaciones CRUD de persistencia."""
 
     @abstractmethod
-    def get_id(self, entidad_id: ID) -> Optional[E]:
-        """Obtiene una entidad por su ID unico."""
+    def obt_por_id(self, entidad_id: ID) -> Optional[E]:
+        """Obtiene una entidad por su identificador unico."""
         pass
 
     @abstractmethod
-    def get_all(self) -> List[E]:
-        """Obtiene el listado completo de entidades."""
-        pass
-
-    # =============================
-    # 2. Modificacion de la entidad
-    # =============================
-
-    @abstractmethod
-    def save(self, entidad: E) -> E:
-        """Guarda o persiste una NUEVA entidad."""
+    def obt_todos(self) -> List[E]:
+        """Retorna todas las entidades persistidas."""
         pass
 
     @abstractmethod
-    def update(self, entidad_id: ID, entidad: E) -> Optional[E]:
-        """Actualiza una entidad existente por su ID."""
+    def guardar(self, entidad: E) -> E:
+        """Persiste una entidad nueva o actualizada."""
         pass
 
     @abstractmethod
-    def delete(self, entidad_id: ID) -> bool:
-        """Elimina una entidad por su ID."""
+    def actualizar(self, entidad_id: ID, entidad: E) -> Optional[E]:
+        """Actualiza una entidad existente identificada por su ID."""
         pass
+
+    @abstractmethod
+    def eliminar(self, entidad_id: ID) -> bool:
+        """Elimina una entidad por su ID. Retorna True si existia y fue eliminada."""
+        pass
+
+    @abstractmethod
+    def existe(self, entidad_id: ID) -> bool:
+        """Verifica la existencia de una entidad por su ID."""
+        pass
+
+class DAOMemoria(BaseDAO[E, ID], Generic[E, ID]):
+    """
+    Implementacion generica de almacenamiento en memoria thread-safe.
+    Proporciona operaciones CRUD basicas sincronizadas mediante un cerrojo (RLock).
+    """
+
+    def __init__(self, extractor_id: Optional[Callable[[E], ID]] = None) -> None:
+        self._almacenamiento: Dict[ID, E] = {}
+        self._extractor_id: Callable[[E], ID] = extractor_id or (lambda entidad: getattr(entidad, "id"))
+        self._lock = threading.RLock()
+
+    def obt_por_id(self, entidad_id: ID) -> Optional[E]:
+        """Recupera una entidad del almacenamiento en memoria por su ID."""
+        with self._lock:
+            return self._almacenamiento.get(entidad_id)
+
+    def obt_todos(self) -> List[E]:
+        """Retorna una lista con todas las entidades almacenadas."""
+        with self._lock:
+            return list(self._almacenamiento.values())
+
+    def guardar(self, entidad: E) -> E:
+        """Guarda o reemplaza una entidad en el almacenamiento en memoria."""
+        entidad_id = self._extractor_id(entidad)
+        with self._lock:
+            self._almacenamiento[entidad_id] = entidad
+        return entidad
+
+    def actualizar(self, entidad_id: ID, entidad: E) -> Optional[E]:
+        """Actualiza una entidad existente. Retorna None si no existe."""
+        with self._lock:
+            if entidad_id not in self._almacenamiento:
+                return None
+            self._almacenamiento[entidad_id] = entidad
+            return entidad
+
+    def eliminar(self, entidad_id: ID) -> bool:
+        """Elimina una entidad si existe. Retorna True si fue eliminada, False de lo contrario."""
+        with self._lock:
+            if entidad_id in self._almacenamiento:
+                del self._almacenamiento[entidad_id]
+                return True
+            return False
+
+    def existe(self, entidad_id: ID) -> bool:
+        """Retorna True si el ID existe en el almacenamiento, False en caso contrario."""
+        with self._lock:
+            return entidad_id in self._almacenamiento
+
+    obt_todas_entidades = obt_todos
+    obtener_todos = obt_todos
+    obtener_por_id = obt_por_id
+    save = guardar
