@@ -16,7 +16,3 @@ class ContratoDAO(BaseDAO[ContratoModelo, UUID]):
 class ContratoDAOMemoria(DAOMemoria[ContratoModelo, UUID], ContratoDAO):
     """Implementacion en memoria de persistencia para ContratoModelo."""
     pass
-
-
-# Alias para retrocompatibilidad
-ContratoDAOInMemory = ContratoDAOMemoria

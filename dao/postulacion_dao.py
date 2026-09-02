@@ -28,14 +28,6 @@ class PostulacionDAO(BaseDAO[PostulacionModelo, UUID]):
         """Marca como RECHAZADA toda postulacion del contrato excepto la seleccionada."""
         pass
 
-    # Alias para compatibilidad
-    def get_by_contrato(self, contrato_id: UUID) -> List[PostulacionModelo]:
-        return self.obtener_por_contrato(contrato_id)
-
-    def get_by_transportista(self, transportista_id: UUID) -> List[PostulacionModelo]:
-        return self.obtener_por_transportista(transportista_id)
-
-
 class PostulacionDAOMemoria(DAOMemoria[PostulacionModelo, UUID], PostulacionDAO):
     """Implementacion en memoria thread-safe de persistencia para PostulacionModelo."""
 
@@ -68,7 +60,3 @@ class PostulacionDAOMemoria(DAOMemoria[PostulacionModelo, UUID], PostulacionDAO)
                     self._almacenamiento[postulacion.id] = postulacion
                     modificadas.append(postulacion)
             return modificadas
-
-
-# Alias para retrocompatibilidad
-PostulacionDAOInMemory = PostulacionDAOMemoria
