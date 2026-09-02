@@ -3,7 +3,7 @@ Modulo de reglas de negocio globales y configuracion parametrizable.
 Implementado con patron Singleton para asegurar un estado unico en memoria.
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 
 class ReglasNegocio:
@@ -34,9 +34,9 @@ class ReglasNegocio:
     @classmethod
     def actualizar_configuracion(
         cls,
-        iva_porcentaje: float | None = None,
-        tolerancia_max: float | None = None,
-        anticipacion_min_h: int | None = None,
+        iva_porcentaje: Optional[float] = None,
+        tolerancia_max: Optional[float] = None,
+        anticipacion_min_h: Optional[int] = None,
     ) -> Dict[str, Any]:
         """
         Actualiza los parametros globales validando los rangos permitidos.

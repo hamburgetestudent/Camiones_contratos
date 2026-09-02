@@ -2,7 +2,12 @@
 Modulo de control de estados y transiciones permitidas para los contratos.
 """
 
-from enum import StrEnum
+try:
+    from enum import StrEnum
+except ImportError:
+    from enum import Enum
+    class StrEnum(str, Enum):
+        pass
 from typing import Optional, Set, Dict, Any
 from datetime import datetime, timezone
 from uuid import UUID

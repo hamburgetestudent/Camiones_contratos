@@ -52,3 +52,14 @@ class UsuarioService:
             
         return usuario
 
+
+class ValidadorUsuario:
+    """Adaptador que cumple con ValidadorCredenciales delegando la verificación a UsuarioService."""
+
+    def validar(self, usuario: str, password: str) -> bool:
+        try:
+            UsuarioService.autenticar_usuario(usuario, password)
+            return True
+        except HTTPException:
+            return False
+

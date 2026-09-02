@@ -1,6 +1,11 @@
 from pydantic import BaseModel, EmailStr, Field
 from uuid import UUID, uuid4
-from enum import StrEnum
+try:
+    from enum import StrEnum
+except ImportError:
+    from enum import Enum
+    class StrEnum(str, Enum):
+        pass
 
 class RolUsuario(StrEnum):
     INDEPENDIENTE = "INDEPENDIENTE"
@@ -10,7 +15,7 @@ class RolUsuario(StrEnum):
 class UsuarioBase(BaseModel):
     nombre: str = Field(..., min_length=2, description="Nombre del usuario")
     email: EmailStr = Field(..., description="Correo electrónico único")
-    rol: RolUsuario = Field(default=RolUsuario.GENERADOR, description="Rol del usuario en el sistema")
+    rol: RolUsuario = Field(default=RolUsuario.INDEPENDIENTE, description="Rol del usuario en el sistema")
 
 class UsuarioCrear(UsuarioBase):
     password: str = Field(..., min_length=6, description="Contraseña del usuario")

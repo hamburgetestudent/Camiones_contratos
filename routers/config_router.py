@@ -2,6 +2,7 @@
 Router HTTP para la configuracion y reglas de negocio globales.
 """
 
+from typing import Optional
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from domain.reglas import ReglasNegocio
@@ -10,9 +11,9 @@ router = APIRouter(prefix="/configuracion", tags=["Configuración"])
 
 
 class ActualizarConfiguracionNegocio(BaseModel):
-    iva_porcentaje: float | None = None
-    tolerancia_max: float | None = None
-    anticipacion_min_h: int | None = None
+    iva_porcentaje: Optional[float] = None
+    tolerancia_max: Optional[float] = None
+    anticipacion_min_h: Optional[int] = None
 
 
 @router.get(
