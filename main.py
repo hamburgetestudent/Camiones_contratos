@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from routers.config_router import router as config_router
 from routers.contratos_router import router as contratos_router
 from routers.auth_router import router as auth_router
+from routers.onboarding_router import router as onboarding_router
 
 app = FastAPI(
     title="API - Contratos Camiones (Refactorizado)",
@@ -18,6 +19,7 @@ app = FastAPI(
 app.include_router(auth_router)
 app.include_router(config_router)
 app.include_router(contratos_router)
+app.include_router(onboarding_router)
 
 
 if __name__ == "__main__":

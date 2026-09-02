@@ -9,16 +9,27 @@ from uuid import UUID
 from dao.base_dao import BD_DAO
 from domain.modelos import ContratoCrear, ContratoModelo
 from domain.maquina_estados import EstadoContrato, MaquinaEstadosContrato
+from services.onboarding_service import OnboardingService, onboarding_service_instancia
 
 
 class ContratoService:
     """Servicio que encapsula los casos de uso principales de Contratos."""
 
-    def __init__(self, dao: BD_DAO[ContratoModelo, UUID]):
+    def __init__(
+        self,
+        dao: BD_DAO[ContratoModelo, UUID],
+        onboarding_service: Optional[OnboardingService] = None,
+    ):
         self.dao = dao
+        self.onboarding_service = onboarding_service or onboarding_service_instancia
 
     def crear_contrato(self, datos: ContratoCrear) -> ContratoModelo:
         """Crea un nuevo contrato en estado BORRADOR y lo persiste via DAO."""
+        if not self.onboarding_service.es_dador_aprobado(datos.id_empresa_generadora):
+            raise PermissionError(
+                f"La empresa generadora {datos.id_empresa_generadora} no cuenta con su verificacion KYC/Onboarding en estado APROBADO."
+            )
+
         nuevo_contrato = ContratoModelo(**datos.model_dump())
         return self.dao.save(nuevo_contrato)
 

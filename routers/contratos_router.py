@@ -35,6 +35,11 @@ def crear_contrato(datos_contrato: ContratoCrear):
     """Crea un contrato aplicando las validaciones de negocio en el modelo Pydantic y persistiendo via DAO."""
     try:
         return contrato_service.crear_contrato(datos_contrato)
+    except PermissionError as error:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(error),
+        )
     except (ValueError, ValidationError) as error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

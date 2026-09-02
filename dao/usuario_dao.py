@@ -5,7 +5,6 @@ from dao.base_dao import BD_DAO
 
 class UsuarioDAO(BD_DAO[UsuarioModelo, UUID]):
     def __init__(self):
-        # Base de datos en memoria para usuarios
         self._db: dict[UUID, UsuarioModelo] = {}
 
     def get_id(self, entidad_id: UUID) -> Optional[UsuarioModelo]:
@@ -31,10 +30,6 @@ class UsuarioDAO(BD_DAO[UsuarioModelo, UUID]):
         return False
 
     def get_by_email(self, email: str) -> Optional[UsuarioModelo]:
-        """
-        Busca un usuario por su correo electrónico.
-        Esta es la función que te faltaba para que el registro funcionara.
-        """
         for usuario in self._db.values():
             if usuario.email == email:
                 return usuario
