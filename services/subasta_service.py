@@ -40,7 +40,7 @@ class ServicioSubasta:
         """
         Retorna las cargas disponibles para postulacion aplicando filtros opcionales.
         """
-        todos = self.contrato_dao.obtener_todos()
+        todos = self.contrato_dao.obt_todos()
         cargas = [c for c in todos if c.estado in ESTADOS_CARGA_DISPONIBLES]
 
         if region and region.strip():
@@ -76,7 +76,7 @@ class ServicioSubasta:
         if not onboarding_aprobado:
             raise ValueError("El transportista debe tener su onboarding en estado 'APROBADO' para postular")
 
-        contrato = self.contrato_dao.obtener_por_id(datos_postulacion.carga_id)
+        contrato = self.contrato_dao.obt_por_id(datos_postulacion.carga_id)
         if not contrato:
             raise ValueError(f"La carga/contrato con ID {datos_postulacion.carga_id} no existe")
 
@@ -106,14 +106,14 @@ class ServicioSubasta:
         """
         Adjudica una subasta: selecciona la oferta ganadora, rechaza las demas y adjudica el contrato.
         """
-        contrato = self.contrato_dao.obtener_por_id(carga_id)
+        contrato = self.contrato_dao.obt_por_id(carga_id)
         if not contrato:
             raise ValueError(f"La carga/contrato con ID {carga_id} no fue encontrada")
 
         if contrato.estado in ESTADOS_NO_POSTULABLES:
             raise ValueError(f"El contrato ya fue adjudicado, finalizado o cancelado (Estado: {contrato.estado.value})")
 
-        postulacion = self.postulacion_dao.obtener_por_id(postulacion_id)
+        postulacion = self.postulacion_dao.obt_por_id(postulacion_id)
         if not postulacion or postulacion.carga_id != carga_id:
             raise ValueError(f"La postulacion con ID {postulacion_id} no pertenece al contrato indicado")
 
@@ -136,7 +136,7 @@ class ServicioSubasta:
 
     def listar_postulaciones_carga(self, carga_id: UUID) -> List[PostulacionModelo]:
         """Retorna todas las postulaciones asociadas a una carga."""
-        return self.postulacion_dao.obtener_por_contrato(carga_id)
+        return self.postulacion_dao.obt_por_contrato(carga_id)
 
 
 # Alias para retrocompatibilidad

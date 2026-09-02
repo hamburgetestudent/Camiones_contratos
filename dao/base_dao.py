@@ -15,12 +15,12 @@ class BaseDAO(ABC, Generic[E, ID]):
     """Interfaz abstracta generica para operaciones CRUD de persistencia."""
 
     @abstractmethod
-    def obtener_por_id(self, entidad_id: ID) -> Optional[E]:
+    def obt_por_id(self, entidad_id: ID) -> Optional[E]:
         """Obtiene una entidad por su identificador unico."""
         pass
 
     @abstractmethod
-    def obtener_todos(self) -> List[E]:
+    def obt_todos(self) -> List[E]:
         """Retorna todas las entidades persistidas."""
         pass
 
@@ -55,12 +55,12 @@ class DAOMemoria(BaseDAO[E, ID], Generic[E, ID]):
         self._extractor_id: Callable[[E], ID] = extractor_id or (lambda entidad: getattr(entidad, "id"))
         self._lock = threading.RLock()
 
-    def obtener_por_id(self, entidad_id: ID) -> Optional[E]:
+    def obt_por_id(self, entidad_id: ID) -> Optional[E]:
         """Recupera una entidad del almacenamiento en memoria por su ID."""
         with self._lock:
             return self._almacenamiento.get(entidad_id)
 
-    def obtener_todos(self) -> List[E]:
+    def obt_todos(self) -> List[E]:
         """Retorna una lista con todas las entidades almacenadas."""
         with self._lock:
             return list(self._almacenamiento.values())
@@ -92,3 +92,8 @@ class DAOMemoria(BaseDAO[E, ID], Generic[E, ID]):
         """Retorna True si el ID existe en el almacenamiento, False en caso contrario."""
         with self._lock:
             return entidad_id in self._almacenamiento
+
+    obt_todas_entidades = obt_todos
+    obtener_todos = obt_todos
+    obtener_por_id = obt_por_id
+    save = guardar

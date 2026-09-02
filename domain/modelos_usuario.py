@@ -1,6 +1,5 @@
 from enum import StrEnum
 import re
-from typing import Annotated
 from uuid import UUID, uuid4
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -24,7 +23,7 @@ class UsuarioBase(BaseModel):
 
     @field_validator("email")
     @classmethod
-    def validar_email(cls, v: str) -> str:
+    def vali_email(cls, v: str) -> str:
         email_limpio = v.strip().lower()
         if not PATRON_EMAIL.match(email_limpio):
             raise ValueError("Formato de correo electronico invalido")

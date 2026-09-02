@@ -24,14 +24,14 @@ class ServicioContrato:
 
     def obtener_contrato(self, contrato_id: UUID) -> ContratoModelo:
         """Recupera un contrato por su ID unico. Lanza ValueError si no existe."""
-        contrato = self.dao.obtener_por_id(contrato_id)
+        contrato = self.dao.obt_por_id(contrato_id)
         if not contrato:
             raise ValueError(f"El contrato con ID {contrato_id} no fue encontrado")
         return contrato
 
     def listar_contratos(self) -> List[ContratoModelo]:
         """Obtiene la lista completa de todos los contratos registrados."""
-        return self.dao.obtener_todos()
+        return self.dao.obt_todos()
 
     def cambiar_estado(
         self,

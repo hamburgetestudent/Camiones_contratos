@@ -19,11 +19,13 @@ def manejar_excepcion_http(error: Exception) -> HTTPException:
     """
     Mapea excepciones de dominio, reglas y persistencia a codigos de estado HTTP adecuados.
     """
-    mensaje = str(error)
-    mensaje_lower = mensaje.lower()
+    if isinstance(error, HTTPException):
+        return error
 
-    if any(patron in mensaje_lower for patron in ["no fue encontrad", "no existe", "not found"]):
+    mensaje = str(error)
+    mensaje_minuscula = mensaje.lower()
+
+    if any(patron in mensaje_minuscula for patron in ["no fue encontrad", "no existe", "not found"]):
         return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=mensaje)
 
     return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=mensaje)
-

@@ -28,14 +28,14 @@ class ReglasNegocio:
         return cls._instancia
 
     @classmethod
-    def reset_defaults(cls) -> None:
+    def reseteo_defaults(cls) -> None:
         """Restaura los valores por defecto del sistema."""
         cls.IVA_PORCENTAJE = cls.DEFAULT_IVA_PORCENTAJE
         cls.TOLERANCIA_MAX = cls.DEFAULT_TOLERANCIA_MAX
         cls.ANTICIPACION_MIN_H = cls.DEFAULT_ANTICIPACION_MIN_H
 
     @classmethod
-    def obtener_configuracion(cls) -> Dict[str, Any]:
+    def obt_configuracion(cls) -> Dict[str, Any]:
         """Retorna la configuracion actual de reglas de negocio como diccionario."""
         return {
             "iva_porcentaje": cls.IVA_PORCENTAJE,
@@ -44,7 +44,7 @@ class ReglasNegocio:
         }
 
     @classmethod
-    def actualizar_configuracion(
+    def act_configuracion(
         cls,
         iva_porcentaje: Optional[float] = None,
         tolerancia_max: Optional[float] = None,
@@ -68,4 +68,4 @@ class ReglasNegocio:
                 raise ValueError("La anticipacion minima no puede ser negativa")
             cls.ANTICIPACION_MIN_H = int(anticipacion_min_h)
 
-        return cls.obtener_configuracion()
+        return cls.obt_configuracion()

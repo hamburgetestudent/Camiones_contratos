@@ -17,18 +17,18 @@ class MaquinaEstadosBase(Generic[S]):
     TRANSICIONES_PERMITIDAS: Dict[S, Set[S]] = {}
 
     @classmethod
-    def validar_transicion(cls, estado_actual: S, nuevo_estado: S) -> bool:
+    def vali_transicion(cls, estado_actual: S, nuevo_estado: S) -> bool:
         """Verifica si la transicion entre dos estados esta permitida."""
         estados_posibles = cls.TRANSICIONES_PERMITIDAS.get(estado_actual, set())
         return nuevo_estado in estados_posibles
 
     @classmethod
-    def obtener_siguientes_estados(cls, estado_actual: S) -> Set[S]:
+    def obt_estados(cls, estado_actual: S) -> Set[S]:
         """Retorna el conjunto de estados a los que se puede transicionar desde el estado actual."""
         return cls.TRANSICIONES_PERMITIDAS.get(estado_actual, set()).copy()
 
     @classmethod
-    def es_estado_terminal(cls, estado: S) -> bool:
+    def estado_terminal(cls, estado: S) -> bool:
         """Indica si un estado no permite transiciones posteriores."""
         return len(cls.TRANSICIONES_PERMITIDAS.get(estado, set())) == 0
 
@@ -102,7 +102,7 @@ class MaquinaEstadosContrato(MaquinaEstadosBase[EstadoContrato]):
         """
         Aplica la transicion de estado validando invariantes y reglas de negocio.
         """
-        if not cls.validar_transicion(contrato_data.estado, nuevo_estado):
+        if not cls.vali_transicion(contrato_data.estado, nuevo_estado):
             raise ValueError(
                 f"Transicion de estado no permitida, no se puede pasar de {contrato_data.estado.value} a {nuevo_estado.value}"
             )

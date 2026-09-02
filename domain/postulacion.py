@@ -60,12 +60,11 @@ class PostulacionCrear(PostulacionBase):
     """Modelo DTO para la creacion de una postulacion."""
     pass
 
-
 class PostulacionModelo(PostulacionBase):
     """Modelo completo de entidad y persistencia de una postulacion."""
     id: UUID = Field(default_factory=uuid4, description="ID unico de la postulacion")
     estado: EstadoPostulacion = Field(default=EstadoPostulacion.POSTULADA, description="Estado actual de la postulacion")
-    created_at: AwareDatetime = Field(
+    creado_en: AwareDatetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         description="Fecha y hora de creacion UTC",
     )

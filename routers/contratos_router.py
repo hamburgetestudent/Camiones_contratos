@@ -46,7 +46,7 @@ def crear_contrato(
     status_code=status.HTTP_200_OK,
     summary="Obtener un contrato por ID",
 )
-def obtener_contrato(
+def obt_contrato(
     contrato_id: UUID,
     contrato_service: ServicioContratoDep,
 ) -> ContratoModelo:

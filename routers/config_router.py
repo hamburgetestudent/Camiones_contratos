@@ -42,7 +42,7 @@ class ActualizarConfiguracionNegocio(BaseModel):
 )
 def get_configuracion() -> Dict[str, Any]:
     """Retorna la configuracion global parametrizable en memoria."""
-    return ReglasNegocio.obtener_configuracion()
+    return ReglasNegocio.obt_configuracion()
 
 
 @router.patch(
@@ -54,7 +54,7 @@ def get_configuracion() -> Dict[str, Any]:
 def actualizar_configuracion(payload: ActualizarConfiguracionNegocio) -> Dict[str, Any]:
     """Actualiza parametros como IVA, tolerancia financiera o anticipacion minima."""
     try:
-        return ReglasNegocio.actualizar_configuracion(
+        return ReglasNegocio.act_configuracion(
             iva_porcentaje=payload.iva_porcentaje,
             tolerancia_max=payload.tolerancia_max,
             anticipacion_min_h=payload.anticipacion_min_h,

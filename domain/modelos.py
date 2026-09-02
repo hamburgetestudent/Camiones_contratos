@@ -13,7 +13,9 @@ from pydantic import AwareDatetime, BaseModel, BeforeValidator, ConfigDict, Fiel
 from domain.maquina_estados import EstadoContrato
 from domain.reglas import ReglasNegocio
 
+# Numeros ONU, representan el nivel de peligrosidad de carga
 ONU_REGEX = re.compile(r"^(UN)?\d{4}$", re.IGNORECASE)
+
 TOLERANCIA_IVA_CLP: float = 5.0
 MIN_LONGITUD_EMBALAJE: int = 10
 
@@ -82,7 +84,7 @@ class ContratoBase(BaseModel):
 
     model_config = ConfigDict(str_strip_whitespace=True)
 
-    def _validar_fechas(self) -> None:
+    def _vali_fechas(self) -> None:
         ahora = datetime.now(timezone.utc)
         limite_salida = ahora + timedelta(hours=ReglasNegocio.ANTICIPACION_MIN_H)
 
@@ -97,7 +99,7 @@ class ContratoBase(BaseModel):
         if self.f_cierre_postulaciones > self.f_estimada_salida:
             raise ValueError("El cierre de postulaciones no puede ser posterior a la fecha de salida")
 
-    def _validar_carga_y_capacidad(self) -> None:
+    def _vali_carga_y_capacidad(self) -> None:
         if self.origen == self.destino:
             raise ValueError("El origen y destino no pueden ser identicos")
 
@@ -105,7 +107,7 @@ class ContratoBase(BaseModel):
             exceso = self.peso_total - self.input_camionKG
             raise ValueError(f"El peso de la carga supera la capacidad del camion por {exceso} KG")
 
-    def _validar_requerimientos_especiales(self) -> None:
+    def _vali_requerimientos_especiales(self) -> None:
         if self.tipo_carga in (TipoCarga.REFRIGERADA, TipoCarga.PERECEDERA) and not self.requiere_termo:
             raise ValueError(f"La carga {self.tipo_carga.value} requiere activar la opcion de termo/refrigeracion")
 
@@ -124,7 +126,7 @@ class ContratoBase(BaseModel):
                     f"La carga fragil requiere una especificacion de embalaje de al menos {MIN_LONGITUD_EMBALAJE} caracteres"
                 )
 
-    def _validar_coherencia_financiera(self) -> None:
+    def _vali_coherencia_financiera(self) -> None:
         diferencia = abs((self.monto_neto + self.monto_iva) - self.monto_total)
         if diferencia > ReglasNegocio.TOLERANCIA_MAX:
             raise ValueError(
@@ -140,12 +142,12 @@ class ContratoBase(BaseModel):
                 )
 
     @model_validator(mode="after")
-    def validar_reglas_de_negocio(self) -> "ContratoBase":
+    def vali_reglas_de_negocio(self) -> "ContratoBase":
         """Ejecuta todos los validadores de dominio en secuencia logica."""
-        self._validar_fechas()
-        self._validar_carga_y_capacidad()
-        self._validar_requerimientos_especiales()
-        self._validar_coherencia_financiera()
+        self._vali_fechas()
+        self._vali_carga_y_capacidad()
+        self._vali_requerimientos_especiales()
+        self._vali_coherencia_financiera()
         return self
 
 
