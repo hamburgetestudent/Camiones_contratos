@@ -67,10 +67,10 @@ btnApple.addEventListener("click", () => {
 // RECUPERAR CONTRASEÑA
 // =================================
 
-const forgotPassword =
-    document.getElementById("forgotPassword");
+const recuperarContraseña =
+    document.getElementById("recuperarContraseña");
 
-forgotPassword.addEventListener("click", (event) => {
+recuperarContraseña.addEventListener("click", (event) => {
 
     event.preventDefault();
 
