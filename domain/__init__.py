@@ -1,50 +1,54 @@
-"""
-Modulo de Dominio: Reglas de negocio, maquinas de estado y modelos de datos.
-Centraliza las entidades y la logica pura de la aplicacion.
-"""
+"""Modulo de dominio: Reglas de negocio, maquinas de estado y modelos Pydantic."""
 
-from domain.maquina_estados import (
-    EstadoContrato,
-    MaquinaEstadosBase,
-    MaquinaEstadosContrato,
-)
+from domain.reglas import ReglasNegocio
+from domain.maquina_estados import EstadoContrato, MaquinaEstadosContrato
 from domain.modelos import (
+    TipoCarga,
+    Moneda,
     ContratoBase,
     ContratoCrear,
     ContratoModelo,
-    Moneda,
-    TipoCarga,
-    limpiar_texto,
 )
-from domain.postulacion import (
-    TARIFA_MINIMA_POSTULACION_CLP,
-    EstadoPostulacion,
-    MaquinaEstadoPostulacion,
-    PostulacionBase,
-    PostulacionCrear,
-    PostulacionModelo,
+from domain.modelos_usuario import (
+    RolUsuario,
+    UsuarioBase,
+    UsuarioCrear,
+    UsuarioModelo,
 )
-from domain.reglas import ReglasNegocio
+from domain.modelos_onboarding import (
+    EstadoValidacion,
+    TipoDocumento,
+    DocumentoTransportista,
+    CargarDocumentoDTO,
+    ValidarDocumentoDTO,
+    EstadoOnboardingTransportistaDTO,
+    DatosFacturacion,
+    DadorCarga,
+    CrearPerfilDadorDTO,
+    ValidarPerfilDadorDTO,
+)
 
 __all__ = [
-    # Reglas
     "ReglasNegocio",
-    # Maquinas de estado
-    "MaquinaEstadosBase",
     "EstadoContrato",
     "MaquinaEstadosContrato",
-    "EstadoPostulacion",
-    "MaquinaEstadoPostulacion",
-    # Modelos Contrato
     "TipoCarga",
     "Moneda",
     "ContratoBase",
     "ContratoCrear",
     "ContratoModelo",
-    "limpiar_texto",
-    # Modelos Postulacion
-    "TARIFA_MINIMA_POSTULACION_CLP",
-    "PostulacionBase",
-    "PostulacionCrear",
-    "PostulacionModelo",
+    "RolUsuario",
+    "UsuarioBase",
+    "UsuarioCrear",
+    "UsuarioModelo",
+    "EstadoValidacion",
+    "TipoDocumento",
+    "DocumentoTransportista",
+    "CargarDocumentoDTO",
+    "ValidarDocumentoDTO",
+    "EstadoOnboardingTransportistaDTO",
+    "DatosFacturacion",
+    "DadorCarga",
+    "CrearPerfilDadorDTO",
+    "ValidarPerfilDadorDTO",
 ]

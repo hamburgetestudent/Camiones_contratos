@@ -8,28 +8,19 @@ except ImportError:
         pass
 
 class RolUsuario(StrEnum):
-    GENERADOR = "GENERADOR"
     TRANSPORTISTA = "TRANSPORTISTA"
+    DADOR_CARGA = "DADOR_CARGA"
+    ADMIN_BACKOFFICE = "ADMIN_BACKOFFICE"
+    GENERADOR = "DADOR_CARGA"
+    ADMIN = "ADMIN_BACKOFFICE"
     EMPRESA = "EMPRESA"
     INDEPENDIENTE = "INDEPENDIENTE"
-    ADMIN = "ADMIN"
 
 
 class UsuarioBase(BaseModel):
     nombre: str = Field(..., min_length=2, description="Nombre del usuario")
-    email: EmailStr = Field(..., description="Correo electrónico único")
-    rol: RolUsuario = Field(default=RolUsuario.INDEPENDIENTE, description="Rol del usuario en el sistema")
-
-    model_config = ConfigDict(str_strip_whitespace=True)
-
-    @field_validator("email")
-    @classmethod
-    def vali_email(cls, v: str) -> str:
-        email_limpio = v.strip().lower()
-        if not PATRON_EMAIL.match(email_limpio):
-            raise ValueError("Formato de correo electronico invalido")
-        return email_limpio
-
+    email: str = Field(..., pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$", description="Correo electrónico único")
+    rol: RolUsuario = Field(default=RolUsuario.DADOR_CARGA, description="Rol del usuario en el sistema")
 
 class UsuarioCrear(UsuarioBase):
     password: str = Field(..., min_length=6, description="Contrasena del usuario")
