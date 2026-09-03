@@ -1,18 +1,18 @@
 """
-Servicio de Negocio para la gestion del ciclo de vida de los Contratos.
-Orquesta los modelos de dominio, la maquina de estados y la capa DAO.
+Servicio de negocio para la gestion del ciclo de vida de los Contratos.
+Orquesta los modelos de dominio, la maquina de estados y la capa de persistencia.
 """
 
 from typing import List, Optional
 from uuid import UUID
 
-from dao.base_dao import BD_DAO
-from domain.modelos import ContratoCrear, ContratoModelo
+from dao.contrato_dao import ContratoDAO
 from domain.maquina_estados import EstadoContrato, MaquinaEstadosContrato
 from services.onboarding_service import OnboardingService, onboarding_service_instancia
+from domain.modelos import ContratoCrear, ContratoModelo
 
 
-class ContratoService:
+class ServicioContrato:
     """Servicio que encapsula los casos de uso principales de Contratos."""
 
     def __init__(
@@ -30,19 +30,20 @@ class ContratoService:
                 f"La empresa generadora {datos.id_empresa_generadora} no cuenta con su verificacion KYC/Onboarding en estado APROBADO."
             )
 
+        """Crea un nuevo contrato en estado BORRADOR y lo persiste."""
         nuevo_contrato = ContratoModelo(**datos.model_dump())
-        return self.dao.save(nuevo_contrato)
+        return self.dao.guardar(nuevo_contrato)
 
     def obtener_contrato(self, contrato_id: UUID) -> ContratoModelo:
-        """Recupera un contrato por su ID. Lanza ValueError si no existe."""
-        contrato = self.dao.get_id(contrato_id)
+        """Recupera un contrato por su ID unico. Lanza ValueError si no existe."""
+        contrato = self.dao.obt_por_id(contrato_id)
         if not contrato:
             raise ValueError(f"El contrato con ID {contrato_id} no fue encontrado")
         return contrato
 
     def listar_contratos(self) -> List[ContratoModelo]:
-        """Obtiene la lista completa de contratos."""
-        return self.dao.get_all()
+        """Obtiene la lista completa de todos los contratos registrados."""
+        return self.dao.obt_todos()
 
     def cambiar_estado(
         self,
@@ -53,7 +54,7 @@ class ContratoService:
     ) -> ContratoModelo:
         """
         Solicita un cambio de estado evaluando las reglas de la Maquina de Estados
-        y persiste los cambios.
+        y persiste los cambios aplicados.
         """
         contrato = self.obtener_contrato(contrato_id)
 
@@ -64,5 +65,9 @@ class ContratoService:
             id_camion=id_camion,
         )
 
-        self.dao.update(contrato_id, contrato_actualizado)
+        self.dao.actualizar(contrato_id, contrato_actualizado)
         return contrato_actualizado
+
+
+# Alias para retrocompatibilidad
+ContratoService = ServicioContrato
