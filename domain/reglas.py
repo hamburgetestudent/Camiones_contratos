@@ -3,7 +3,7 @@ Modulo de reglas de negocio globales y configuracion parametrizable.
 Implementa un patron Singleton thread-safe para asegurar un estado unico en memoria.
 """
 
-from typing import Any, Dict, Optional
+from typing import Dict, Any, Optional
 
 
 class ReglasNegocio:

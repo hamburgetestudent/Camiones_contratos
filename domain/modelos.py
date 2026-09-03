@@ -4,9 +4,13 @@ Refactorizados con validaciones modulares y desacoplados para mayor robustez y e
 """
 
 from datetime import datetime, timedelta, timezone
-from enum import StrEnum
-import re
-from typing import Annotated, Optional
+try:
+    from enum import StrEnum
+except ImportError:
+    from enum import Enum
+    class StrEnum(str, Enum):
+        pass
+from typing import Optional, Annotated
 from uuid import UUID, uuid4
 from pydantic import AwareDatetime, BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 

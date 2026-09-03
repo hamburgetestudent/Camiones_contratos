@@ -1,10 +1,11 @@
-from enum import StrEnum
-import re
+from pydantic import BaseModel, EmailStr, Field
 from uuid import UUID, uuid4
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-
-PATRON_EMAIL = re.compile(r"^[\w\.-]+@[\w\.-]+\.\w+$")
-
+try:
+    from enum import StrEnum
+except ImportError:
+    from enum import Enum
+    class StrEnum(str, Enum):
+        pass
 
 class RolUsuario(StrEnum):
     GENERADOR = "GENERADOR"
@@ -16,8 +17,8 @@ class RolUsuario(StrEnum):
 
 class UsuarioBase(BaseModel):
     nombre: str = Field(..., min_length=2, description="Nombre del usuario")
-    email: str = Field(..., description="Correo electronico unico del usuario")
-    rol: RolUsuario = Field(default=RolUsuario.GENERADOR, description="Rol del usuario en el sistema")
+    email: EmailStr = Field(..., description="Correo electrónico único")
+    rol: RolUsuario = Field(default=RolUsuario.INDEPENDIENTE, description="Rol del usuario en el sistema")
 
     model_config = ConfigDict(str_strip_whitespace=True)
 

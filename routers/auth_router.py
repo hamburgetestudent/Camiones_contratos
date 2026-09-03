@@ -27,17 +27,3 @@ def registrar_usuario(usuario: UsuarioCrear) -> UsuarioModelo:
     """Registra un nuevo usuario en el sistema."""
     return UsuarioService.registrar_usuario(usuario)
 
-
-@router.post(
-    "/login",
-    status_code=status.HTTP_200_OK,
-    summary="Autenticación de usuario",
-)
-def login(payload: LoginEsquema):
-    """Autentica a un usuario verificando sus credenciales."""
-    usuario = UsuarioService.autenticar_usuario(payload.email, payload.password)
-    return {
-        "access_token": usuario.email,
-        "token_type": "bearer",
-        "rol": usuario.rol,
-    }

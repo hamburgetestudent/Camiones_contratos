@@ -2,10 +2,9 @@
 Router HTTP para la configuracion y reglas de negocio globales.
 """
 
-from typing import Any, Dict, Optional
-from fastapi import APIRouter, status
-from pydantic import BaseModel, ConfigDict, Field
-
+from typing import Optional
+from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel
 from domain.reglas import ReglasNegocio
 from routers.comun import manejar_excepcion_http
 
