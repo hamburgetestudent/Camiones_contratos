@@ -1,48 +1,23 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends
+from fastapi.security import OAuth2PasswordRequestForm
+from domain.modelos_usuario import UsuarioCrear, UsuarioModelo
+from services.usuario_service import UsuarioService
 
+router = APIRouter(prefix="/auth", tags=["Autenticación"])
 
-# Router para las funciones de autenticación
-router = APIRouter(
-    prefix="/auth",
-    tags=["Autenticación"]
-)
+@router.post("/registro", response_model=UsuarioModelo, summary="Registrar un nuevo usuario")
+def registrar_usuario(usuario: UsuarioCrear):
+    return UsuarioService.registrar_usuario(usuario)
 
-
-# Datos que recibe el formulario de login
-class LoginRequest(BaseModel):
-    usuario: str
-    password: str
-
-
-# Usuarios de prueba
-USUARIOS = {
-    "admin": "1234",
-    "transportista": "1234",
-    "empresa": "1234"
-}
-
-
-# Endpoint para iniciar sesión
-@router.post("/login")
-async def login(datos: LoginRequest):
-
-    # Verificar que el usuario exista
-    if datos.usuario not in USUARIOS:
-        raise HTTPException(
-            status_code=401,
-            detail="Usuario o contraseña incorrectos"
-        )
-
-    # Verificar la contraseña
-    if USUARIOS[datos.usuario] != datos.password:
-        raise HTTPException(
-            status_code=401,
-            detail="Usuario o contraseña incorrectos"
-        )
-
-    # Login correcto
+@router.post("/login", summary="Autenticación de usuario")
+def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    # OAuth2PasswordRequestForm recibe 'username' (que usaremos como email) y 'password'
+    usuario = UsuarioService.autenticar_usuario(form_data.username, form_data.password)
+    
+    # En una app real aquí se generaría un token JWT
     return {
-        "mensaje": "Inicio de sesión exitoso",
-        "usuario": datos.usuario
+        "access_token": usuario.email, 
+        "token_type": "bearer", 
+        "rol": usuario.rol
     }
+
