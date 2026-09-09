@@ -1,10 +1,10 @@
 from fastapi import HTTPException, status
 import hashlib
 from domain.modelos_usuario import UsuarioCrear, UsuarioModelo
-from dao.usuario_dao import UsuarioDAO
+from dao.usuario_dao import UsuarioDAOMemoria
 
 # Instancia global (en memoria) para acceder a los datos de los usuarios
-usuario_dao = UsuarioDAO()
+usuario_dao = UsuarioDAOMemoria()
 
 def hash_password(password: str) -> str:
     # Hasheo simple para demostración (idealmente usar passlib y bcrypt)
@@ -14,8 +14,8 @@ class UsuarioService:
     
     @staticmethod
     def registrar_usuario(usuario_data: UsuarioCrear) -> UsuarioModelo:
-        # Validar si el email ya existe utilizando get_by_email
-        usuario_existente = usuario_dao.get_by_email(usuario_data.email)
+        # Validar si el email ya existe utilizando obt_por_email
+        usuario_existente = usuario_dao.obt_por_email(usuario_data.email)
         if usuario_existente:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, 
@@ -31,12 +31,12 @@ class UsuarioService:
         )
         
         # Guardar en la "base de datos"
-        return usuario_dao.save(nuevo_usuario)
+        return usuario_dao.guardar(nuevo_usuario)
     
     @staticmethod
     def autenticar_usuario(email: str, password: str) -> UsuarioModelo:
         # Buscar al usuario por email
-        usuario = usuario_dao.get_by_email(email)
+        usuario = usuario_dao.obt_por_email(email)
         if not usuario:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, 
@@ -51,4 +51,15 @@ class UsuarioService:
             )
             
         return usuario
+
+
+class ValidadorUsuario:
+    """Adaptador que cumple con ValidadorCredenciales delegando la verificación a UsuarioService."""
+
+    def validar(self, usuario: str, password: str) -> bool:
+        try:
+            UsuarioService.autenticar_usuario(usuario, password)
+            return True
+        except HTTPException:
+            return False
 
