@@ -56,19 +56,12 @@ npm install
 npm run dev
 ```
 
-### 4. Pruebas Automatizadas (Pytest)
-```bash
-pip install -r requirements-dev.txt
-pytest -v
-```
-
 ## Arquitectura del sistema
 
 La arquitectura del sistema está estructurada mediante una separación clara de responsabilidades:
 
 - **Frontend:** Desarrollado con **Electron** y **TypeScript**, proporciona la interfaz de usuario de escritorio.
 - **Backend:** Construido con **Python** y **FastAPI**, se encarga de los endpoints, la lógica de negocio y la validación de los contratos.
-- **Autenticación:** Gestión de registro y login modular desacoplado (`routers/login_router.py`, `services/login_service.py`, `domain/modelos_login.py`) conectado al validador del sistema de usuarios.
 - **Modelos:** El archivo `modelos.py` contiene la estructura de los contratos y sus validaciones.
 - **Almacenamiento:** Actualmente los contratos se almacenan temporalmente en un diccionario de Python, utilizado como almacenamiento en memoria.
 
