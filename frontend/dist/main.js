@@ -7,6 +7,7 @@ const electron_1 = require("electron");
 const path_1 = __importDefault(require("path"));
 // Función que crea la ventana principal
 function createWindow() {
+    electron_1.Menu.setApplicationMenu(null);
     const ventana = new electron_1.BrowserWindow({
         width: 900,
         height: 550,
