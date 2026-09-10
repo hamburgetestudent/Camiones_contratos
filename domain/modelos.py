@@ -3,6 +3,7 @@ Modelos de dominio y esquemas de validacion Pydantic para Contratos de Camiones.
 Refactorizados con validaciones modulares y desacoplados para mayor robustez y escalabilidad.
 """
 
+import re
 from datetime import datetime, timedelta, timezone
 try:
     from enum import StrEnum
