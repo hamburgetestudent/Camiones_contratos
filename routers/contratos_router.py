@@ -1,11 +1,9 @@
-"""
-Router HTTP para los endpoints de ciclo de vida de los Contratos.
-"""
+"""Router HTTP para los endpoints de ciclo de vida de los Contratos."""
 
-from typing import List, Optional
 from uuid import UUID
-from fastapi import APIRouter, status
-from pydantic import BaseModel, ConfigDict, Field
+
+from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from domain.maquina_estados import EstadoContrato
 from domain.modelos import ContratoCrear, ContratoModelo
@@ -15,10 +13,17 @@ router = APIRouter(prefix="/contratos", tags=["Contratos"])
 
 
 class SolicitudCambioEstado(BaseModel):
-    """Esquema para la transicion de estado de un contrato."""
+    """Esquema de solicitud para transicionar el estado en el ciclo de vida de un contrato.
+
+    Attributes:
+        nuevo_estado (EstadoContrato): Estado destino validado por la máquina de estados.
+        id_transportista (Optional[UUID]): Identificador único del transportista asignado (obligatorio al adjudicar).
+        id_camion (Optional[UUID]): Identificador del vehículo o camión asignado a la operación.
+    """
+
     nuevo_estado: EstadoContrato = Field(..., description="Nuevo estado al que avanzara el contrato")
-    id_transportista: Optional[UUID] = Field(None, description="Identificador del transportista asignado")
-    id_camion: Optional[UUID] = Field(None, description="Identificador del camion asignado")
+    id_transportista: UUID | None = Field(None, description="Identificador del transportista asignado")
+    id_camion: UUID | None = Field(None, description="Identificador del camion asignado")
 
     model_config = ConfigDict(extra="forbid")
 
@@ -54,7 +59,7 @@ def crear_contrato(
     status_code=status.HTTP_200_OK,
     summary="Obtener un contrato por ID",
 )
-def obt_contrato(
+def obtener_contrato(
     contrato_id: UUID,
     contrato_service: ServicioContratoDep,
 ) -> ContratoModelo:
@@ -65,15 +70,19 @@ def obt_contrato(
         raise manejar_excepcion_http(error)
 
 
+# Alias para retrocompatibilidad
+obt_contrato = obtener_contrato
+
+
 @router.get(
     "",
-    response_model=List[ContratoModelo],
+    response_model=list[ContratoModelo],
     status_code=status.HTTP_200_OK,
     summary="Listar todos los contratos registrados",
 )
 def listar_contratos(
     contrato_service: ServicioContratoDep,
-) -> List[ContratoModelo]:
+) -> list[ContratoModelo]:
     """Retorna la lista de todos los contratos almacenados en el DAO."""
     return contrato_service.listar_contratos()
 

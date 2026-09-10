@@ -2,17 +2,17 @@
 Router HTTP para el flujo de Onboarding y Verificacion de Documentacion (KYC / Fleet Compliance).
 """
 
-from typing import List
 from uuid import UUID
+
 from fastapi import APIRouter, Header, HTTPException, status
 
 from domain.modelos_onboarding import (
-    DocumentoTransportista,
     CargarDocumentoDTO,
-    ValidarDocumentoDTO,
-    EstadoOnboardingTransportistaDTO,
-    DadorCarga,
     CrearPerfilDadorDTO,
+    DadorCarga,
+    DocumentoTransportista,
+    EstadoOnboardingTransportistaDTO,
+    ValidarDocumentoDTO,
     ValidarPerfilDadorDTO,
 )
 from services.onboarding_service import onboarding_service_instancia
@@ -23,6 +23,7 @@ router = APIRouter(prefix="/onboarding", tags=["Onboarding & KYC"])
 # =========================================
 # Endpoints Transportista
 # =========================================
+
 
 @router.post(
     "/transportista/documentos",
@@ -44,7 +45,7 @@ def cargar_documento_transportista(
 
 @router.get(
     "/transportista/documentos",
-    response_model=List[DocumentoTransportista],
+    response_model=list[DocumentoTransportista],
     summary="Listar documentos del transportista",
 )
 def listar_documentos_transportista(
@@ -69,6 +70,7 @@ def consultar_estado_transportista(
 # =========================================
 # Endpoints Dador de Carga
 # =========================================
+
 
 @router.post(
     "/dador/perfil",
@@ -110,9 +112,10 @@ def obtener_perfil_dador(
 # Endpoints Backoffice / Admin
 # =========================================
 
+
 @router.get(
     "/admin/documentos",
-    response_model=List[DocumentoTransportista],
+    response_model=list[DocumentoTransportista],
     summary="Listar documentos de transportistas pendientes de revisión",
 )
 def listar_documentos_pendientes_admin():
@@ -141,7 +144,7 @@ def validar_documento_admin(documento_id: UUID, payload: ValidarDocumentoDTO):
 
 @router.get(
     "/admin/dadores",
-    response_model=List[DadorCarga],
+    response_model=list[DadorCarga],
     summary="Listar dadores de carga pendientes de validación tributaria",
 )
 def listar_dadores_pendientes_admin():
@@ -166,4 +169,3 @@ def validar_dador_admin(dador_id: UUID, payload: ValidarPerfilDadorDTO):
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(error),
         )
-
