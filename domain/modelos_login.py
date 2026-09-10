@@ -19,4 +19,3 @@ class RespuestaLogin(BaseModel):
 
     mensaje: str
     usuario: str
-

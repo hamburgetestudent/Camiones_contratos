@@ -1,15 +1,13 @@
-"""
-Modulo de reglas de negocio globales y configuracion parametrizable.
+"""Modulo de reglas de negocio globales y configuracion parametrizable.
+
 Implementa un patron Singleton thread-safe para asegurar un estado unico en memoria.
 """
 
-from typing import Dict, Any, Optional
-import threading
+from typing import Any, Optional
 
 
 class ReglasNegocio:
-    """
-    Gestion centralizada de parametros de negocio globales:
+    """Gestion centralizada de parametros de negocio globales:
     tasas de IVA, tolerancias financieras y tiempos minimos de programacion.
     """
 
@@ -26,9 +24,7 @@ class ReglasNegocio:
 
     def __new__(cls) -> "ReglasNegocio":
         if cls._instancia is None:
-            with cls._lock:
-                if cls._instancia is None:
-                    cls._instancia = super(ReglasNegocio, cls).__new__(cls)
+            cls._instancia = super().__new__(cls)
         return cls._instancia
 
     @classmethod
@@ -39,7 +35,7 @@ class ReglasNegocio:
         cls.ANTICIPACION_MIN_H = cls.DEFAULT_ANTICIPACION_MIN_H
 
     @classmethod
-    def obt_configuracion(cls) -> Dict[str, Any]:
+    def obtener_configuracion(cls) -> dict[str, Any]:
         """Retorna la configuracion actual de reglas de negocio como diccionario."""
         return {
             "iva_porcentaje": cls.IVA_PORCENTAJE,
@@ -48,15 +44,13 @@ class ReglasNegocio:
         }
 
     @classmethod
-    def act_configuracion(
+    def actualizar_configuracion(
         cls,
-        iva_porcentaje: Optional[float] = None,
-        tolerancia_max: Optional[float] = None,
-        anticipacion_min_h: Optional[int] = None,
-    ) -> Dict[str, Any]:
-        """
-        Actualiza los parametros globales validando los rangos y tipos permitidos.
-        """
+        iva_porcentaje: float | None = None,
+        tolerancia_max: float | None = None,
+        anticipacion_min_h: int | None = None,
+    ) -> dict[str, Any]:
+        """Actualiza los parametros globales validando los rangos y tipos permitidos."""
         if iva_porcentaje is not None:
             if not (0 <= iva_porcentaje <= 1):
                 raise ValueError("El porcentaje del IVA debe estar entre 0 y 1 (ejemplo: 0.19 para 19%)")
@@ -72,4 +66,8 @@ class ReglasNegocio:
                 raise ValueError("La anticipacion minima no puede ser negativa")
             cls.ANTICIPACION_MIN_H = int(anticipacion_min_h)
 
-        return cls.obt_configuracion()
+        return cls.obtener_configuracion()
+
+    # Alias para retrocompatibilidad
+    obt_configuracion = obtener_configuracion
+    act_configuracion = actualizar_configuracion

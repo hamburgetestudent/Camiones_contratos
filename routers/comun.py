@@ -4,6 +4,7 @@ Centraliza el manejo homogeneo de errores y la inyeccion tipada de servicios.
 """
 
 from typing import Annotated
+
 from fastapi import Depends, HTTPException, status
 
 from services.contrato_service import ContratoService

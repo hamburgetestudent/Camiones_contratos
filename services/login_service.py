@@ -46,4 +46,3 @@ class LoginService:
             mensaje="Inicio de sesión exitoso",
             usuario=credenciales.usuario,
         )
-

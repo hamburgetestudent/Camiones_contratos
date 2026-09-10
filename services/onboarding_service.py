@@ -2,20 +2,18 @@
 Servicio de Negocio para el modulo de Onboarding y Verificacion de Documentacion (KYC / Fleet Compliance).
 """
 
-from typing import List, Optional
+from datetime import UTC, datetime
 from uuid import UUID
-from datetime import datetime, timezone
 
-from dao.onboarding_dao import DocumentoDAOInMemory, DadorCargaDAOInMemory
+from dao.onboarding_dao import DadorCargaDAOInMemory, DocumentoDAOInMemory
 from domain.modelos_onboarding import (
-    DocumentoTransportista,
     DadorCarga,
     DatosFacturacion,
+    DocumentoTransportista,
+    EstadoOnboardingTransportistaDTO,
     EstadoValidacion,
     TipoDocumento,
-    EstadoOnboardingTransportistaDTO,
 )
-
 
 DOCUMENTOS_REQUERIDOS_TRANSPORTISTA = [
     TipoDocumento.LICENCIA_CONDUCIR,
@@ -31,8 +29,8 @@ class OnboardingService:
 
     def __init__(
         self,
-        documento_dao: Optional[DocumentoDAOInMemory] = None,
-        dador_dao: Optional[DadorCargaDAOInMemory] = None,
+        documento_dao: DocumentoDAOInMemory | None = None,
+        dador_dao: DadorCargaDAOInMemory | None = None,
     ) -> None:
         self.documento_dao = documento_dao or DocumentoDAOInMemory()
         self.dador_dao = dador_dao or DadorCargaDAOInMemory()
@@ -50,7 +48,7 @@ class OnboardingService:
         if existente:
             existente.archivo = archivo
             existente.estado = EstadoValidacion.PENDIENTE
-            existente.created_at = datetime.now(timezone.utc)
+            existente.created_at = datetime.now(UTC)
             self.documento_dao.update(existente.id, existente)
             return existente
 
@@ -62,7 +60,7 @@ class OnboardingService:
         )
         return self.documento_dao.save(nuevo_doc)
 
-    def listar_documentos_transportista(self, user_id: UUID) -> List[DocumentoTransportista]:
+    def listar_documentos_transportista(self, user_id: UUID) -> list[DocumentoTransportista]:
         """Obtiene la lista de todos los documentos cargados por el transportista."""
         return self.documento_dao.get_by_user_id(user_id)
 
@@ -82,8 +80,7 @@ class OnboardingService:
         # Verificar si todos los requeridos existen y estan aprobados
         todos_cargados = all(tipo in docs_por_tipo for tipo in DOCUMENTOS_REQUERIDOS_TRANSPORTISTA)
         todos_aprobados = todos_cargados and all(
-            docs_por_tipo[tipo].estado == EstadoValidacion.APROBADO
-            for tipo in DOCUMENTOS_REQUERIDOS_TRANSPORTISTA
+            docs_por_tipo[tipo].estado == EstadoValidacion.APROBADO for tipo in DOCUMENTOS_REQUERIDOS_TRANSPORTISTA
         )
 
         if tiene_rechazados:
@@ -135,7 +132,7 @@ class OnboardingService:
         )
         return self.dador_dao.save(nuevo_perfil)
 
-    def obtener_perfil_dador(self, user_id: UUID) -> Optional[DadorCarga]:
+    def obtener_perfil_dador(self, user_id: UUID) -> DadorCarga | None:
         """Obtiene el perfil del dador de carga por su UUID de usuario."""
         return self.dador_dao.get_by_user_id(user_id)
 
@@ -150,7 +147,7 @@ class OnboardingService:
     # Operaciones de Backoffice / Admin
     # =========================================
 
-    def listar_documentos_pendientes_admin(self) -> List[DocumentoTransportista]:
+    def listar_documentos_pendientes_admin(self) -> list[DocumentoTransportista]:
         """Lista todos los documentos de transportistas pendientes de revision."""
         return self.documento_dao.get_pendientes()
 
@@ -167,7 +164,7 @@ class OnboardingService:
         self.documento_dao.update(documento_id, doc)
         return doc
 
-    def listar_dadores_pendientes_admin(self) -> List[DadorCarga]:
+    def listar_dadores_pendientes_admin(self) -> list[DadorCarga]:
         """Lista todos los dadores de carga pendientes de validacion tributaria."""
         return self.dador_dao.get_pendientes()
 
@@ -192,4 +189,3 @@ onboarding_service_instancia = OnboardingService(
     documento_dao=documento_dao_instancia,
     dador_dao=dador_dao_instancia,
 )
-

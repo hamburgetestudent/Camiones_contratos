@@ -5,7 +5,6 @@
 ## Descripción
 Implementar el flujo de carga y validación de documentación para los dos tipos de usuarios de la plataforma (Transportista y Dador de Carga), según el módulo 2 del roadmap. En esta fase no se requiere integración con base de datos real ni con APIs externas de validación tributaria; toda la persistencia debe manejarse de forma simulada en memoria.
 
-
 ---
 
 ## Etiquetas (Labels)
@@ -74,3 +73,4 @@ Se deben implementar los siguientes endpoints en un nuevo router `/onboarding`:
 * **Bloqueo para el Transportista:** Modificar el servicio `SubastaService.postular_a_carga` para consultar el estado global de onboarding del `transportista_id` en el servicio de onboarding en lugar de usar el parámetro simulado `onboarding_aprobado: bool` en el router. Retornar error `HTTP 403 Forbidden` si no está aprobado.
 
 ---
+

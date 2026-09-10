@@ -1,5 +1,5 @@
-"""
-Modulo centralizado de inyeccion de dependencias y singletons para servicios y DAOs.
+"""Modulo centralizado de inyeccion de dependencias y singletons para servicios y DAOs.
+
 Evita acoplamiento cruzado y facilita sustitucion de adaptadores.
 """
 
@@ -16,20 +16,20 @@ servicio_contrato = ServicioContrato(dao=contrato_dao)
 servicio_subasta = ServicioSubasta(contrato_dao=contrato_dao, postulacion_dao=postulacion_dao)
 
 
-def obt_servicio_contrato() -> ServicioContrato:
+def obtener_servicio_contrato() -> ServicioContrato:
     """Retorna la instancia singleton del servicio de contratos."""
     return servicio_contrato
 
 
-def obt_servicio_subasta() -> ServicioSubasta:
+def obtener_servicio_subasta() -> ServicioSubasta:
     """Retorna la instancia singleton del servicio de subastas."""
     return servicio_subasta
 
 
 # Alias para retrocompatibilidad
-get_contrato_service = obt_servicio_contrato
-get_subasta_service = obt_servicio_subasta
-obtener_servicio_contrato = obt_servicio_contrato
-obtener_servicio_subasta = obt_servicio_subasta
+obt_servicio_contrato = obtener_servicio_contrato
+obt_servicio_subasta = obtener_servicio_subasta
+get_contrato_service = obtener_servicio_contrato
+get_subasta_service = obtener_servicio_subasta
 contrato_service = servicio_contrato
 subasta_service = servicio_subasta
