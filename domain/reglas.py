@@ -16,6 +16,7 @@ class ReglasNegocio:
     DEFAULT_ANTICIPACION_MIN_H: int = 2
 
     _instancia: Optional["ReglasNegocio"] = None
+    _lock: threading.Lock = threading.Lock()
 
     IVA_PORCENTAJE: float = DEFAULT_IVA_PORCENTAJE
     TOLERANCIA_MAX: float = DEFAULT_TOLERANCIA_MAX
