@@ -2,7 +2,7 @@
 Capa de acceso a datos (DAO) para la entidad Usuario.
 """
 
-from typing import Optional
+from typing import List, Optional
 from uuid import UUID
 
 from dao.base_dao import BaseDAO, DAOMemoria

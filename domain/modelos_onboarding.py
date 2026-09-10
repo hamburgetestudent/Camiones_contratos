@@ -3,7 +3,12 @@ Modelos de dominio y esquemas Pydantic para el modulo de Onboarding y Verificaci
 """
 
 from datetime import datetime, timezone
-from enum import StrEnum
+try:
+    from enum import StrEnum
+except ImportError:
+    from enum import Enum
+    class StrEnum(str, Enum):
+        pass
 from typing import List, Optional
 from uuid import UUID, uuid4
 from pydantic import BaseModel, EmailStr, Field, field_validator

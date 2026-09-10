@@ -14,33 +14,47 @@ from domain.modelos_onboarding import (
 )
 
 
+class OnboardingDAO:
+    """Interfaz para operaciones DAO de onboarding."""
+    pass
+
+
 class DocumentoDAOInMemory(BD_DAO[DocumentoTransportista, UUID]):
     """Repositorio en memoria para los documentos de los transportistas."""
 
     def __init__(self) -> None:
         self._db: Dict[UUID, DocumentoTransportista] = {}
 
-    def get_id(self, entidad_id: UUID) -> Optional[DocumentoTransportista]:
+    def obt_por_id(self, entidad_id: UUID) -> Optional[DocumentoTransportista]:
         return self._db.get(entidad_id)
 
-    def get_all(self) -> List[DocumentoTransportista]:
+    def obt_todos(self) -> List[DocumentoTransportista]:
         return list(self._db.values())
 
-    def save(self, entidad: DocumentoTransportista) -> DocumentoTransportista:
+    def guardar(self, entidad: DocumentoTransportista) -> DocumentoTransportista:
         self._db[entidad.id] = entidad
         return entidad
 
-    def update(self, entidad_id: UUID, entidad: DocumentoTransportista) -> Optional[DocumentoTransportista]:
+    def actualizar(self, entidad_id: UUID, entidad: DocumentoTransportista) -> Optional[DocumentoTransportista]:
         if entidad_id in self._db:
             self._db[entidad_id] = entidad
             return entidad
         return None
 
-    def delete(self, entidad_id: UUID) -> bool:
+    def eliminar(self, entidad_id: UUID) -> bool:
         if entidad_id in self._db:
             del self._db[entidad_id]
             return True
         return False
+
+    def existe(self, entidad_id: UUID) -> bool:
+        return entidad_id in self._db
+
+    get_id = obt_por_id
+    get_all = obt_todos
+    save = guardar
+    update = actualizar
+    delete = eliminar
 
     def get_by_user_id(self, user_id: UUID) -> List[DocumentoTransportista]:
         """Obtiene todos los documentos cargados por un transportista."""
@@ -64,27 +78,36 @@ class DadorCargaDAOInMemory(BD_DAO[DadorCarga, UUID]):
     def __init__(self) -> None:
         self._db: Dict[UUID, DadorCarga] = {}
 
-    def get_id(self, entidad_id: UUID) -> Optional[DadorCarga]:
+    def obt_por_id(self, entidad_id: UUID) -> Optional[DadorCarga]:
         return self._db.get(entidad_id)
 
-    def get_all(self) -> List[DadorCarga]:
+    def obt_todos(self) -> List[DadorCarga]:
         return list(self._db.values())
 
-    def save(self, entidad: DadorCarga) -> DadorCarga:
+    def guardar(self, entidad: DadorCarga) -> DadorCarga:
         self._db[entidad.id] = entidad
         return entidad
 
-    def update(self, entidad_id: UUID, entidad: DadorCarga) -> Optional[DadorCarga]:
+    def actualizar(self, entidad_id: UUID, entidad: DadorCarga) -> Optional[DadorCarga]:
         if entidad_id in self._db:
             self._db[entidad_id] = entidad
             return entidad
         return None
 
-    def delete(self, entidad_id: UUID) -> bool:
+    def eliminar(self, entidad_id: UUID) -> bool:
         if entidad_id in self._db:
             del self._db[entidad_id]
             return True
         return False
+
+    def existe(self, entidad_id: UUID) -> bool:
+        return entidad_id in self._db
+
+    get_id = obt_por_id
+    get_all = obt_todos
+    save = guardar
+    update = actualizar
+    delete = eliminar
 
     def get_by_user_id(self, user_id: UUID) -> Optional[DadorCarga]:
         """Obtiene el perfil tributario de un dador de carga por su user_id."""

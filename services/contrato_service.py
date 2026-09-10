@@ -17,7 +17,7 @@ class ServicioContrato:
 
     def __init__(
         self,
-        dao: BD_DAO[ContratoModelo, UUID],
+        dao: ContratoDAO,
         onboarding_service: Optional[OnboardingService] = None,
     ):
         self.dao = dao
@@ -30,7 +30,6 @@ class ServicioContrato:
                 f"La empresa generadora {datos.id_empresa_generadora} no cuenta con su verificacion KYC/Onboarding en estado APROBADO."
             )
 
-        """Crea un nuevo contrato en estado BORRADOR y lo persiste."""
         nuevo_contrato = ContratoModelo(**datos.model_dump())
         return self.dao.guardar(nuevo_contrato)
 

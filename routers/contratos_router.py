@@ -4,8 +4,8 @@ Router HTTP para los endpoints de ciclo de vida de los Contratos.
 
 from typing import List, Optional
 from uuid import UUID
-from fastapi import APIRouter, status
-from pydantic import BaseModel, ConfigDict, Field
+from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from domain.maquina_estados import EstadoContrato
 from domain.modelos import ContratoCrear, ContratoModelo

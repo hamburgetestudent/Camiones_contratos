@@ -44,6 +44,10 @@ class BaseDAO(ABC, Generic[E, ID]):
         """Verifica la existencia de una entidad por su ID."""
         pass
 
+
+BD_DAO = BaseDAO
+
+
 class DAOMemoria(BaseDAO[E, ID], Generic[E, ID]):
     """
     Implementacion generica de almacenamiento en memoria thread-safe.

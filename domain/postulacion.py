@@ -3,7 +3,12 @@ Modelos de dominio y esquemas Pydantic para el Motor de Postulaciones y Subastas
 """
 
 from datetime import datetime, timezone
-from enum import StrEnum
+try:
+    from enum import StrEnum
+except ImportError:
+    from enum import Enum
+    class StrEnum(str, Enum):
+        pass
 from typing import Dict, Optional, Set
 from uuid import UUID, uuid4
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
