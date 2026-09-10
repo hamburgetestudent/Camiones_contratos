@@ -67,10 +67,10 @@ btnApple.addEventListener("click", () => {
 // RECUPERAR CONTRASEÑA
 // =================================
 
-const forgotPassword =
-    document.getElementById("forgotPassword");
+const recuperarContraseña =
+    document.getElementById("recuperarContraseña");
 
-forgotPassword.addEventListener("click", (event) => {
+recuperarContraseña.addEventListener("click", (event) => {
 
     event.preventDefault();
 
@@ -90,6 +90,6 @@ btnRegistro.addEventListener("click", (event) => {
 
     event.preventDefault();
 
-    alert("Aquí irá el formulario de registro.");
+    window.location.href = "../registrar/registro.html";
 
 });
