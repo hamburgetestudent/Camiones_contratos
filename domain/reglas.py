@@ -4,6 +4,7 @@ Implementa un patron Singleton thread-safe para asegurar un estado unico en memo
 """
 
 from typing import Dict, Any, Optional
+import threading
 
 
 class ReglasNegocio:
@@ -17,6 +18,7 @@ class ReglasNegocio:
     DEFAULT_ANTICIPACION_MIN_H: int = 2
 
     _instancia: Optional["ReglasNegocio"] = None
+    _lock: threading.Lock = threading.Lock()
 
     IVA_PORCENTAJE: float = DEFAULT_IVA_PORCENTAJE
     TOLERANCIA_MAX: float = DEFAULT_TOLERANCIA_MAX
@@ -24,7 +26,9 @@ class ReglasNegocio:
 
     def __new__(cls) -> "ReglasNegocio":
         if cls._instancia is None:
-            cls._instancia = super(ReglasNegocio, cls).__new__(cls)
+            with cls._lock:
+                if cls._instancia is None:
+                    cls._instancia = super(ReglasNegocio, cls).__new__(cls)
         return cls._instancia
 
     @classmethod

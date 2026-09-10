@@ -55,6 +55,10 @@ class BaseDAO(ABC, Generic[E, ID]):
     delete = eliminar
 
 
+
+BD_DAO = BaseDAO
+
+
 class DAOMemoria(BaseDAO[E, ID], Generic[E, ID]):
     """
     Implementacion generica de almacenamiento en memoria thread-safe.
@@ -108,10 +112,10 @@ class DAOMemoria(BaseDAO[E, ID], Generic[E, ID]):
     obtener_todos = obt_todos
     obtener_por_id = obt_por_id
     save = guardar
+
+# Alias de compatibilidad hacia atras
     get_id = obt_por_id
     get_all = obt_todos
     update = actualizar
     delete = eliminar
-
-
-BD_DAO = BaseDAO
+    BD_DAO = BaseDAO

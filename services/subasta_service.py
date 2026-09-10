@@ -24,6 +24,35 @@ ESTADOS_NO_POSTULABLES: Set[EstadoContrato] = {
 }
 
 
+def _distancia_km(contrato: "ContratoModelo") -> float:
+    """
+    Retorna la distancia estimada en kilómetros para un contrato.
+
+    Actualmente delega en el atributo ``distancia_km`` del modelo cuando está
+    disponible.  Si el atributo no existe o es ``None`` se lanza
+    ``NotImplementedError`` para forzar una integración real de geocodificación
+    o ruteo antes de habilitar el filtro por distancia en producción.
+
+    Args:
+        contrato: Instancia de ``ContratoModelo`` con los datos del flete.
+
+    Returns:
+        Distancia estimada en kilómetros (float ≥ 0).
+
+    Raises:
+        NotImplementedError: Cuando el modelo no proporciona ``distancia_km``
+            y no hay implementación de cálculo disponible.
+    """
+    valor = getattr(contrato, "distancia_km", None)
+    if valor is None:
+        raise NotImplementedError(
+            "El modelo ContratoModelo no expone 'distancia_km'. "
+            "Integre un servicio de geocodificación o ruteo y rellene ese campo "
+            "antes de filtrar por distancia máxima."
+        )
+    return float(valor)
+
+
 class ServicioSubasta:
     """Orquesta la exploracion de cargas, envio de ofertas y adjudicacion de subastas."""
 
@@ -60,7 +89,7 @@ class ServicioSubasta:
         if distancia_max_km is not None and distancia_max_km > 0:
             cargas = [
                 c for c in cargas
-                if (c.peso_total * 0.1) <= distancia_max_km
+                if _distancia_km(c) <= distancia_max_km
             ]
 
         return cargas
