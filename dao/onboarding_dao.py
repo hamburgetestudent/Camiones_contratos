@@ -14,16 +14,12 @@ from domain.modelos_onboarding import (
 )
 
 
-fix/backend-imports-exports-syntax-832078353663061898
 class OnboardingDAO:
     """Interfaz para operaciones DAO de onboarding."""
     pass
 
-
-class DocumentoDAOInMemory(BD_DAO[DocumentoTransportista, UUID]):
-
 class DocumentoDAOInMemory(BaseDAO[DocumentoTransportista, UUID]):
-F_area_trabajo
+
     """Repositorio en memoria para los documentos de los transportistas."""
 
     def __init__(self) -> None:
@@ -54,7 +50,7 @@ F_area_trabajo
     def existe(self, entidad_id: UUID) -> bool:
         return entidad_id in self._db
 
-fix/backend-imports-exports-syntax-832078353663061898
+    # Alias de compatibilidad con BaseDAO
     get_id = obt_por_id
     get_all = obt_todos
     save = guardar
@@ -62,7 +58,7 @@ fix/backend-imports-exports-syntax-832078353663061898
     delete = eliminar
 
     # --- Consultas especializadas ---
-F_area_trabajo
+
 
     def get_by_user_id(self, user_id: UUID) -> List[DocumentoTransportista]:
         """Obtiene todos los documentos cargados por un transportista."""
@@ -78,13 +74,6 @@ F_area_trabajo
     def get_pendientes(self) -> List[DocumentoTransportista]:
         """Obtiene todos los documentos en estado PENDIENTE."""
         return [doc for doc in self._db.values() if doc.estado == EstadoValidacion.PENDIENTE]
-
-    # Alias de compatibilidad
-    get_id = obt_por_id
-    get_all = obt_todos
-    save = guardar
-    update = actualizar
-    delete = eliminar
 
 
 class DadorCargaDAOInMemory(BaseDAO[DadorCarga, UUID]):
@@ -118,15 +107,9 @@ class DadorCargaDAOInMemory(BaseDAO[DadorCarga, UUID]):
     def existe(self, entidad_id: UUID) -> bool:
         return entidad_id in self._db
 
-fix/backend-imports-exports-syntax-832078353663061898
-    get_id = obt_por_id
-    get_all = obt_todos
-    save = guardar
-    update = actualizar
-    delete = eliminar
 
     # --- Consultas especializadas ---
-F_area_trabajo
+
 
     def get_by_user_id(self, user_id: UUID) -> Optional[DadorCarga]:
         """Obtiene el perfil tributario de un dador de carga por su user_id."""

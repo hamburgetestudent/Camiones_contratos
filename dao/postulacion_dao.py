@@ -54,8 +54,12 @@ class PostulacionDAOMemoria(DAOMemoria[PostulacionModelo, UUID], PostulacionDAO)
         """
         with self._lock:
             modificadas: List[PostulacionModelo] = []
-            for postulacion in self.obt_por_contrato(contrato_id):
-                if postulacion.id != ganadora_id and postulacion.estado != EstadoPostulacion.RECHAZADA:
+            for postulacion in self._almacenamiento.values():
+                if (
+                    postulacion.carga_id == contrato_id
+                    and postulacion.id != ganadora_id
+                    and postulacion.estado != EstadoPostulacion.RECHAZADA
+                ):
                     postulacion.estado = EstadoPostulacion.RECHAZADA
                     self._almacenamiento[postulacion.id] = postulacion
                     modificadas.append(postulacion)
