@@ -3,7 +3,7 @@ Modulo base para el patron Data Access Object (DAO).
 Define interfaces abstractas y clases base genericas de acceso a datos en espanol.
 """
 
-from abc import ABC, abstractmethod
+from abc import ABC
 import threading
 from typing import Callable, Dict, Generic, List, Optional, TypeVar
 
@@ -14,35 +14,46 @@ ID = TypeVar("ID")  # Identificador
 class BaseDAO(ABC, Generic[E, ID]):
     """Interfaz abstracta generica para operaciones CRUD de persistencia."""
 
-    @abstractmethod
     def obt_por_id(self, entidad_id: ID) -> Optional[E]:
         """Obtiene una entidad por su identificador unico."""
-        pass
+        if hasattr(self, "get_id"):
+            return self.get_id(entidad_id)
+        return None
 
-    @abstractmethod
     def obt_todos(self) -> List[E]:
         """Retorna todas las entidades persistidas."""
-        pass
+        if hasattr(self, "get_all"):
+            return self.get_all()
+        return []
 
-    @abstractmethod
     def guardar(self, entidad: E) -> E:
         """Persiste una entidad nueva o actualizada."""
-        pass
+        if hasattr(self, "save"):
+            return self.save(entidad)
+        return entidad
 
-    @abstractmethod
     def actualizar(self, entidad_id: ID, entidad: E) -> Optional[E]:
         """Actualiza una entidad existente identificada por su ID."""
-        pass
+        if hasattr(self, "update"):
+            return self.update(entidad_id, entidad)
+        return None
 
-    @abstractmethod
     def eliminar(self, entidad_id: ID) -> bool:
         """Elimina una entidad por su ID. Retorna True si existia y fue eliminada."""
-        pass
+        if hasattr(self, "delete"):
+            return self.delete(entidad_id)
+        return False
 
-    @abstractmethod
     def existe(self, entidad_id: ID) -> bool:
         """Verifica la existencia de una entidad por su ID."""
-        pass
+        return self.obt_por_id(entidad_id) is not None
+
+    get_id = obt_por_id
+    get_all = obt_todos
+    save = guardar
+    update = actualizar
+    delete = eliminar
+
 
 
 BD_DAO = BaseDAO
@@ -103,4 +114,8 @@ class DAOMemoria(BaseDAO[E, ID], Generic[E, ID]):
     save = guardar
 
 # Alias de compatibilidad hacia atras
-BD_DAO = BaseDAO
+    get_id = obt_por_id
+    get_all = obt_todos
+    update = actualizar
+    delete = eliminar
+    BD_DAO = BaseDAO
