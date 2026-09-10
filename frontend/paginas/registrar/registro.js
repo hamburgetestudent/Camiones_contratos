@@ -52,17 +52,18 @@ registroForm.addEventListener("submit", event => {
     }
 
     const datosUsuario = {
+
         tipo_usuario,
         nombre: document.getElementById("nombre").value.trim(),
         apellido: document.getElementById("apellido").value.trim(),
         rut_persona: document.getElementById("rut_persona").value.trim(),
         telefono: document.getElementById("telefono").value.trim(),
         email: document.getElementById("email").value.trim(),
-        razon_social: document.getElementById("razon_social").value.trim(),
         rut_empresa: document.getElementById("rut_empresa").value.trim(),
         giro: document.getElementById("giro").value.trim(),
         cargo: document.getElementById("cargo").value.trim(),
         direccion_empresa: document.getElementById("direccion_empresa").value.trim()
+
     };
 
     console.log("Datos del usuario:", datosUsuario);

@@ -90,6 +90,6 @@ btnRegistro.addEventListener("click", (event) => {
 
     event.preventDefault();
 
-    alert("Aquí irá el formulario de registro.");
+    window.location.href = "../registrar/registro.html";
 
 });
