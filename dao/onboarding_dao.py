@@ -5,7 +5,7 @@ Modulo DAO en memoria para Onboarding y Verificacion de Documentos (KYC).
 from typing import List, Optional, Dict
 from uuid import UUID
 
-from dao.base_dao import BD_DAO
+from dao.base_dao import BaseDAO
 from domain.modelos_onboarding import (
     DocumentoTransportista,
     DadorCarga,
@@ -14,12 +14,16 @@ from domain.modelos_onboarding import (
 )
 
 
+fix/backend-imports-exports-syntax-832078353663061898
 class OnboardingDAO:
     """Interfaz para operaciones DAO de onboarding."""
     pass
 
 
 class DocumentoDAOInMemory(BD_DAO[DocumentoTransportista, UUID]):
+
+class DocumentoDAOInMemory(BaseDAO[DocumentoTransportista, UUID]):
+F_area_trabajo
     """Repositorio en memoria para los documentos de los transportistas."""
 
     def __init__(self) -> None:
@@ -50,11 +54,15 @@ class DocumentoDAOInMemory(BD_DAO[DocumentoTransportista, UUID]):
     def existe(self, entidad_id: UUID) -> bool:
         return entidad_id in self._db
 
+fix/backend-imports-exports-syntax-832078353663061898
     get_id = obt_por_id
     get_all = obt_todos
     save = guardar
     update = actualizar
     delete = eliminar
+
+    # --- Consultas especializadas ---
+F_area_trabajo
 
     def get_by_user_id(self, user_id: UUID) -> List[DocumentoTransportista]:
         """Obtiene todos los documentos cargados por un transportista."""
@@ -71,8 +79,15 @@ class DocumentoDAOInMemory(BD_DAO[DocumentoTransportista, UUID]):
         """Obtiene todos los documentos en estado PENDIENTE."""
         return [doc for doc in self._db.values() if doc.estado == EstadoValidacion.PENDIENTE]
 
+    # Alias de compatibilidad
+    get_id = obt_por_id
+    get_all = obt_todos
+    save = guardar
+    update = actualizar
+    delete = eliminar
 
-class DadorCargaDAOInMemory(BD_DAO[DadorCarga, UUID]):
+
+class DadorCargaDAOInMemory(BaseDAO[DadorCarga, UUID]):
     """Repositorio en memoria para los perfiles y datos de facturacion de dadores de carga."""
 
     def __init__(self) -> None:
@@ -103,11 +118,15 @@ class DadorCargaDAOInMemory(BD_DAO[DadorCarga, UUID]):
     def existe(self, entidad_id: UUID) -> bool:
         return entidad_id in self._db
 
+fix/backend-imports-exports-syntax-832078353663061898
     get_id = obt_por_id
     get_all = obt_todos
     save = guardar
     update = actualizar
     delete = eliminar
+
+    # --- Consultas especializadas ---
+F_area_trabajo
 
     def get_by_user_id(self, user_id: UUID) -> Optional[DadorCarga]:
         """Obtiene el perfil tributario de un dador de carga por su user_id."""
@@ -128,3 +147,9 @@ class DadorCargaDAOInMemory(BD_DAO[DadorCarga, UUID]):
         """Obtiene todos los perfiles de dador de carga en estado PENDIENTE."""
         return [dador for dador in self._db.values() if dador.estado_validacion == EstadoValidacion.PENDIENTE]
 
+    # Alias de compatibilidad
+    get_id = obt_por_id
+    get_all = obt_todos
+    save = guardar
+    update = actualizar
+    delete = eliminar

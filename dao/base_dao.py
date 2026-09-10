@@ -101,3 +101,6 @@ class DAOMemoria(BaseDAO[E, ID], Generic[E, ID]):
     obtener_todos = obt_todos
     obtener_por_id = obt_por_id
     save = guardar
+
+# Alias de compatibilidad hacia atras
+BD_DAO = BaseDAO
