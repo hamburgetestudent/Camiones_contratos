@@ -29,5 +29,7 @@ def obt_servicio_subasta() -> ServicioSubasta:
 # Alias para retrocompatibilidad
 get_contrato_service = obt_servicio_contrato
 get_subasta_service = obt_servicio_subasta
+obtener_servicio_contrato = obt_servicio_contrato
+obtener_servicio_subasta = obt_servicio_subasta
 contrato_service = servicio_contrato
 subasta_service = servicio_subasta
