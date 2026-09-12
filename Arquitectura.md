@@ -17,8 +17,52 @@ El estilo de Arquitectura Limpia, estructurado en capas concéntricas (Dominio, 
 ## 2. Diagrama de Arquitectura
 
 
-*(Nota: Reemplaza el enlace anterior por la imagen real de tu diagrama UML o de componentes antes de subir al repositorio).*
+## 2. Diagrama de Arquitectura
 
+El siguiente diagrama ilustra el estilo Cliente-Servidor y la separación en capas, detallando cómo interactúan los módulos definidos.
+
+```mermaid
+flowchart TD
+    %% Definición de la Capa Cliente
+    subgraph Cliente ["Capa Cliente (Frontend multiplataforma)"]
+        UI["Módulo 6: Interfaz de Usuario (Electron / SPA)"]
+    end
+
+    %% Definición del Servidor Backend y sus capas concéntricas
+    subgraph Backend ["Servidor Backend (FastAPI REST)"]
+        
+        subgraph Routers ["Capa Externa: Controladores (Routers)"]
+            R_API["Endpoints API (Validación Pydantic)"]
+        end
+
+        subgraph Services ["Capa de Aplicación: Servicios"]
+            M1["Módulo 1: Gestión de Identidad (IAM)"]
+            M2["Módulo 2: Onboarding y Compliance"]
+            M3["Módulo 3: Gestión de Contratos"]
+            M4["Módulo 4: Subastas y Postulaciones"]
+            M5["Módulo 5: Seguimiento y Disputas"]
+        end
+
+        subgraph Domain ["Capa Central: Dominio"]
+            Ent["Entidades (Modelos de Negocio)"]
+            ME["Máquina de Estados"]
+            Reglas["Reglas Parametrizables"]
+        end
+
+        subgraph DataAccess ["Capa de Infraestructura: Datos"]
+            DAO["Módulo DAO (Persistencia en Memoria)"]
+        end
+    end
+
+    %% Relaciones y flujo de datos
+    UI -->|Peticiones HTTP/REST| Routers
+    Routers -->|Llamadas a casos de uso| Services
+    
+    Services -->|Aplica lógica de negocio| Domain
+    Services -->|Consulta/Persiste datos| DAO
+    
+    DAO -.->|Depende de abstracciones de| Domain
+```
 ## 3. Descomposición Modular
 
 Fundamentación: Los módulos se han delimitado aplicando principios SOLID (específicamente Responsabilidad Única) y agrupación por subdominios derivados directamente de las Épicas e Historias de Usuario (US) levantadas.
