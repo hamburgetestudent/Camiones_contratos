@@ -5,6 +5,7 @@ Configura las rutas modulares y el servidor ASGI.
 
 from fastapi import FastAPI
 
+from routers.auditoria_router import router as auditoria_router
 from routers.auth_router import router as auth_router
 from routers.config_router import router as config_router
 from routers.contratos_router import router as contratos_router
@@ -15,11 +16,12 @@ from services.usuario_service import ValidadorUsuario
 
 app = FastAPI(
     title="API - Contratos Camiones y Motor de Subastas",
-    version="0.1.4",
-    description="Backend modular con Autenticación, Motor de Contratos, Postulaciones y Subastas",
+    version="0.2.0",
+    description="Backend modular con autenticación, contratos, subastas y auditoría histórica",
 )
 
 # Inclusion de routers modulares
+app.include_router(auditoria_router)
 app.include_router(auth_router)
 app.include_router(crear_login_router(ValidadorUsuario()))
 app.include_router(config_router)

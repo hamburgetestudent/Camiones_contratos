@@ -317,9 +317,9 @@ def verificar_frontend(directorio_raiz: Optional[Path] = None) -> Dict[str, Any]
     carpeta_frontend = raiz / "frontend"
 
     archivos_clave = {
-        "index.html": carpeta_frontend / "paginas" / "index.html",
-        "style.css": carpeta_frontend / "paginas" / "style.css",
-        "script.js": carpeta_frontend / "paginas" / "script.js",
+        "index.html": carpeta_frontend / "paginas" / "Login" / "index.html",
+        "style.css": carpeta_frontend / "paginas" / "Login" / "style.css",
+        "script.js": carpeta_frontend / "paginas" / "Login" / "script.js",
         "package.json": carpeta_frontend / "package.json",
         "dist/main.js": carpeta_frontend / "dist" / "main.js",
         "src/main.ts": carpeta_frontend / "src" / "main.ts",

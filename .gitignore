@@ -11,6 +11,12 @@ src/
 
 # Test y borradores
 test_refactor_borrador.py
+.pytest_cache/
+.ruff_cache/
+
+# Persistencia local de auditoria
+data/*.sqlite3
+data/*.sqlite3-*
 
 
 # Node.js

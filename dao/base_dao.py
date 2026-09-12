@@ -20,50 +20,32 @@ class BaseDAO(ABC, Generic[E, ID]):  # noqa: UP046
     @abstractmethod
     def obtener_por_id(self, entidad_id: ID) -> E | None:
         """Obtiene una entidad por su identificador unico."""
-        if hasattr(self, "get_id"):
-            return self.get_id(entidad_id)
-        return None
+        raise NotImplementedError
 
     @abstractmethod
     def obtener_todos(self) -> list[E]:
         """Retorna todas las entidades persistidas."""
-        if hasattr(self, "get_all"):
-            return self.get_all()
-        return []
+        raise NotImplementedError
 
+    @abstractmethod
     def guardar(self, entidad: E) -> E:
         """Persiste una entidad nueva o actualizada."""
-        if hasattr(self, "save"):
-            return self.save(entidad)
-        return entidad
+        raise NotImplementedError
 
     @abstractmethod
     def actualizar(self, entidad_id: ID, entidad: E) -> E | None:
         """Actualiza una entidad existente identificada por su ID."""
-        if hasattr(self, "update"):
-            return self.update(entidad_id, entidad)
-        return None
+        raise NotImplementedError
 
+    @abstractmethod
     def eliminar(self, entidad_id: ID) -> bool:
         """Elimina una entidad por su ID. Retorna True si existia y fue eliminada."""
-        if hasattr(self, "delete"):
-            return self.delete(entidad_id)
-        return False
+        raise NotImplementedError
 
+    @abstractmethod
     def existe(self, entidad_id: ID) -> bool:
         """Verifica la existencia de una entidad por su ID."""
-        return self.obt_por_id(entidad_id) is not None
-
-    get_id = obt_por_id
-    get_all = obt_todos
-    save = guardar
-    update = actualizar
-    delete = eliminar
-
-
-
-BD_DAO = BaseDAO
-
+        raise NotImplementedError
 
     # Alias para retrocompatibilidad
     def obt_por_id(self, entidad_id: ID) -> E | None:

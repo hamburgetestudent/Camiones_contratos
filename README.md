@@ -70,7 +70,7 @@ Para confirmar que el servidor y la base de datos están funcionando correctamen
 1. **Verificación del Servidor HTTP (FastAPI):**
    - Inicia la aplicación ejecutando `uvicorn main:app --reload --host 127.0.0.1 --port 8000`.
    - Abre tu navegador en `http://127.0.0.1:8000/docs` para acceder a la documentación interactiva OpenAPI (Swagger UI).
-   - Confirma que la interfaz liste correctamente todos los routers cargados (`/auth`, `/configuracion`, `/contratos`, `/onboarding`, `/subastas`).
+   - Confirma que la interfaz liste correctamente todos los routers cargados (`/auth`, `/configuracion`, `/contratos`, `/onboarding`, `/subastas`, `/auditoria`).
 
 2. **Verificación de Endpoints y Base de Datos:**
    - Realiza una petición GET al endpoint `http://127.0.0.1:8000/configuracion`. Deberías recibir una respuesta con código HTTP 200 OK y el cuerpo JSON correspondiente a las reglas de negocio globales.
@@ -90,6 +90,22 @@ La arquitectura del sistema está estructurada mediante una separación clara de
 - **Autenticación:** Gestión de registro y login modular desacoplado (`routers/login_router.py`, `services/login_service.py`, `domain/modelos_login.py`) conectado al validador del sistema de usuarios.
 - **Modelos:** El archivo `modelos.py` contiene la estructura de los contratos y sus validaciones.
 - **Almacenamiento:** Actualmente los contratos se almacenan temporalmente en un diccionario de Python, utilizado como almacenamiento en memoria.
+- **Auditoría:** Los eventos críticos se conservan en un ledger SQLite append-only, con hashes encadenados y reconstrucción por fecha. La ruta se configura mediante `AUDIT_DB_PATH` y por defecto utiliza `data/auditoria.sqlite3`.
+
+### Auditoría histórica (CR-203)
+
+Los endpoints principales son:
+
+- `GET /auditoria/transportes/{id}/eventos`
+- `GET /auditoria/transportes/{id}/reconstruccion?hasta=2026-09-12T12:00:00Z`
+- `POST /auditoria/correcciones` con encabezado `X-User-Id`
+- `GET /auditoria/integridad`
+
+Los cambios de estado de contratos y la adjudicación de ofertas también exigen el
+encabezado `X-User-Id`, de modo que cada actuación conserve al usuario responsable.
+
+El análisis, alcance y criterios de aceptación están documentados en
+[`docs/CR-203_ANALISIS_CAMBIO.md`](docs/CR-203_ANALISIS_CAMBIO.md).
 
 ### Diagrama de arquitectura
 

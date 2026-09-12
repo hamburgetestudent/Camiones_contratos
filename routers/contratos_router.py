@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Header, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from domain.maquina_estados import EstadoContrato
@@ -97,6 +97,11 @@ def cambiar_estado_contrato(
     contrato_id: UUID,
     payload: SolicitudCambioEstado,
     contrato_service: ServicioContratoDep,
+    actor_id: UUID = Header(
+        ...,
+        alias="X-User-Id",
+        description="Usuario responsable del cambio de estado",
+    ),
 ) -> ContratoModelo:
     """Aplica la maquina de estados para avanzar el contrato a un nuevo estado."""
     try:
@@ -105,6 +110,7 @@ def cambiar_estado_contrato(
             nuevo_estado=payload.nuevo_estado,
             id_transportista=payload.id_transportista,
             id_camion=payload.id_camion,
+            actor_id=actor_id,
         )
     except Exception as error:
         raise manejar_excepcion_http(error)

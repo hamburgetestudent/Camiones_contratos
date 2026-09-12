@@ -3,7 +3,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Header, Query, status
 from pydantic import BaseModel, ConfigDict, Field
 
 from domain.modelos import ContratoModelo
@@ -93,12 +93,17 @@ def listar_postulaciones_carga(
 def adjudicar_subasta(
     payload: SolicitudAdjudicacion,
     subasta_service: ServicioSubastaDep,
+    revisado_por: Annotated[
+        UUID,
+        Header(alias="X-User-Id", description="Usuario que revisa y adjudica las ofertas"),
+    ],
 ) -> PostulacionModelo:
     """El dador selecciona la postulacion ganadora, cambiando la carga a ADJUDICADO y rechazando el resto."""
     try:
         return subasta_service.adjudicar_subasta(
             carga_id=payload.carga_id,
             postulacion_id=payload.postulacion_id,
+            revisado_por=revisado_por,
         )
     except Exception as error:
         raise manejar_excepcion_http(error)

@@ -1,5 +1,14 @@
 """Modulo de dominio: Reglas de negocio, maquinas de estado y modelos Pydantic."""
 
+from domain.auditoria import (
+    AccionAuditoria,
+    EntidadAuditable,
+    EstadoTransporteHistorico,
+    EventoAuditoria,
+    EventoAuditoriaCrear,
+    ResultadoIntegridadAuditoria,
+    SolicitudCorreccionAuditoria,
+)
 from domain.maquina_estados import EstadoContrato, MaquinaEstadosContrato
 from domain.modelos import (
     ContratoBase,
@@ -29,6 +38,13 @@ from domain.modelos_usuario import (
 from domain.reglas import ReglasNegocio
 
 __all__ = [
+    "AccionAuditoria",
+    "EntidadAuditable",
+    "EstadoTransporteHistorico",
+    "EventoAuditoria",
+    "EventoAuditoriaCrear",
+    "ResultadoIntegridadAuditoria",
+    "SolicitudCorreccionAuditoria",
     "ReglasNegocio",
     "EstadoContrato",
     "MaquinaEstadosContrato",

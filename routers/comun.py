@@ -7,11 +7,13 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 
+from services.auditoria_service import ServicioAuditoria
 from services.contrato_service import ContratoService
-from services.dependencies import get_contrato_service, get_subasta_service
+from services.dependencies import get_auditoria_service, get_contrato_service, get_subasta_service
 from services.subasta_service import SubastaService
 
 # Inyeccion de dependencias tipada con Annotated
+ServicioAuditoriaDep = Annotated[ServicioAuditoria, Depends(get_auditoria_service)]
 ServicioContratoDep = Annotated[ContratoService, Depends(get_contrato_service)]
 ServicioSubastaDep = Annotated[SubastaService, Depends(get_subasta_service)]
 

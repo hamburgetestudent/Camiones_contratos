@@ -27,7 +27,7 @@ A continuación se presenta la matriz consolidada y priorizada de los requisitos
 | **REF-09** | Restricción de proyecto | Licenciamiento de dependencias de código abierto (Open Source). | El stack de dependencias (FastAPI, Electron, TypeScript, Pydantic) debe contar con licencias permisivas (MIT, Apache 2.0, ISC) sin costo por licencia. | **Baja** |
 | **REF-10** | Otros no funcionales (Usabilidad e Idioma) | Interfaz de usuario en español y adaptada a la logística nacional. | Interfaz gráfica y mensajes de retroalimentación 100% en idioma español, manejando moneda en pesos chilenos (CLP), IVA y normativas de carga (códigos ONU). | **Baja** |
 | **REF-11** | Otros no funcionales (Mantenibilidad) | Arquitectura modular desacoplada en capas (Routers, Services, Domain, DAO). | La capa de almacenamiento en memoria debe poder ser reemplazada por una base de datos relacional (PostgreSQL/SQLite) sin alterar la lógica de negocio ni los controladores. | **Media** |
-| **REF-12** | Otros no funcionales (Auditoría y Trazabilidad) | Registro y trazabilidad de eventos del ciclo de vida del contrato. | Toda creación, actualización de estado, postulación y adjudicación debe registrar marca de tiempo UTC y el identificador de usuario asociado. | **Media** |
+| **REF-12** | Otros no funcionales (Auditoría y Trazabilidad) | Registro inmutable y reconstrucción histórica de eventos del ciclo de vida del contrato. | Toda creación, actualización de estado, postulación, revisión, adjudicación y corrección debe registrar fecha UTC, actor, instantánea, bases aplicadas y hash encadenado. El estado debe poder reconstruirse por fecha y conservarse al menos dos años. | **Alta** |
 | **REF-13** | Usabilidad| Arquitectura de interfaz oara el usuario intuitiva.| La interfaz debe permitir que al menos el 80% de los usuarios de prueba realice las funciones principales sin asistencia y en un máximo de tres pasos por operación. | **Alta** |
 
 
@@ -86,3 +86,10 @@ En concordancia con los lineamientos del proyecto, los requisitos de **prioridad
 5. **Validación y prevención de errores:** Los formularios validarán los campos obligatorios y los formatos incorrectos antes de enviar la información al backend. En caso de error, se indicará claramente qué dato debe corregirse.
 6. **Evaluación de usabilidad:** La solución será evaluada mediante una prueba con usuarios. Se considerará cumplido el requisito cuando al menos el 80% de los usuarios pueda realizar las funciones principales sin asistencia y en un máximo de tres pasos por operación.
 
+### 4.5 Abordaje de REF-12 / CR-203 (Auditoría y reconstrucción histórica)
+
+1. **Ledger append-only persistente:** Los hechos se anexan en SQLite y triggers de base de datos rechazan cualquier `UPDATE` o `DELETE`.
+2. **Trazabilidad completa:** Cada evento conserva actor, fecha UTC, instantánea, reglas vigentes e información utilizada para decidir.
+3. **Correcciones no destructivas:** Una rectificación crea un nuevo evento que referencia al original; nunca lo sobrescribe.
+4. **Reconstrucción temporal:** La API recompone contrato, ofertas, revisiones y decisiones usando únicamente los eventos existentes hasta una fecha de corte.
+5. **Evidencia de integridad:** Los eventos de cada transporte forman una cadena SHA-256 verificable.
