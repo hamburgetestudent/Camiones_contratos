@@ -23,164 +23,116 @@
     <!-- Contenedor principal -->
     <main class="contenedor">
 
+        <div class="login-card">
 
-        <!-- ================================= -->
-        <!-- TÍTULO                            -->
-        <!-- ================================= -->
+            <!-- ================================= -->
+            <!-- TÍTULO                            -->
+            <!-- ================================= -->
 
-        <div class="titulo">
-            Inicio de Sesion
-        </div>
-
-
-        <!-- ================================= -->
-        <!-- FORMULARIO                        -->
-        <!-- ================================= -->
-
-        <section class="formulario">
-
-
-            <!-- Email -->
-            <div class="campo">
-
-                <label for="email">
-                    Email
-                </label>
-
-                <input id="email" type="email" placeholder="Value">
-
+            <div class="titulo">
+                Inicio de Sesion
             </div>
 
-
-            <!-- Password -->
-            <div class="campo">
-
-                <label for="password">
-                    Password
-                </label>
-
-                <input
-                    id="password"
-                    type="password"
-                    placeholder="Value"
-                >
-
-            </div>
-
-
             <!-- ================================= -->
-            <!-- BOTÓN INICIAR SESIÓN              -->
+            <!-- CONTENIDO (FORMULARIO E IMAGEN)   -->
             <!-- ================================= -->
 
-            <button id="btnLogin" class="boton-login"> 
-                Sign In <span class="icono-usuario">♙</span>
-            </button>
+            <div class="contenido-grid">
 
+                <!-- ================================= -->
+                <!-- FORMULARIO                        -->
+                <!-- ================================= -->
 
-            <!-- ================================= -->
-            <!-- RECUPERAR CONTRASEÑA               -->
-            <!-- ================================= -->
+                <section class="formulario">
 
-            <a href="#" id="recuperarContraseña" class="recuperar">
-                Se te olvido la contraseña?
-            </a>
+                    <!-- Email -->
+                    <div class="campo">
+                        <label for="email">
+                            Email
+                        </label>
+                        <input id="email" type="email" placeholder="ejemplo@correo.com">
+                    </div>
 
+                    <!-- Password -->
+                    <div class="campo">
+                        <label for="password">
+                            Password
+                        </label>
+                        <input
+                            id="password"
+                            type="password"
+                            placeholder="••••••••"
+                        >
+                    </div>
 
-            <!-- ================================= -->
-            <!-- SEPARADOR                         -->
-            <!-- ================================= -->
+                    <!-- BOTÓN INICIAR SESIÓN -->
+                    <button id="btnLogin" class="boton-login"> 
+                        Sign In <span class="icono-usuario">♙</span>
+                    </button>
 
-            <div class="separador">
+                    <!-- RECUPERAR CONTRASEÑA -->
+                    <a href="#" id="recuperarContraseña" class="recuperar">
+                        ¿Se te olvidó la contraseña?
+                    </a>
 
-                <span></span>
-
-                <p>O continuar con</p>
-
-                <span></span>
-
-            </div>
-
-
-            <!-- ================================= -->
-            <!-- INICIO DE SESIÓN SOCIAL            -->
-            <!-- ================================= -->
-
-            <div class="botones-sociales">
-
-
-                <!-- GOOGLE -->
-                <button class="boton-social" id="btnGoogle">
-
-                    <div class="logo-google"> G </div>
-
-                    <span> Google </span>
-
-                </button>
-
-
-                <!-- MICROSOFT -->
-                <button
-                    class="boton-social"
-                    id="btnMicrosoft"
-                >
-
-                    <div class="logo-microsoft">
-
+                    <!-- SEPARADOR -->
+                    <div class="separador">
                         <span></span>
+                        <p>O continuar con</p>
                         <span></span>
-                        <span></span>
-                        <span></span>
+                    </div>
+
+                    <!-- INICIO DE SESIÓN SOCIAL -->
+                    <div class="botones-sociales">
+
+                        <!-- GOOGLE -->
+                        <button class="boton-social" id="btnGoogle">
+                            <div class="logo-google"> G </div>
+                            <span> Google </span>
+                        </button>
+
+                        <!-- MICROSOFT -->
+                        <button class="boton-social" id="btnMicrosoft">
+                            <div class="logo-microsoft">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                            <span> Microsoft </span>
+                        </button>
+
+                        <!-- APPLE -->
+                        <button class="boton-social" id="btnApple">
+                            <div class="logo-apple"> ● </div>
+                            <span> Apple </span>
+                        </button>
 
                     </div>
 
-                    <span>
-                        Microsoft
-                    </span>
+                    <!-- REGISTRO -->
+                    <div class="registro">
+                        <span> ¿No tienes cuenta? </span>
+                        <a href="#" id="btnRegistro"> Regístrate </a>
+                    </div>
 
-                </button>
+                </section>
 
+                <!-- ================================= -->
+                <!-- IMAGEN DERECHA                    -->
+                <!-- ================================= -->
 
-                <!-- APPLE -->
-                <button class="boton-social" id="btnApple">
-
-                    <div class="logo-apple"> ● </div>
-                    <span> Apple </span>
-
-                </button>
-
+                <section class="imagen-container">
+                    <img
+                        src="../imagenes/imagen_prueba.png"
+                        alt="Imagen de inicio de sesión"
+                        class="imagen-login"
+                    >
+                </section>
 
             </div>
 
-
-            <!-- ================================= -->
-            <!-- REGISTRO                           -->
-            <!-- ================================= -->
-
-            <div class="registro">
-
-                <span> ¿No tienes cuenta? </span>
-                <a href="#" id="btnRegistro"> Regístrate </a>
-            
-            </div>
-
-
-        </section>
-
-
-        <!-- ================================= -->
-        <!-- IMAGEN DERECHA                    -->
-        <!-- ================================= -->
-
-        <section class="imagen-container">
-
-            <img
-                src="../imagenes/imagen_prueba.png"
-                alt="Imagen de inicio de sesión"
-                class="imagen-login"
-            >
-
-        </section>
-
+        </div>
 
     </main>
 
