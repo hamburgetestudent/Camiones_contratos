@@ -317,9 +317,9 @@ def verificar_frontend(directorio_raiz: Optional[Path] = None) -> Dict[str, Any]
     carpeta_frontend = raiz / "frontend"
 
     archivos_clave = {
-        "index.html": carpeta_frontend / "paginas" / "index.html",
-        "style.css": carpeta_frontend / "paginas" / "style.css",
-        "script.js": carpeta_frontend / "paginas" / "script.js",
+        "Login/index.html": carpeta_frontend / "paginas" / "Login" / "index.html",
+        "Login/style.css": carpeta_frontend / "paginas" / "Login" / "style.css",
+        "Login/script.js": carpeta_frontend / "paginas" / "Login" / "script.js",
         "package.json": carpeta_frontend / "package.json",
         "dist/main.js": carpeta_frontend / "dist" / "main.js",
         "src/main.ts": carpeta_frontend / "src" / "main.ts",
@@ -480,9 +480,9 @@ class TestCompilacionCodigo(unittest.TestCase):
     def test_frontend_archivos_base(self) -> None:
         """Verifica que los archivos esenciales del frontend existan."""
         info = verificar_frontend(DIRECTORIO_PROYECTO)
-        self.assertTrue(info["detalles"]["index.html"], "Falta frontend/paginas/index.html")
-        self.assertTrue(info["detalles"]["style.css"], "Falta frontend/paginas/style.css")
-        self.assertTrue(info["detalles"]["script.js"], "Falta frontend/paginas/script.js")
+        self.assertTrue(info["detalles"]["Login/index.html"], "Falta frontend/paginas/Login/index.html")
+        self.assertTrue(info["detalles"]["Login/style.css"], "Falta frontend/paginas/Login/style.css")
+        self.assertTrue(info["detalles"]["Login/script.js"], "Falta frontend/paginas/Login/script.js")
 
 
 # =============================================================================
