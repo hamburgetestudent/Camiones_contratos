@@ -1,14 +1,7 @@
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
-
-try:
-    from enum import StrEnum
-except ImportError:
-    from enum import Enum
-
-    class StrEnum(str, Enum):  # noqa: UP042
-        pass
+from enum import StrEnum
 
 
 class RolUsuario(StrEnum):
