@@ -28,7 +28,7 @@ function createWindow() {
     // Abre la ventana maximizada para adaptarse al escritorio
     ventana.maximize();
     // Carga el archivo HTML de la interfaz
-    ventana.loadFile(path_1.default.join(__dirname, "../paginas/Login/index.html"));
+    ventana.loadFile(path_1.default.join(__dirname, "../codigos/paginas/Login/index.html"));
 }
 // Cuando Electron termina de iniciar
 electron_1.app.whenReady().then(() => {
