@@ -1,0 +1,211 @@
+
+* { 
+    box-sizing: border-box; 
+}
+
+:root { 
+    font-family: Arial, Helvetica, sans-serif; 
+    color:#242424; 
+    background:#f5f6f8;
+}
+
+body {
+     margin:0; 
+     min-height:100vh;
+      background:#f5f6f8;
+}
+
+.registro-container { 
+    min-height:100vh; 
+    display:flex; 
+    justify-content:center; 
+    padding:40px 20px; 
+}
+
+.registro-card { width:min(900px,100%); 
+    background:#fff; 
+    border:1px solid #dedede; 
+    border-radius:16px; 
+    padding:32px; 
+    box-shadow:0 8px 30px rgba(0,0,0,.06); 
+}
+
+.registro-header { 
+    margin-bottom:28px; 
+}
+
+.registro-header h1 { 
+    margin:0 0 8px; 
+    font-size:28px; 
+}
+
+.registro-header p { 
+    margin:0; 
+    color:#666; 
+    font-size:14px; 
+}
+
+fieldset {
+    border:0; 
+    padding:0; 
+    margin:0 0 28px; 
+}
+
+legend,.form-section h2 { 
+    font-size:17px; 
+    font-weight:700; 
+    margin-bottom:14px; 
+}
+
+.tipo-grid { 
+    display:grid; 
+    grid-template-columns:repeat(2,minmax(0,1fr)); 
+    gap:14px; 
+}
+
+.tipo-option { 
+    display:block; 
+    cursor:pointer; 
+}
+
+.tipo-option input { 
+    position:absolute; 
+    opacity:0; 
+    pointer-events:none; 
+}
+
+.tipo-content { 
+    display:block; 
+    min-height:100px; 
+    border:1px solid #d7d7d7; 
+    border-radius:12px; 
+    padding:18px; 
+    transition:.2s; 
+}
+
+.tipo-content strong { 
+    display:block; 
+    margin-bottom:8px; 
+}
+
+.tipo-content small { 
+    display:block; 
+    color:#666; 
+    line-height:1.4; 
+}
+
+.tipo-option input:checked + .tipo-content { 
+    border-color:#333; 
+    background:#f7f7f7; 
+    box-shadow:inset 0 0 0 1px #333; 
+}
+
+.form-section { 
+    border-top:1px solid #ececec; 
+    padding-top:24px; 
+    margin-top:24px; 
+}
+
+.form-grid { 
+    display:grid; 
+    grid-template-columns:repeat(2,minmax(0,1fr)); 
+    gap:18px; 
+}
+
+.field { 
+    display:flex; 
+    flex-direction:column; 
+    gap:7px; 
+}
+
+.field-full { 
+    grid-column:1/-1; 
+}
+
+.field label { 
+    font-size:13px; 
+    font-weight:600; 
+}
+
+.field input { 
+    width:100%; 
+    height:42px; 
+    border:1px solid #d4d4d4; 
+    border-radius:8px; 
+    padding:0 12px; 
+    font-size:14px; 
+    outline:none; 
+}
+
+.field input:focus { 
+    border-color:#555; 
+    box-shadow:0 0 0 3px rgba(0,0,0,.06); 
+}
+
+.help { 
+    color:#777; 
+    font-size:12px; 
+}
+
+.hidden { 
+    display:none; 
+}
+
+.terms { 
+    display:flex; 
+    align-items:flex-start; 
+    gap:9px; 
+    margin:28px 0 16px; 
+    font-size:13px; 
+    color:#555; 
+}
+
+.terms input { 
+    margin-top:2px; 
+}
+
+.mensaje { 
+    min-height:20px; 
+    margin-bottom:12px; 
+    font-size:13px; 
+}
+
+.mensaje.error { 
+    color:#a40000; 
+}
+
+.mensaje.success { 
+    color:#176b35; 
+}
+
+.btn-primary { 
+    width:100%; 
+    height:44px; 
+    border:0; 
+    border-radius:8px; 
+    background:#2d2d2d; 
+    color:#fff; 
+    font-size:14px; 
+    font-weight:700; 
+    cursor:pointer; 
+}
+
+.btn-primary:hover { 
+    background:#444; 
+}
+
+@media (max-width:700px) { 
+
+    .registro-card{
+        padding:22px;
+    } 
+
+    .tipo-grid,.form-grid{
+        grid-template-columns:1fr;
+    } 
+
+    .field-full{
+        grid-column:auto;
+    } 
+    
+}

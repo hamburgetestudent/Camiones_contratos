@@ -2,7 +2,7 @@
     "compilerOptions": { 
         "target": "ES2022", 
         "module": "CommonJS", 
-        "rootDir": "src", 
+        "rootDir": "codigos", 
         "outDir": "dist", 
         "strict": true, 
         "esModuleInterop": true, 
@@ -11,6 +11,6 @@
         "skipLibCheck": true, 
         "types": [ "node", "electron" ] 
         }, 
-    "include": [ "src/**/*.ts" ], 
+    "include": [ "codigos/**/*.ts" ], 
     "exclude": [ "node_modules", "dist" ] 
 }

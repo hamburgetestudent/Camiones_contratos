@@ -1,17 +1,22 @@
-{ 
-  "name": "Camiones_contratos", 
-  "version": "1.0.0", 
-  "description": "Aplicación de escritorio desarrollada con Electron, Node.js, TypeScript y python", 
-  "main": "dist/main.js", 
-  "author": "", 
-  "license": "MIT", 
-  "scripts": { 
-    "build": "tsc", 
-    "start": "npm run build && electron .", 
-    "dev": "tsc --watch" }, 
-  "devDependencies": { 
-    "@types/node": "^22.0.0", 
-    "electron": "^44.0.0", 
-    "typescript": "^7.0.2" } 
+{"name":"Camiones_contratos",
+"version":"1.0.0",
+"description":"Aplicación de escritorio desarrollada con Electron, Node.js, TypeScript y python",
+"main":"dist/main.js",
+"author":"",
+"license":"MIT",
+
+"scripts":{
+    "setup": "npm install --include=dev",
+    "build": "tsc && cpx \"codigos/paginas/**/*\" \"dist/paginas\" && cpx \"codigos/imagenes/**/*\" \"dist/imagenes\"",
+    "prestart": "npm run setup",
+    "start": "npm run build && electron .",
+    "dev": "tsc --watch"
+},
+
+"devDependencies":{
+    "@types/node":"^22.0.0",
+    "cpx":"^1.5.0",
+    "electron":"^44.0.0",
+    "typescript":"^7.0.2"}
 
 }
