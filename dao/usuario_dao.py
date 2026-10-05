@@ -1,42 +1,46 @@
-from typing import List, Optional
+"""Capa de acceso a datos (DAO) para la entidad Usuario."""
+
+from abc import abstractmethod
 from uuid import UUID
+
+from dao.base_dao import BaseDAO, DAOMemoria
 from domain.modelos_usuario import UsuarioModelo
-from dao.base_dao import BD_DAO
 
-class UsuarioDAO(BD_DAO[UsuarioModelo, UUID]):
-    def __init__(self):
-        # Base de datos en memoria para usuarios
-        self._db: dict[UUID, UsuarioModelo] = {}
 
-    def get_id(self, entidad_id: UUID) -> Optional[UsuarioModelo]:
-        return self._db.get(entidad_id)
+class UsuarioDAO(BaseDAO[UsuarioModelo, UUID]):
+    """Interfaz abstracta para operaciones de persistencia de usuarios."""
 
-    def get_all(self) -> List[UsuarioModelo]:
-        return list(self._db.values())
+    @abstractmethod
+    def obtener_por_email(self, email: str) -> UsuarioModelo | None:
+        """Busca un usuario por su correo electronico."""
+        pass
 
-    def save(self, entidad: UsuarioModelo) -> UsuarioModelo:
-        self._db[entidad.id] = entidad
-        return entidad
+    # Alias para retrocompatibilidad
+    def obt_por_email(self, email: str) -> UsuarioModelo | None:
+        """Alias para obtener_por_email."""
+        return self.obtener_por_email(email)
 
-    def update(self, entidad_id: UUID, entidad: UsuarioModelo) -> Optional[UsuarioModelo]:
-        if entidad_id in self._db:
-            self._db[entidad_id] = entidad
-            return entidad
-        return None
+    def obt_email(self, email: str) -> UsuarioModelo | None:
+        """Alias para obtener_por_email."""
+        return self.obtener_por_email(email)
 
-    def delete(self, entidad_id: UUID) -> bool:
-        if entidad_id in self._db:
-            del self._db[entidad_id]
-            return True
-        return False
+    def get_by_email(self, email: str) -> UsuarioModelo | None:
+        """Alias en ingles para obtener_por_email."""
+        return self.obtener_por_email(email)
 
-    def get_by_email(self, email: str) -> Optional[UsuarioModelo]:
-        """
-        Busca un usuario por su correo electrónico.
-        Esta es la función que te faltaba para que el registro funcionara.
-        """
-        for usuario in self._db.values():
-            if usuario.email == email:
-                return usuario
-        return None
 
+class UsuarioDAOMemoria(DAOMemoria[UsuarioModelo, UUID], UsuarioDAO):
+    """Implementacion en memoria thread-safe del DAO de usuarios."""
+
+    def obtener_por_email(self, email: str) -> UsuarioModelo | None:
+        """Busca un usuario por su correo electronico de forma sincronizada."""
+        email_normalizado = email.strip().lower()
+        with self._lock:
+            for usuario in self._almacenamiento.values():
+                if usuario.email.strip().lower() == email_normalizado:
+                    return usuario
+            return None
+
+    obt_por_email = obtener_por_email
+    obt_email = obtener_por_email
+    get_by_email = obtener_por_email

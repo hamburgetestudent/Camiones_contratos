@@ -1,0 +1,355 @@
+/* ================================= */
+/* CONFIGURACIÓN GENERAL              */
+/* ================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #f5f6f8;
+    color: #292929;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* ================================= */
+/* CONTENEDOR PRINCIPAL               */
+/* ================================= */
+
+.contenedor {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+}
+
+
+/* ================================= */
+/* TARJETA PRINCIPAL (CARD DESKTOP)   */
+/* ================================= */
+
+.login-card {
+    width: min(960px, 100%);
+    background: #ffffff;
+    border: 1px solid #dedede;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+
+
+/* ================================= */
+/* TÍTULO                             */
+/* ================================= */
+
+.titulo {
+    width: 100%;
+    max-width: 480px;
+    height: 60px;
+    margin: 0 auto 36px auto;
+    border: 1px solid #444;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    background-color: #fafafa;
+}
+
+
+/* ================================= */
+/* CUERPO DEL LOGIN (GRID / FLEX)     */
+/* ================================= */
+
+.contenido-grid {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 60px;
+}
+
+
+/* ================================= */
+/* FORMULARIO                         */
+/* ================================= */
+
+.formulario {
+    width: 100%;
+    max-width: 320px;
+    flex-shrink: 0;
+}
+
+
+/* ================================= */
+/* CAMPOS                             */
+/* ================================= */
+
+.campo {
+    margin-bottom: 18px;
+}
+
+label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+input {
+    width: 100%;
+    height: 38px;
+    border: 1px solid #d4d4d4;
+    border-radius: 8px;
+    padding: 0 14px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus {
+    border-color: #555;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+}
+
+
+/* ================================= */
+/* BOTÓN LOGIN                        */
+/* ================================= */
+
+.boton-login {
+    width: 100%;
+    height: 40px;
+    border: none;
+    border-radius: 8px;
+    background-color: #2d2d2d;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.boton-login:hover {
+    background-color: #444;
+}
+
+.boton-login:active {
+    transform: scale(0.99);
+}
+
+.icono-usuario {
+    font-size: 14px;
+}
+
+
+/* ================================= */
+/* RECUPERAR CONTRASEÑA                */
+/* ================================= */
+
+.recuperar {
+    display: block;
+    margin-top: 14px;
+    color: #444;
+    font-size: 12px;
+    text-align: right;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.recuperar:hover {
+    color: #000;
+}
+
+
+/* ================================= */
+/* SEPARADOR                          */
+/* ================================= */
+
+.separador {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: 24px 0 16px 0;
+}
+
+.separador span {
+    height: 1px;
+    flex: 1;
+    background-color: #cfcfcf;
+}
+
+.separador p {
+    margin: 0;
+    white-space: nowrap;
+    font-size: 12px;
+    color: #666;
+}
+
+
+/* ================================= */
+/* BOTONES SOCIALES                   */
+/* ================================= */
+
+.botones-sociales {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+}
+
+.boton-social {
+    flex: 1;
+    height: 74px;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s, transform 0.1s;
+}
+
+.boton-social:hover {
+    background-color: #f7f7f7;
+    border-color: #aaa;
+}
+
+.boton-social:active {
+    transform: scale(0.97);
+}
+
+.boton-social > span {
+    font-size: 11px;
+}
+
+
+/* Logos */
+
+.logo-google {
+    font-size: 24px;
+    font-weight: bold;
+    font-family: Arial, sans-serif;
+}
+
+.logo-microsoft {
+    width: 20px;
+    height: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 2px;
+}
+
+.logo-microsoft span {
+    display: block;
+}
+
+.logo-microsoft span:nth-child(1) {
+    background-color: #f25022;
+}
+
+.logo-microsoft span:nth-child(2) {
+    background-color: #7fba00;
+}
+
+.logo-microsoft span:nth-child(3) {
+    background-color: #00a4ef;
+}
+
+.logo-microsoft span:nth-child(4) {
+    background-color: #ffb900;
+}
+
+.logo-apple {
+    width: 22px;
+    height: 22px;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* ================================= */
+/* REGISTRO                           */
+/* ================================= */
+
+.registro {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 26px;
+    font-size: 13px;
+}
+
+.registro a {
+    color: #292929;
+    text-decoration: underline;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.registro a:hover {
+    color: #000;
+}
+
+
+/* ================================= */
+/* IMAGEN ILUSTRATIVA                */
+/* ================================= */
+
+.imagen-container {
+    flex: 1;
+    max-width: 440px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.imagen-login {
+    width: 100%;
+    max-height: 400px;
+    object-fit: contain;
+}
+
+
+/* ================================= */
+/* RESPONSIVE PARA RESOLUCIONES MENORES */
+/* ================================= */
+
+@media (max-width: 768px) {
+    .contenido-grid {
+        flex-direction: column-reverse;
+        gap: 24px;
+    }
+
+    .login-card {
+        padding: 24px;
+    }
+
+    .imagen-container {
+        max-width: 220px;
+    }
+}
