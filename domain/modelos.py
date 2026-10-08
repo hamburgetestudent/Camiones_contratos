@@ -1,7 +1,6 @@
-"""Modelos de dominio y esquemas de validacion Pydantic para Contratos de Camiones.
+#Modelos de dominio y esquemas de validacion Pydantic para Contratos de Camiones.
 
-Refactorizados con validaciones modulares y desacoplados para mayor robustez y escalabilidad.
-"""
+#Refactorizados con validaciones modulares y desacoplados para mayor robustez y escalabilidad.
 
 import re
 from datetime import UTC, datetime, timedelta
@@ -9,13 +8,8 @@ from enum import Enum
 from typing import Annotated
 from uuid import UUID, uuid4
 
-try:
-    from enum import StrEnum
-except ImportError:
-    from enum import Enum
 
-    class StrEnum(str, Enum):  # noqa: UP042
-        pass
+from enum import StrEnum
 
 
 from pydantic import AwareDatetime, BaseModel, BeforeValidator, ConfigDict, Field, model_validator
@@ -31,7 +25,7 @@ MIN_LONGITUD_EMBALAJE: int = 10
 
 
 def limpiar_texto(valor: str) -> str:
-    """Remueve espacios superfluos y normaliza a mayusculas."""
+    #Remueve espacios superfluos y normaliza a mayusculas.
     if isinstance(valor, str):
         return " ".join(valor.strip().split()).upper()
     return valor
@@ -41,7 +35,7 @@ TextoNormalizado = Annotated[str, BeforeValidator(limpiar_texto)]
 
 
 class TipoCarga(StrEnum):
-    """Clasificacion de tipos de carga para transporte terrestre."""
+    #Clasificacion de tipos de carga para transporte terrestre.
 
     GENERAL = "GENERAL"
     REFRIGERADA = "REFRIGERADA"
@@ -57,7 +51,7 @@ class TipoCarga(StrEnum):
 
 
 class Moneda(StrEnum):
-    """Monedas admitidas para valorizacion de contratos."""
+    #Monedas admitidas para valorizacion de contratos.
 
     CLP = "CLP"
     UF = "UF"
@@ -69,7 +63,7 @@ class Moneda(StrEnum):
 
 
 class ContratoBase(BaseModel):
-    """Esquema base con todas las especificaciones y reglas de validacion de un contrato."""
+    #Esquema base con todas las especificaciones y reglas de validacion de un contrato.
 
     id_empresa_generadora: UUID = Field(..., description="ID unico de la empresa generadora de carga")
     origen: TextoNormalizado = Field(..., min_length=3, description="Direccion o comuna de origen")
@@ -164,7 +158,7 @@ class ContratoBase(BaseModel):
 
     @model_validator(mode="after")
     def validar_reglas_de_negocio(self) -> "ContratoBase":
-        """Ejecuta todos los validadores de dominio en secuencia logica."""
+        #Ejecuta todos los validadores de dominio en secuencia logica.
         self._validar_fechas()
         self._validar_carga_y_capacidad()
         self._validar_requerimientos_especiales()
@@ -180,13 +174,13 @@ class ContratoBase(BaseModel):
 
 
 class ContratoCrear(ContratoBase):
-    """Modelo DTO para la solicitud de creacion de un contrato."""
+    #Modelo DTO para la solicitud de creacion de un contrato.
 
     pass
 
 
 class ContratoModelo(ContratoBase):
-    """Modelo de entidad y persistencia del contrato."""
+    #Modelo de entidad y persistencia del contrato.
 
     id: UUID = Field(default_factory=uuid4, description="ID unico del contrato")
     estado: EstadoContrato = Field(default=EstadoContrato.BORRADOR, description="Estado actual en el ciclo de vida")
