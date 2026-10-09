@@ -9,14 +9,8 @@ from enum import Enum
 from typing import Annotated
 from uuid import UUID, uuid4
 
-try:
-    from enum import StrEnum
-except ImportError:
-    from enum import Enum
 
-    class StrEnum(str, Enum):  # noqa: UP042
-        pass
-
+from enum import StrEnum
 
 from pydantic import AwareDatetime, BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
