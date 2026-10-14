@@ -11,6 +11,7 @@ from uuid import UUID, uuid4
 
 from enum import StrEnum
 
+from enum import StrEnum
 
 from pydantic import AwareDatetime, BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 

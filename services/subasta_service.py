@@ -1,5 +1,6 @@
 """Servicio de negocio para el Motor de Postulaciones y Subastas."""
 
+from datetime import UTC, datetime
 from uuid import UUID
 
 from dao.contrato_dao import ContratoDAO
@@ -97,9 +98,11 @@ class ServicioSubasta:
     ) -> PostulacionModelo:
         """Registra la postulacion de un transportista para una carga activa tras validar las reglas de negocio.
 
-        Valida que el transportista cuente con onboarding aprobado, que la carga exista y que se
-        encuentre en un estado que admita nuevas ofertas. Si la carga estaba en PUBLICADO o EN_SUBASTA,
-        se transiciona automaticamente a EN_POSTULACION.
+        Valida que el transportista cuente con onboarding aprobado, que la carga exista, que se
+        encuentre en un estado que admita nuevas ofertas y que no haya expirado la fecha límite de
+        postulación (f_cierre_postulaciones). Si expiró, la subasta se declara desierta (si no hubo
+        postulaciones previas) o cerrada (si ya contaba con ofertas). Si la carga estaba en
+        PUBLICADO o EN_SUBASTA y es válida, se transiciona automáticamente a EN_POSTULACION.
 
         Args:
             datos_postulacion (PostulacionCrear): Esquema con ID de carga, transportista, camion y tarifa ofertada.
@@ -109,7 +112,8 @@ class ServicioSubasta:
             PostulacionModelo: Entidad de postulacion persistida con estado PENDIENTE.
 
         Raises:
-            ValueError: Si el onboarding no esta aprobado, si el contrato no existe o si no admite ofertas.
+            ValueError: Si el onboarding no esta aprobado, si el contrato no existe, si no admite ofertas
+                o si el plazo para postular ha expirado (cerrada o desierta).
         """
         if not onboarding_aprobado:
             raise ValueError("El transportista debe tener su onboarding en estado 'APROBADO' para postular")
@@ -121,6 +125,27 @@ class ServicioSubasta:
         if contrato.estado in ESTADOS_NO_POSTULABLES:
             raise ValueError(
                 f"La carga se encuentra en estado '{contrato.estado.value}' y no acepta nuevas postulaciones"
+            )
+
+        fecha_cierre = contrato.f_cierre_postulaciones
+        if fecha_cierre.tzinfo is None:
+            fecha_cierre = fecha_cierre.replace(tzinfo=UTC)
+
+        if datetime.now(UTC) > fecha_cierre:
+            postulaciones_existentes = self.postulacion_dao.obtener_por_contrato(contrato.id)
+            if not postulaciones_existentes:
+                contrato_actualizado = MaquinaEstadosContrato.cambiar_estado(
+                    contrato_data=contrato,
+                    nuevo_estado=EstadoContrato.CANCELADO,
+                )
+                self.contrato_dao.actualizar(contrato.id, contrato_actualizado)
+                raise ValueError(
+                    f"El plazo para postular ha expirado ({contrato.f_cierre_postulaciones}). "
+                    "La subasta se declara desierta."
+                )
+            raise ValueError(
+                f"El plazo para postular ha expirado ({contrato.f_cierre_postulaciones}). "
+                "La subasta se encuentra cerrada."
             )
 
         nueva_postulacion = PostulacionModelo(**datos_postulacion.model_dump())
@@ -195,6 +220,45 @@ class ServicioSubasta:
             List[PostulacionModelo]: Listado cronologico de postulaciones recibidas.
         """
         return self.postulacion_dao.obtener_por_contrato(carga_id)
+
+    def verificar_expiracion_subasta(self, carga_id: UUID) -> str:
+        """Verifica si una subasta ha expirado segun su fecha limite de postulaciones.
+
+        Si la fecha actual supera f_cierre_postulaciones:
+        - Si no existen ofertas/postulaciones, transiciona el contrato a CANCELADO y la declara 'DESIERTA'.
+        - Si existen ofertas previas, la declara 'CERRADA' (a la espera de adjudicacion).
+
+        Args:
+            carga_id (UUID): Identificador unico de la carga o contrato.
+
+        Returns:
+            str: 'DESIERTA' si expiro sin postulaciones, 'CERRADA' si expiro con postulaciones,
+                o 'VIGENTE' si aun se encuentra dentro del plazo.
+
+        Raises:
+            ValueError: Si el contrato no existe.
+        """
+        contrato = self.contrato_dao.obtener_por_id(carga_id)
+        if not contrato:
+            raise ValueError(f"La carga/contrato con ID {carga_id} no existe")
+
+        fecha_cierre = contrato.f_cierre_postulaciones
+        if fecha_cierre.tzinfo is None:
+            fecha_cierre = fecha_cierre.replace(tzinfo=UTC)
+
+        if datetime.now(UTC) > fecha_cierre:
+            postulaciones = self.postulacion_dao.obtener_por_contrato(carga_id)
+            if not postulaciones:
+                if contrato.estado not in ESTADOS_NO_POSTULABLES:
+                    contrato_actualizado = MaquinaEstadosContrato.cambiar_estado(
+                        contrato_data=contrato,
+                        nuevo_estado=EstadoContrato.CANCELADO,
+                    )
+                    self.contrato_dao.actualizar(contrato.id, contrato_actualizado)
+                return "DESIERTA"
+            return "CERRADA"
+
+        return "VIGENTE"
 
 
 # Alias para retrocompatibilidad
