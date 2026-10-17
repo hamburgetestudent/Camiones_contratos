@@ -2,6 +2,8 @@
 Modelos de dominio y esquemas Pydantic para el modulo de Onboarding y Verificacion KYC / Fleet Compliance.
 """
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 from enum import StrEnum
 from uuid import UUID, uuid4
@@ -47,10 +49,21 @@ class DocumentoTransportistaBase(BaseModel):
         return valor
 
 
-class CargarDocumentoDTO(DocumentoTransportistaBase):
+class CargarDocumentoDTO(BaseModel):
     """Payload para la carga simulada de un documento por parte del transportista."""
 
-    pass
+    tipo: TipoDocumento = Field(..., description="Tipo de documento requerido")
+    archivo: str = Field(..., min_length=3, description="Ruta o referencia simulada al archivo cargado")
+
+    @field_validator("archivo")
+    @classmethod
+    def validar_archivo(cls, valor: str) -> str:
+        extensiones_validas = (".pdf", ".jpg", ".jpeg", ".png")
+        if not valor.strip().lower().endswith(extensiones_validas):
+            raise ValueError(
+                "El formato del archivo debe terminar en .pdf, .jpg, .jpeg o .png"
+            )
+        return valor
 
 
 class ValidarDocumentoDTO(BaseModel):
@@ -108,6 +121,20 @@ class CrearPerfilDadorDTO(BaseModel):
         valor_limpio = valor.strip().upper().replace(".", "")
         if len(valor_limpio) < 3:
             raise ValueError("El RUT/ID de empresa debe tener al menos 3 caracteres validos")
+
+        rut_sin_guion = valor_limpio.replace("-", "")
+        if len(rut_sin_guion) < 7 or not rut_sin_guion[:-1].isdigit() or rut_sin_guion[-1] not in "0123456789K":
+            raise ValueError("Formato de RUT inválido: debe contener entre 7 y 9 dígitos incluyendo el verificador")
+
+        cuerpo = rut_sin_guion[:-1]
+        dv_recibido = rut_sin_guion[-1]
+        suma = sum(int(c) * (2 + i % 6) for i, c in enumerate(reversed(cuerpo)))
+        resto = 11 - (suma % 11)
+        dv_esperado = "0" if resto == 11 else ("K" if resto == 10 else str(resto))
+
+        if dv_recibido != dv_esperado:
+            raise ValueError(f"Dígito verificador del RUT inválido: se esperaba '{dv_esperado}'")
+
         return valor_limpio
 
 
