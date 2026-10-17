@@ -1,2 +1,4 @@
 HU-IAM-01 – Registrar usuario | https://chatgpt.com/share/6ad1520d-e5a4-83e8-9041-990f0667b859
 HU-IAM-02 – Iniciar sesión | https://chatgpt.com/share/6ad2a74d-170c-83e9-ba67-b26f2467e910
+HU-ONB-02 — Consultar estado de habilitación | https://chatgpt.com/share/6ad2bc9a-1888-83e9-a4be-f1ba66c2b288
+HU-ONB-03: Registro y Actualización del Perfil Tributario del Dador de Carga | https://chatgpt.com/share/6ad2bc9a-1888-83e9-a4be-f1ba66c2b288
