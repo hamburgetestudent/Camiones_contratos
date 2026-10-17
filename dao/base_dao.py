@@ -54,17 +54,6 @@ class BaseDAO(ABC, Generic[E, ID]):  # noqa: UP046
         """Verifica la existencia de una entidad por su ID."""
         return self.obt_por_id(entidad_id) is not None
 
-    get_id = obt_por_id
-    get_all = obt_todos
-    save = guardar
-    update = actualizar
-    delete = eliminar
-
-
-
-BD_DAO = BaseDAO
-
-
     # Alias para retrocompatibilidad
     def obt_por_id(self, entidad_id: ID) -> E | None:
         """Alias para obtener_por_id."""
@@ -163,7 +152,6 @@ class DAOMemoria(BaseDAO[E, ID], Generic[E, ID]):  # noqa: UP046
     update = actualizar
     delete = eliminar
     exists = existe
-
 
 # Alias para retrocompatibilidad con importaciones previas
 BD_DAO = BaseDAO
