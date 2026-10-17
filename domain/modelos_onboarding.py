@@ -36,6 +36,16 @@ class DocumentoTransportistaBase(BaseModel):
     tipo: TipoDocumento = Field(..., description="Tipo de documento requerido")
     archivo: str = Field(..., min_length=3, description="Ruta o referencia simulada al archivo cargado")
 
+    @field_validator("archivo")
+    @classmethod
+    def validar_archivo(cls, valor: str) -> str:
+        extensiones_validas = (".pdf", ".jpg", ".jpeg", ".png")
+        if not valor.strip().lower().endswith(extensiones_validas):
+            raise ValueError(
+                "El formato del archivo debe terminar en .pdf, .jpg, .jpeg o .png"
+            )
+        return valor
+
 
 class CargarDocumentoDTO(DocumentoTransportistaBase):
     """Payload para la carga simulada de un documento por parte del transportista."""
