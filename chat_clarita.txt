@@ -7,4 +7,4 @@ HU-CON-03 - Validar montos | https://chatgpt.com/share/6ad2ec74-8e0c-83e8-865b-d
 HU-CON-05 - Consultar contratos | https://chatgpt.com/share/6ad2f0f2-6b44-83e8-aaaf-575601131460
 HU-SUB-01 - Consultar cargas | https://chatgpt.com/share/6ad2f751-9b48-83e9-a365-2ed8a65b0dc8
 HU-TRK-01 - Inicio de Tránsito y Despacho de la Carga | https://chatgpt.com/share/6ad2f94a-4514-83e8-adbb-9ec201742899
-HU-CFG-01 - Consultar configuraciónhttps://chatgpt.com/share/6ad2fb2f-f14c-83e8-8783-f9851935e891
+HU-CFG-01 - Consultar configuración | https://chatgpt.com/share/6ad2fb2f-f14c-83e8-8783-f9851935e891
