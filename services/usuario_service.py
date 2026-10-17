@@ -91,3 +91,7 @@ class ValidadorUsuario:
             return True
         except HTTPException:
             return False
+
+    def obtener_datos_usuario(self, usuario: str) -> UsuarioModelo | None:
+        """Obtiene los datos del usuario autenticado por su email."""
+        return usuario_dao.obt_por_email(usuario)

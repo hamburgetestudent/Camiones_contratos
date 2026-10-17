@@ -4,13 +4,13 @@ import path from "path";
 // Función que crea la ventana principal
 function createWindow(): void {
     const ventana = new BrowserWindow({
-        width: 900,
-        height: 550,
-        resizable: false,
+        width: 980,
+        height: 680,
+        resizable: true,
     });
 
-    // Carga el archivo HTML de la interfaz
-    ventana.loadFile(path.join(__dirname, "../paginas/index.html"));
+    // Carga el archivo HTML de la interfaz de inicio de sesión
+    ventana.loadFile(path.join(__dirname, "../paginas/Login/index.html"));
 }
 
 // Cuando Electron termina de iniciar

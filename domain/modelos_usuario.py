@@ -46,9 +46,25 @@ class UsuarioCrear(UsuarioBase):
         description="Datos de facturación o perfil tributario si es dador de carga",
     )
 
+    @field_validator("rol", mode="before")
+    @classmethod
+    def normalizar_rol_entrada(cls, v: object) -> object:
+        if isinstance(v, str):
+            valor = v.strip().upper()
+            if valor == "INDEPENDIENTE":
+                return RolUsuario.TRANSPORTISTA
+            if valor == "EMPRESA":
+                return RolUsuario.DADOR_CARGA
+            return valor
+        return v
+
     @field_validator("rol")
     @classmethod
     def validar_rol(cls, v: RolUsuario) -> RolUsuario:
+        if v == RolUsuario.INDEPENDIENTE:
+            return RolUsuario.TRANSPORTISTA
+        if v == RolUsuario.EMPRESA:
+            return RolUsuario.DADOR_CARGA
         if v not in (RolUsuario.TRANSPORTISTA, RolUsuario.DADOR_CARGA):
             raise ValueError("El rol al registrarse solo puede ser TRANSPORTISTA o DADOR_CARGA")
         return v
