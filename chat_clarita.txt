@@ -1,4 +1,10 @@
 HU-IAM-01 – Registrar usuario | https://chatgpt.com/share/6ad1520d-e5a4-83e8-9041-990f0667b859
 HU-IAM-02 – Iniciar sesión | https://chatgpt.com/share/6ad2a74d-170c-83e9-ba67-b26f2467e910
-HU-ONB-02 — Consultar estado de habilitación | https://chatgpt.com/share/6ad2bc9a-1888-83e9-a4be-f1ba66c2b288
-HU-ONB-03: Registro y Actualización del Perfil Tributario del Dador de Carga | https://chatgpt.com/share/6ad2bc9a-1888-83e9-a4be-f1ba66c2b288
+HU-ONB-02 - Consultar estado de habilitación | https://chatgpt.com/share/6ad2bc9a-1888-83e9-a4be-f1ba66c2b288
+HU-ONB-03 - Registrar perfil tributario | https://chatgpt.com/share/6ad2c5cc-9678-83e9-afea-02ff2a6fa44b
+HU-CON-01 - Registrar borrador de contrato | https://chatgpt.com/share/6ad2f46a-d08c-83e8-838d-dcbacb84ad1d
+HU-CON-03 - Validar montos | https://chatgpt.com/share/6ad2ec74-8e0c-83e8-865b-d6d57e94959d
+HU-CON-05 - Consultar contratos | https://chatgpt.com/share/6ad2f0f2-6b44-83e8-aaaf-575601131460
+HU-SUB-01 - Consultar cargas | https://chatgpt.com/share/6ad2f751-9b48-83e9-a365-2ed8a65b0dc8
+HU-TRK-01 - Inicio de Tránsito y Despacho de la Carga | https://chatgpt.com/share/6ad2f94a-4514-83e8-adbb-9ec201742899
+HU-CFG-01 - Consultar configuración | https://chatgpt.com/share/6ad2fb2f-f14c-83e8-8783-f9851935e891

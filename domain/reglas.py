@@ -3,6 +3,7 @@
 Implementa un patron Singleton thread-safe para asegurar un estado unico en memoria.
 """
 
+import threading
 from typing import Any, Optional
 
 
