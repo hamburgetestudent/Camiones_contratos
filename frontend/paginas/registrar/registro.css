@@ -194,6 +194,25 @@ legend,.form-section h2 {
     background:#444; 
 }
 
+.btn-primary:disabled {
+    opacity:0.65;
+    cursor:not-allowed;
+}
+
+.volver-login {
+    margin-top:18px;
+    display:flex;
+    justify-content:center;
+    gap:6px;
+    font-size:13px;
+}
+
+.volver-login a {
+    color:#242424;
+    font-weight:600;
+    text-decoration:underline;
+}
+
 @media (max-width:700px) { 
 
     .registro-card{

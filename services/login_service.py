@@ -42,6 +42,21 @@ class LoginService:
         if not credenciales_validas:
             raise CredencialesInvalidasError
 
+        obtener_datos = getattr(self._validador, "obtener_datos_usuario", None)
+        datos_usuario = obtener_datos(credenciales.usuario) if callable(obtener_datos) else None
+        if datos_usuario is not None:
+            return RespuestaLogin(
+                mensaje="Inicio de sesión exitoso",
+                usuario=credenciales.usuario,
+                id=str(datos_usuario.id),
+                nombre=datos_usuario.nombre,
+                email=datos_usuario.email,
+                rol=str(datos_usuario.rol.value if hasattr(datos_usuario.rol, "value") else datos_usuario.rol),
+                estado=str(
+                    datos_usuario.estado.value if hasattr(datos_usuario.estado, "value") else datos_usuario.estado
+                ),
+            )
+
         return RespuestaLogin(
             mensaje="Inicio de sesión exitoso",
             usuario=credenciales.usuario,

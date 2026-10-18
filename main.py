@@ -4,6 +4,7 @@ Configura las rutas modulares y el servidor ASGI.
 """
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from routers.auth_router import router as auth_router
 from routers.config_router import router as config_router
@@ -17,6 +18,14 @@ app = FastAPI(
     title="API - Contratos Camiones y Motor de Subastas",
     version="0.1.4",
     description="Backend modular con Autenticación, Motor de Contratos, Postulaciones y Subastas",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Inclusion de routers modulares
