@@ -1,4 +1,5 @@
-{"name":"Camiones_contratos",
+{
+"name":"Camiones_contratos",
 "version":"1.0.0",
 "description":"Aplicación de escritorio desarrollada con Electron, Node.js, TypeScript y python",
 "main":"dist/main.js",

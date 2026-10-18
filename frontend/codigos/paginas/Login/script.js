@@ -1,4 +1,4 @@
-// =================================
+
 // BOTÓN DE INICIO DE SESIÓN
 // =================================
 
@@ -17,15 +17,15 @@ btnLogin.addEventListener("click", () => {
         return;
     }
 
-    // Por ahora solamente mostramos un mensaje
-    // Más adelante aquí conectaremos el login real
+    // agregar funciones para que se conecte con back e inicie sesion
+
     alert("Intentando iniciar sesión con: " + email);
 
 });
 
 
-// =================================
-// GOOGLE
+
+// INICIO GOOGLE
 // =================================
 
 const btnGoogle = document.getElementById("btnGoogle");
@@ -37,8 +37,7 @@ btnGoogle.addEventListener("click", () => {
 });
 
 
-// =================================
-// MICROSOFT
+// INICIO MICROSOFT
 // =================================
 
 const btnMicrosoft = document.getElementById("btnMicrosoft");
@@ -50,8 +49,8 @@ btnMicrosoft.addEventListener("click", () => {
 });
 
 
-// =================================
-// APPLE
+
+// INICIO APPLE
 // =================================
 
 const btnApple = document.getElementById("btnApple");
@@ -63,9 +62,9 @@ btnApple.addEventListener("click", () => {
 });
 
 
-// =================================
+
 // RECUPERAR CONTRASEÑA
-// =================================
+// ================================
 
 const recuperarContraseña =
     document.getElementById("recuperarContraseña");
@@ -79,12 +78,11 @@ recuperarContraseña.addEventListener("click", (event) => {
 });
 
 
-// =================================
-// REGISTRO
+
+// REGISTRO NUEVO USUARIO
 // =================================
 
-const btnRegistro =
-    document.getElementById("btnRegistro");
+const btnRegistro = document.getElementById("btnRegistro");
 
 btnRegistro.addEventListener("click", (event) => {
 
