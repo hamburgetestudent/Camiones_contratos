@@ -8,12 +8,9 @@ const API_BASE_URL = window.API_BASE_URL || "http://127.0.0.1:8000";
 // CONFIGURACIÓN DE HOME
 // =================================
 
+const usuarioGuardado = localStorage.getItem("usuario_actual");
 
-const usuarioActual = {  //Editar cuando exita la coneccion
-    nombre: "Usuario de prueba",
-    foto: "",
-    iniciales: "US"
-};
+const usuarioActual = JSON.parse(usuarioGuardado);
 
 // Datos demostrativos. Sustituir por los objetos recibidos desde la base de datos.
 const contratos = [
@@ -399,7 +396,10 @@ function gestionarAccionPerfil(evento) {
     } else if (accion === "configuracion") {
         alert("conectar la pantalla de configuración de la aplicación.");
     } else if (accion === "cerrar") {
-        alert("conectar el cierre de sesion de tu aplicación.");
+
+        localStorage.removeItem("sesion_usuario");
+
+        window.location.replace("../Login/index.html");
     }
 }
 
