@@ -69,8 +69,8 @@ async function ejecutarLogin() {
             `${datos.mensaje || "Inicio de sesión exitoso"}: ${nombreMostrar}${rolMostrar}`,
             "success"
         );
-        
-        window.location.href = "../Registrar_nuevoUsuario/registro.html";
+
+        window.location.href = "../Principal/principal.html";
 
     } catch (error) {
         console.error("Error al conectar con el backend:", error);

@@ -1,11 +1,13 @@
-"use strict";
+// =================================
+// CONFIGURACIÓN DE API BACKEND
+// =================================
 
-/*
- * INTEGRACIÓN CON BASE DE DATOS:
- * 1. Reemplaza los datos de ejemplo de "contratos" por los objetos que
- *    devuelva el backend/API.
- * 2. Mantener cada objeto con los campos usados en "crearTarjetaContrato".
- */
+const API_BASE_URL = window.API_BASE_URL || "http://127.0.0.1:8000";
+
+// =================================
+// CONFIGURACIÓN DE HOME
+// =================================
+
 
 const usuarioActual = {  //Editar cuando exita la coneccion
     nombre: "Usuario de prueba",
@@ -393,11 +395,11 @@ function gestionarAccionPerfil(evento) {
 
    
     if (accion === "editar") {
-        alert("Aquí debes conectar la pantalla para editar los datos del usuario.");
+        alert("conectar la pantalla para editar los datos del usuario.");
     } else if (accion === "configuracion") {
-        alert("Aquí debes conectar la pantalla de configuración de la aplicación.");
+        alert("conectar la pantalla de configuración de la aplicación.");
     } else if (accion === "cerrar") {
-        alert("Aquí debes conectar el cierre de sesión de tu aplicación.");
+        alert("conectar el cierre de sesion de tu aplicación.");
     }
 }
 

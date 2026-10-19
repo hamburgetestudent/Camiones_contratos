@@ -31,7 +31,6 @@ Thumbs.db
 *.ntvs*
 *.njsproj
 *.sln
-<<<<<<< HEAD
 *.swp
 
 
@@ -39,6 +38,3 @@ Thumbs.db
 dist/
 herramientas/node/
 herramientas/node.zip
-=======
-*.swp
->>>>>>> origin/feat/hu-iam-01-registro

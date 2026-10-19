@@ -8,24 +8,26 @@ const path_1 = __importDefault(require("path"));
 // Función que crea la ventana principal
 function createWindow() {
     const ventana = new electron_1.BrowserWindow({
-        width: 980,
-        height: 680,
-        resizable: true,
+        width: 900,
+        height: 550,
+        resizable: false
     });
-    // Carga el archivo HTML de la interfaz de inicio de sesión
-    ventana.loadFile(path_1.default.join(__dirname, "../paginas/Login/index.html"));
+    // Carga el archivo HTML de la interfaz
+    ventana.loadFile(path_1.default.join(__dirname, "../codigos/paginas/Login/index.html"));
 }
 // Cuando Electron termina de iniciar
 electron_1.app.whenReady().then(() => {
     createWindow();
-    // En macOS, vuelve a crear la ventana si no hay ninguna ventana abierta
+    // En macOS, vuelve a crear la ventana
+    // si no hay ninguna ventana abierta
     electron_1.app.on("activate", () => {
         if (electron_1.BrowserWindow.getAllWindows().length === 0) {
             createWindow();
         }
     });
 });
-// Cierra la aplicación cuando todas las ventanas se hayan cerrado
+// Cierra la aplicación cuando todas las ventanas
+// se hayan cerrado
 electron_1.app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {
         electron_1.app.quit();
