@@ -8,10 +8,6 @@ ENV/
 env/
 .python-version
 
-# Test y borradores
-test_refactor_borrador.py
-
-
 # Node.js
 node_modules/
 npm-debug.log*
@@ -36,3 +32,5 @@ Thumbs.db
 *.njsproj
 *.sln
 *.swp
+
+*.db

@@ -5,7 +5,12 @@ Servicio de Negocio para el modulo de Onboarding y Verificacion de Documentacion
 from datetime import UTC, datetime
 from uuid import UUID
 
-from dao.onboarding_dao import DadorCargaDAOInMemory, DocumentoDAOInMemory
+from dao.onboarding_dao import (
+    DadorCargaDAOInMemory,
+    DadorCargaDAOSQLite,
+    DocumentoDAOInMemory,
+    DocumentoDAOSQLite,
+)
 from domain.modelos_onboarding import (
     DadorCarga,
     DatosFacturacion,
@@ -29,8 +34,8 @@ class OnboardingService:
 
     def __init__(
         self,
-        documento_dao: DocumentoDAOInMemory | None = None,
-        dador_dao: DadorCargaDAOInMemory | None = None,
+        documento_dao: DocumentoDAOInMemory | DocumentoDAOSQLite | None = None,
+        dador_dao: DadorCargaDAOInMemory | DadorCargaDAOSQLite | None = None,
     ) -> None:
         self.documento_dao = documento_dao or DocumentoDAOInMemory()
         self.dador_dao = dador_dao or DadorCargaDAOInMemory()
@@ -182,9 +187,9 @@ class OnboardingService:
         return dador
 
 
-# Instancia singleton del servicio y DAOs
-documento_dao_instancia = DocumentoDAOInMemory()
-dador_dao_instancia = DadorCargaDAOInMemory()
+# Instancia singleton del servicio y DAOs respaldados por SQLite
+documento_dao_instancia = DocumentoDAOSQLite()
+dador_dao_instancia = DadorCargaDAOSQLite()
 onboarding_service_instancia = OnboardingService(
     documento_dao=documento_dao_instancia,
     dador_dao=dador_dao_instancia,

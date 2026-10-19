@@ -26,7 +26,10 @@ def crear_login_router(validador: ValidadorCredenciales) -> APIRouter:
         response_model=RespuestaLogin,
         status_code=status.HTTP_200_OK,
         summary="Iniciar sesión con usuario y contraseña",
-        responses={status.HTTP_401_UNAUTHORIZED: {"description": "Usuario o contraseña incorrectos"}},
+        responses={
+            status.HTTP_401_UNAUTHORIZED: {"description": "Credenciales inválidas"},
+            status.HTTP_400_BAD_REQUEST: {"description": "Campos obligatorios incompletos"},
+        },
     )
     def iniciar_sesion(credenciales: CredencialesLogin) -> RespuestaLogin:
         """Recibe credenciales y delega su comprobación al validador."""
@@ -36,7 +39,7 @@ def crear_login_router(validador: ValidadorCredenciales) -> APIRouter:
         except CredencialesInvalidasError as error:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Usuario o contraseña incorrectos",
+                detail="Credenciales inválidas",
             ) from error
 
     return router
