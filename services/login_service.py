@@ -1,19 +1,26 @@
 """Orquestación del inicio de sesión, sin implementar la validación."""
 
+from __future__ import annotations
+
 from typing import Protocol
 
 from domain.modelos_login import CredencialesLogin, RespuestaLogin
+from domain.modelos_usuario import UsuarioModelo
+from services.security import crear_token_acceso
 
 
 class ValidadorCredenciales(Protocol):
-    """Contrato que debe cumplir el validador creado por el compañero.
+    """Contrato que debe cumplir el validador de credenciales.
 
-    Gracias a este contrato, el login no conoce bases de datos, hashes,
-    reglas de contraseña ni otros detalles que pertenecen a validación.
+    Gracias a este contrato, el login desacopla la coordinacion de la persistencia directa.
     """
 
     def validar(self, usuario: str, password: str) -> bool:
         """Indica si la combinación de usuario y contraseña es correcta."""
+        ...
+
+    def obtener_datos_usuario(self, usuario: str) -> UsuarioModelo | None:
+        """Obtiene la entidad de datos del usuario autenticado si está disponible."""
         ...
 
 
@@ -28,36 +35,51 @@ class LoginService:
         self._validador = validador
 
     def iniciar_sesion(self, credenciales: CredencialesLogin) -> RespuestaLogin:
-        """Solicita la validación y construye la respuesta del login.
+        """Solicita la validación y construye la respuesta del login con token Bearer."""
 
-        Este método no valida por sí mismo el usuario ni la contraseña.
-        """
-
-        password = credenciales.password.get_secret_value()
+        password = credenciales.obtener_password_texto()
         credenciales_validas = self._validador.validar(
             credenciales.usuario,
             password,
         )
 
         if not credenciales_validas:
-            raise CredencialesInvalidasError
+            raise CredencialesInvalidasError("Credenciales inválidas")
 
-        obtener_datos = getattr(self._validador, "obtener_datos_usuario", None)
-        datos_usuario = obtener_datos(credenciales.usuario) if callable(obtener_datos) else None
+        datos_usuario: UsuarioModelo | None = None
+        if hasattr(self._validador, "obtener_datos_usuario"):
+            datos_usuario = self._validador.obtener_datos_usuario(credenciales.usuario)
+
+        rol_valor = "USUARIO"
+        user_id: str | None = None
+        nombre: str | None = None
+        email: str = credenciales.usuario
+        estado: str | None = None
+
         if datos_usuario is not None:
-            return RespuestaLogin(
-                mensaje="Inicio de sesión exitoso",
-                usuario=credenciales.usuario,
-                id=str(datos_usuario.id),
-                nombre=datos_usuario.nombre,
-                email=datos_usuario.email,
-                rol=str(datos_usuario.rol.value if hasattr(datos_usuario.rol, "value") else datos_usuario.rol),
-                estado=str(
-                    datos_usuario.estado.value if hasattr(datos_usuario.estado, "value") else datos_usuario.estado
-                ),
-            )
+            user_id = str(datos_usuario.id)
+            nombre = datos_usuario.nombre
+            email = datos_usuario.email
+            rol_obj = datos_usuario.rol
+            rol_valor = rol_obj.value if hasattr(rol_obj, "value") else str(rol_obj)
+            estado_obj = datos_usuario.estado
+            estado = estado_obj.value if hasattr(estado_obj, "value") else str(estado_obj)
+
+        access_token = crear_token_acceso({
+            "sub": user_id or email,
+            "email": email,
+            "rol": rol_valor,
+        })
 
         return RespuestaLogin(
+            access_token=access_token,
+            token_type="bearer",
+            rol=rol_valor,
             mensaje="Inicio de sesión exitoso",
             usuario=credenciales.usuario,
+            id=user_id,
+            nombre=nombre,
+            email=email,
+            estado=estado,
         )
+
