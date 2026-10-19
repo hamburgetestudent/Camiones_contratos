@@ -72,6 +72,11 @@
                         <h2>Datos de la empresa</h2>
 
                         <div class="form-grid">
+
+                            <div class="field field-full">
+                                <label for="razon_social">Razón social *</label>
+                                <input id="razon_social" name="razon_social" type="text" placeholder="Ej. Logística del Sur S.A.">
+                            </div>
                             
                             <div class="field">
                                 <label for="rut_empresa">RUT de la empresa *</label>
@@ -123,7 +128,12 @@
 
                     <div id="mensaje" class="mensaje" role="alert" aria-live="polite"></div>
 
-                    <button type="submit" class="btn-primary">Crear cuenta</button>
+                    <button type="submit" id="btnSubmitRegistro" class="btn-primary">Crear cuenta</button>
+
+                    <div class="volver-login">
+                        <span>¿Ya tienes cuenta?</span>
+                        <a href="../Login/index.html" id="linkVolverLogin">Inicia sesión</a>
+                    </div>
 
                 </form>
             </section>

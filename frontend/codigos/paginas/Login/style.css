@@ -150,6 +150,26 @@ input:focus {
     font-size: 14px;
 }
 
+.boton-login:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.mensaje-login {
+    min-height: 18px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.mensaje-login.error {
+    color: #a40000;
+}
+
+.mensaje-login.success {
+    color: #176b35;
+}
+
 
 /* ================================= */
 /* RECUPERAR CONTRASEÑA              */

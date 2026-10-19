@@ -1,26 +1,99 @@
+// =================================
+// CONFIGURACIÓN DE API BACKEND
+// =================================
 
+const API_BASE_URL = window.API_BASE_URL || "http://127.0.0.1:8000";
+
+// =================================
 // BOTÓN DE INICIO DE SESIÓN
 // =================================
 
 const btnLogin = document.getElementById("btnLogin");
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+const mensajeLogin = document.getElementById("mensajeLogin");
 
-btnLogin.addEventListener("click", () => {
+function mostrarMensajeLogin(texto, tipo = "") {
+    if (!mensajeLogin) return;
+    mensajeLogin.textContent = texto;
+    mensajeLogin.className = "mensaje-login";
+    if (tipo) {
+        mensajeLogin.classList.add(tipo);
+    }
+}
 
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
+async function ejecutarLogin() {
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+
+    mostrarMensajeLogin("");
 
     // Comprobamos que los campos no estén vacíos
     if (email === "" || password === "") {
-
-        alert("Debes ingresar tu email y contraseña.");
-
+        mostrarMensajeLogin("Debes ingresar tu email y contraseña.", "error");
         return;
     }
 
-    // agregar funciones para que se conecte con back e inicie sesion
+    btnLogin.disabled = true;
+    mostrarMensajeLogin("Verificando credenciales...");
 
-    alert("Intentando iniciar sesión con: " + email);
+    try {
+        const respuesta = await fetch(`${API_BASE_URL}/auth/login`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                usuario: email,
+                password: password,
+            }),
+        });
 
+        const datos = await respuesta.json().catch(() => ({}));
+
+        if (!respuesta.ok) {
+            const detalle =
+                typeof datos.detail === "string"
+                    ? datos.detail
+                    : "Usuario o contraseña incorrectos.";
+            mostrarMensajeLogin(detalle, "error");
+            return;
+        }
+
+        // Guardamos la sesión del usuario autenticado
+        localStorage.setItem("usuario_actual", JSON.stringify(datos));
+
+        const nombreMostrar = datos.nombre || datos.usuario || email;
+        const rolMostrar = datos.rol ? ` (${datos.rol})` : "";
+        mostrarMensajeLogin(
+            `${datos.mensaje || "Inicio de sesión exitoso"}: ${nombreMostrar}${rolMostrar}`,
+            "success"
+        );
+        
+        window.location.href = "../Registrar_nuevoUsuario/registro.html";
+
+    } catch (error) {
+        console.error("Error al conectar con el backend:", error);
+        mostrarMensajeLogin(
+            "No se pudo conectar con el servidor (http://127.0.0.1:8000). Verifica que el backend esté en ejecución.",
+            "error"
+        );
+    } finally {
+        btnLogin.disabled = false;
+    }
+}
+
+btnLogin.addEventListener("click", ejecutarLogin);
+
+[emailInput, passwordInput].forEach((input) => {
+    if (input) {
+        input.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                ejecutarLogin();
+            }
+        });
+    }
 });
 
 

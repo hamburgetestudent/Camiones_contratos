@@ -7,14 +7,8 @@ from datetime import UTC, datetime
 from enum import Enum
 from typing import Any, Generic, TypeVar
 from uuid import UUID
+from enum import StrEnum
 
-try:
-    from enum import StrEnum
-except ImportError:
-    from enum import Enum
-
-    class StrEnum(str, Enum):  # noqa: UP042
-        pass
 
 
 S = TypeVar("S", bound=StrEnum)
