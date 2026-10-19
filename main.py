@@ -9,10 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from routers.auth_router import router as auth_router
 from routers.config_router import router as config_router
 from routers.contratos_router import router as contratos_router
-from routers.login_router import crear_login_router
 from routers.onboarding_router import router as onboarding_router
 from routers.subasta_router import router as subasta_router
-from services.usuario_service import ValidadorUsuario
 
 app = FastAPI(
     title="API - Contratos Camiones y Motor de Subastas",
@@ -30,7 +28,6 @@ app.add_middleware(
 
 # Inclusion de routers modulares
 app.include_router(auth_router)
-app.include_router(crear_login_router(ValidadorUsuario()))
 app.include_router(config_router)
 app.include_router(contratos_router)
 app.include_router(onboarding_router)
