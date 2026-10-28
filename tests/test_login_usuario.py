@@ -24,13 +24,18 @@ from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
+import services.usuario_service as usuario_service_modulo
 from dao.usuario_dao import UsuarioDAOMemoria, UsuarioDAOSQLite
 from domain.modelos_login import CredencialesLogin, RespuestaLogin
-from domain.modelos_usuario import EstadoUsuario, RolUsuario, UsuarioCrear, UsuarioModelo
+from domain.modelos_usuario import (
+    EstadoUsuario,
+    RolUsuario,
+    UsuarioCrear,
+    UsuarioModelo,
+)
 from main import app
 from routers.auth_router import iniciar_sesion as router_iniciar_sesion
-from services.security import crear_token_acceso, decodificar_token_acceso
-import services.usuario_service as usuario_service_modulo
+from services.security import decodificar_token_acceso
 from services.usuario_service import UsuarioService, hash_password
 
 
@@ -253,7 +258,9 @@ class TestCA03CamposObligatorios(BaseTestLogin):
                 usuario="",
                 password="passwordValida123",
             )
-        self.assertIn("correo electrónico es un campo obligatorio", str(ctx.exception).lower())
+        self.assertIn(
+            "correo electrónico es un campo obligatorio", str(ctx.exception).lower()
+        )
 
     def test_rechazo_password_vacia_pydantic(self) -> None:
         """Modelo rechaza contrasena vacia e informa obligatoriedad."""

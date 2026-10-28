@@ -44,7 +44,9 @@ class OnboardingService:
     # Operaciones del Transportista
     # =========================================
 
-    def cargar_documento(self, user_id: UUID, tipo: TipoDocumento, archivo: str) -> DocumentoTransportista:
+    def cargar_documento(
+        self, user_id: UUID, tipo: TipoDocumento, archivo: str
+    ) -> DocumentoTransportista:
         """
         Carga o actualiza un documento para el transportista.
         Si ya existe un documento del mismo tipo, se actualiza el archivo y se reinicia a PENDIENTE.
@@ -65,11 +67,15 @@ class OnboardingService:
         )
         return self.documento_dao.save(nuevo_doc)
 
-    def listar_documentos_transportista(self, user_id: UUID) -> list[DocumentoTransportista]:
+    def listar_documentos_transportista(
+        self, user_id: UUID
+    ) -> list[DocumentoTransportista]:
         """Obtiene la lista de todos los documentos cargados por el transportista."""
         return self.documento_dao.get_by_user_id(user_id)
 
-    def obtener_estado_transportista(self, user_id: UUID) -> EstadoOnboardingTransportistaDTO:
+    def obtener_estado_transportista(
+        self, user_id: UUID
+    ) -> EstadoOnboardingTransportistaDTO:
         """
         Calcula el estado global de onboarding del transportista:
         - APROBADO: Si y solo si los 5 documentos requeridos existen y estan todos APROBADOS.
@@ -80,12 +86,17 @@ class OnboardingService:
         docs_por_tipo = {doc.tipo: doc for doc in documentos}
 
         # Verificar si alguno esta rechazado
-        tiene_rechazados = any(doc.estado == EstadoValidacion.RECHAZADO for doc in documentos)
+        tiene_rechazados = any(
+            doc.estado == EstadoValidacion.RECHAZADO for doc in documentos
+        )
 
         # Verificar si todos los requeridos existen y estan aprobados
-        todos_cargados = all(tipo in docs_por_tipo for tipo in DOCUMENTOS_REQUERIDOS_TRANSPORTISTA)
+        todos_cargados = all(
+            tipo in docs_por_tipo for tipo in DOCUMENTOS_REQUERIDOS_TRANSPORTISTA
+        )
         todos_aprobados = todos_cargados and all(
-            docs_por_tipo[tipo].estado == EstadoValidacion.APROBADO for tipo in DOCUMENTOS_REQUERIDOS_TRANSPORTISTA
+            docs_por_tipo[tipo].estado == EstadoValidacion.APROBADO
+            for tipo in DOCUMENTOS_REQUERIDOS_TRANSPORTISTA
         )
 
         if tiene_rechazados:
@@ -95,7 +106,11 @@ class OnboardingService:
         else:
             estado_global = EstadoValidacion.PENDIENTE
 
-        faltantes = [tipo for tipo in DOCUMENTOS_REQUERIDOS_TRANSPORTISTA if tipo not in docs_por_tipo]
+        faltantes = [
+            tipo
+            for tipo in DOCUMENTOS_REQUERIDOS_TRANSPORTISTA
+            if tipo not in docs_por_tipo
+        ]
 
         return EstadoOnboardingTransportistaDTO(
             user_id=user_id,
@@ -156,7 +171,9 @@ class OnboardingService:
         """Lista todos los documentos de transportistas pendientes de revision."""
         return self.documento_dao.get_pendientes()
 
-    def validar_documento(self, documento_id: UUID, nuevo_estado: EstadoValidacion) -> DocumentoTransportista:
+    def validar_documento(
+        self, documento_id: UUID, nuevo_estado: EstadoValidacion
+    ) -> DocumentoTransportista:
         """Aprueba o rechaza un documento especifico."""
         doc = self.documento_dao.get_id(documento_id)
         if not doc:
@@ -173,7 +190,9 @@ class OnboardingService:
         """Lista todos los dadores de carga pendientes de validacion tributaria."""
         return self.dador_dao.get_pendientes()
 
-    def validar_dador(self, dador_id: UUID, nuevo_estado: EstadoValidacion) -> DadorCarga:
+    def validar_dador(
+        self, dador_id: UUID, nuevo_estado: EstadoValidacion
+    ) -> DadorCarga:
         """Aprueba o rechaza el perfil tributario de un dador de carga."""
         dador = self.dador_dao.get_id(dador_id)
         if not dador:

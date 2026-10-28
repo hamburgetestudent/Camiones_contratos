@@ -1,7 +1,10 @@
-import pytest
 from unittest.mock import patch
+
+import pytest
 from fastapi.testclient import TestClient
+
 from main import app  # Importa la aplicación FastAPI
+
 
 @pytest.fixture
 def client():
@@ -31,7 +34,7 @@ def test_frontend_envio_formulario_exitoso_con_mock(mock_print, client):
     datos_formulario = {
         "patente_camion": "AB123CD",
         "duracion_dias": "30",
-        "monto": "150000"
+        "monto": "150000",
     }
 
     response = client.post("/contratos/nuevo", data=datos_formulario)
@@ -48,13 +51,9 @@ def test_frontend_validacion_campos_vacios(client):
     Caso de Error: Verifica que la interfaz responda ante
     datos inválidos o incompletos.
     """
-    formulario_invalido = {
-        "patente_camion": "",
-        "duracion_dias": "",
-        "monto": ""
-    }
+    formulario_invalido = {"patente_camion": "", "duracion_dias": "", "monto": ""}
 
     response = client.post("/contratos/nuevo", data=formulario_invalido)
-    
+
     # Incluye 405 en los estados permitidos
     assert response.status_code in [400, 405, 422, 200, 404]

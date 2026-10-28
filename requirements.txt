@@ -10,3 +10,6 @@ psycopg2-binary>=2.9.9
 
 # Configuración & Entorno
 python-dotenv>=1.0.0
+
+# Calidad de Código & Formateo
+ruff>=0.8.0
