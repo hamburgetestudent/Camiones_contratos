@@ -90,7 +90,9 @@ def obtener_conexion(db_path: str | Path | None = None) -> Iterator[sqlite3.Conn
         conn.close()
 
 
-def inicializar_bd(db_path: str | Path | None = None, cargar_semilla: bool = True) -> None:
+def inicializar_bd(
+    db_path: str | Path | None = None, cargar_semilla: bool = True
+) -> None:
     """Crea las tablas en SQLite si no existen e inserta datos de prueba iniciales si está vacía."""
     with obtener_conexion(db_path) as conn:
         conn.executescript(SCHEMA_SQL)

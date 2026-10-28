@@ -13,7 +13,14 @@ from enum import StrEnum
 
 from enum import StrEnum
 
-from pydantic import AwareDatetime, BaseModel, BeforeValidator, ConfigDict, Field, model_validator
+from pydantic import (
+    AwareDatetime,
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    model_validator,
+)
 
 from domain.maquina_estados import EstadoContrato
 from domain.reglas import ReglasNegocio
@@ -66,28 +73,56 @@ class Moneda(StrEnum):
 class ContratoBase(BaseModel):
     #Esquema base con todas las especificaciones y reglas de validacion de un contrato.
 
-    id_empresa_generadora: UUID = Field(..., description="ID unico de la empresa generadora de carga")
-    origen: TextoNormalizado = Field(..., min_length=3, description="Direccion o comuna de origen")
-    destino: TextoNormalizado = Field(..., min_length=3, description="Direccion o comuna de destino")
+    id_empresa_generadora: UUID = Field(
+        ..., description="ID unico de la empresa generadora de carga"
+    )
+    origen: TextoNormalizado = Field(
+        ..., min_length=3, description="Direccion o comuna de origen"
+    )
+    destino: TextoNormalizado = Field(
+        ..., min_length=3, description="Direccion o comuna de destino"
+    )
 
-    f_estimada_salida: AwareDatetime = Field(..., description="Fecha y hora estimada de salida")
-    f_estimada_llegada: AwareDatetime = Field(..., description="Fecha y hora estimada de llegada")
-    f_cierre_postulaciones: AwareDatetime = Field(..., description="Fecha y hora limite de postulacion")
+    f_estimada_salida: AwareDatetime = Field(
+        ..., description="Fecha y hora estimada de salida"
+    )
+    f_estimada_llegada: AwareDatetime = Field(
+        ..., description="Fecha y hora estimada de llegada"
+    )
+    f_cierre_postulaciones: AwareDatetime = Field(
+        ..., description="Fecha y hora limite de postulacion"
+    )
 
-    input_camionKG: float = Field(..., gt=0, description="Capacidad maxima del camion en KG")  # noqa: N815
+    input_camionKG: float = Field(
+        ..., gt=0, description="Capacidad maxima del camion en KG"
+    )  # noqa: N815
     tipo_carga: TipoCarga = Field(..., description="Tipo de carga transportada")
     peso_total: float = Field(..., gt=0, description="Peso total de la carga en KG")
-    volumen_m3: float | None = Field(None, gt=0, description="Volumen estimado en metros cubicos")
-    distancia_km: float | None = Field(default=None, ge=0, description="Distancia estimada de la ruta en kilometros")
-
-    requiere_termo: bool = Field(default=False, description="Indica si requiere equipo de refrigeracion/termo")
-    numero_onu: str | None = Field(default=None, description="Codigo ONU de 4 digitos para carga peligrosa")
-    req_embalaje: str | None = Field(
-        default=None, min_length=MIN_LONGITUD_EMBALAJE, description="Instrucciones detalladas de embalaje"
+    volumen_m3: float | None = Field(
+        None, gt=0, description="Volumen estimado en metros cubicos"
     )
-    req_blindaje: bool = Field(default=False, description="Indica si requiere transporte blindado")
+    distancia_km: float | None = Field(
+        default=None, ge=0, description="Distancia estimada de la ruta en kilometros"
+    )
 
-    moneda: Moneda = Field(default=Moneda.CLP, description="Moneda de pago del contrato")
+    requiere_termo: bool = Field(
+        default=False, description="Indica si requiere equipo de refrigeracion/termo"
+    )
+    numero_onu: str | None = Field(
+        default=None, description="Codigo ONU de 4 digitos para carga peligrosa"
+    )
+    req_embalaje: str | None = Field(
+        default=None,
+        min_length=MIN_LONGITUD_EMBALAJE,
+        description="Instrucciones detalladas de embalaje",
+    )
+    req_blindaje: bool = Field(
+        default=False, description="Indica si requiere transporte blindado"
+    )
+
+    moneda: Moneda = Field(
+        default=Moneda.CLP, description="Moneda de pago del contrato"
+    )
     monto_neto: float = Field(..., gt=0, description="Monto Neto del contrato")
     monto_iva: float = Field(..., ge=0, description="Monto del IVA")
     monto_total: float = Field(..., gt=0, description="Monto Total (Neto + IVA)")
@@ -105,10 +140,14 @@ class ContratoBase(BaseModel):
             )
 
         if self.f_estimada_llegada <= self.f_estimada_salida:
-            raise ValueError("La fecha estimada de llegada debe ser posterior a la fecha de salida")
+            raise ValueError(
+                "La fecha estimada de llegada debe ser posterior a la fecha de salida"
+            )
 
         if self.f_cierre_postulaciones > self.f_estimada_salida:
-            raise ValueError("El cierre de postulaciones no puede ser posterior a la fecha de salida")
+            raise ValueError(
+                "El cierre de postulaciones no puede ser posterior a la fecha de salida"
+            )
 
     def _validar_carga_y_capacidad(self) -> None:
         if self.origen == self.destino:
@@ -116,25 +155,39 @@ class ContratoBase(BaseModel):
 
         if self.peso_total > self.input_camionKG:
             exceso = self.peso_total - self.input_camionKG
-            raise ValueError(f"El peso de la carga supera la capacidad del camion por {exceso} KG")
+            raise ValueError(
+                f"El peso de la carga supera la capacidad del camion por {exceso} KG"
+            )
 
     def _validar_requerimientos_especiales(self) -> None:
-        if self.tipo_carga in (TipoCarga.REFRIGERADA, TipoCarga.PERECEDERA) and not self.requiere_termo:
-            raise ValueError(f"La carga {self.tipo_carga.value} requiere activar la opcion de termo/refrigeracion")
+        if (
+            self.tipo_carga in (TipoCarga.REFRIGERADA, TipoCarga.PERECEDERA)
+            and not self.requiere_termo
+        ):
+            raise ValueError(
+                f"La carga {self.tipo_carga.value} requiere activar la opcion de termo/refrigeracion"
+            )
 
         if self.tipo_carga == TipoCarga.PELIGROSA:
             if not self.numero_onu:
-                raise ValueError("Las cargas peligrosas requieren un codigo ONU obligatorio")
+                raise ValueError(
+                    "Las cargas peligrosas requieren un codigo ONU obligatorio"
+                )
             if not ONU_REGEX.match(self.numero_onu.strip()):
                 raise ValueError(
                     f"Codigo ONU '{self.numero_onu}' invalido. Debe constar de 4 digitos (ej: 1234 o UN1234)"
                 )
 
         if self.tipo_carga == TipoCarga.VALORES and not self.req_blindaje:
-            raise ValueError("Las cargas de valores requieren obligatoriamente un camion blindado")
+            raise ValueError(
+                "Las cargas de valores requieren obligatoriamente un camion blindado"
+            )
 
         if self.tipo_carga == TipoCarga.FRAGIL:
-            if not self.req_embalaje or len(self.req_embalaje.strip()) < MIN_LONGITUD_EMBALAJE:
+            if (
+                not self.req_embalaje
+                or len(self.req_embalaje.strip()) < MIN_LONGITUD_EMBALAJE
+            ):
                 raise ValueError(
                     "La carga fragil requiere una especificacion de embalaje de al menos "
                     f"{MIN_LONGITUD_EMBALAJE} caracteres"
@@ -184,7 +237,13 @@ class ContratoModelo(ContratoBase):
     #Modelo de entidad y persistencia del contrato.
 
     id: UUID = Field(default_factory=uuid4, description="ID unico del contrato")
-    estado: EstadoContrato = Field(default=EstadoContrato.BORRADOR, description="Estado actual en el ciclo de vida")
-    id_transportista: UUID | None = Field(default=None, description="ID del transportista asignado")
+    estado: EstadoContrato = Field(
+        default=EstadoContrato.BORRADOR, description="Estado actual en el ciclo de vida"
+    )
+    id_transportista: UUID | None = Field(
+        default=None, description="ID del transportista asignado"
+    )
     id_camion: UUID | None = Field(default=None, description="ID del camion asignado")
-    fecha_publicacion: datetime | None = Field(default=None, description="Fecha de publicacion del contrato")
+    fecha_publicacion: datetime | None = Field(
+        default=None, description="Fecha de publicacion del contrato"
+    )

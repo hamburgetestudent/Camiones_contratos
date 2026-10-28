@@ -34,3 +34,9 @@ Thumbs.db
 *.swp
 
 *.db
+
+# Coverage reports
+.coverage
+.coverage.*
+*.cover
+htmlcov/

@@ -4,7 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, status
 
-from domain.modelos_login import CredencialesLogin, LoginEsquema, RespuestaLogin
+from domain.modelos_login import CredencialesLogin, RespuestaLogin
 from domain.modelos_usuario import UsuarioCrear, UsuarioModelo
 from services.usuario_service import UsuarioService
 

@@ -54,7 +54,9 @@ class ReglasNegocio:
         """Actualiza los parametros globales validando los rangos y tipos permitidos."""
         if iva_porcentaje is not None:
             if not (0 <= iva_porcentaje <= 1):
-                raise ValueError("El porcentaje del IVA debe estar entre 0 y 1 (ejemplo: 0.19 para 19%)")
+                raise ValueError(
+                    "El porcentaje del IVA debe estar entre 0 y 1 (ejemplo: 0.19 para 19%)"
+                )
             cls.IVA_PORCENTAJE = float(iva_porcentaje)
 
         if tolerancia_max is not None:

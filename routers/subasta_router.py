@@ -21,8 +21,12 @@ class SolicitudAdjudicacion(BaseModel):
         postulacion_id (UUID): Identificador unico de la postulacion de oferta ganadora.
     """
 
-    carga_id: UUID = Field(..., description="Identificador unico de la carga o contrato")
-    postulacion_id: UUID = Field(..., description="Identificador unico de la postulacion ganadora")
+    carga_id: UUID = Field(
+        ..., description="Identificador unico de la carga o contrato"
+    )
+    postulacion_id: UUID = Field(
+        ..., description="Identificador unico de la postulacion ganadora"
+    )
 
     model_config = ConfigDict(extra="forbid")
 
@@ -35,9 +39,15 @@ class SolicitudAdjudicacion(BaseModel):
 )
 def explorar_cargas(
     subasta_service: ServicioSubastaDep,
-    region: Annotated[str | None, Query(description="Filtro por origen o destino (comuna/region)")] = None,
-    tipo_carroceria: Annotated[str | None, Query(description="Filtro por tipo de carga o carroceria")] = None,
-    distancia_max_km: Annotated[float | None, Query(gt=0, description="Filtro por distancia maxima simulada")] = None,
+    region: Annotated[
+        str | None, Query(description="Filtro por origen o destino (comuna/region)")
+    ] = None,
+    tipo_carroceria: Annotated[
+        str | None, Query(description="Filtro por tipo de carga o carroceria")
+    ] = None,
+    distancia_max_km: Annotated[
+        float | None, Query(gt=0, description="Filtro por distancia maxima simulada")
+    ] = None,
 ) -> list[ContratoModelo]:
     """Retorna el listado de cargas publicadas o en subasta que cumplen con los filtros especificados."""
     return subasta_service.explorar_cargas(

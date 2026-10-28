@@ -26,6 +26,7 @@ from uuid import UUID
 from fastapi import HTTPException
 from pydantic import ValidationError
 
+import services.usuario_service as usuario_service_modulo
 from dao.onboarding_dao import DadorCargaDAOInMemory, DocumentoDAOInMemory
 from dao.usuario_dao import UsuarioDAOMemoria, UsuarioDAOSQLite
 from domain.modelos_onboarding import (
@@ -40,7 +41,6 @@ from services.onboarding_service import (
     DOCUMENTOS_REQUERIDOS_TRANSPORTISTA,
     OnboardingService,
 )
-import services.usuario_service as usuario_service_modulo
 from services.usuario_service import UsuarioService, hash_password
 
 
@@ -50,7 +50,9 @@ class BaseTestRegistro(unittest.TestCase):
     def setUp(self) -> None:
         # Guardar referencias originales de los singletons
         self._orig_usuario_dao = usuario_service_modulo.usuario_dao
-        self._orig_onboarding_service = usuario_service_modulo.onboarding_service_instancia
+        self._orig_onboarding_service = (
+            usuario_service_modulo.onboarding_service_instancia
+        )
 
         # Inyectar DAOs en memoria para total aislamiento
         self.usuario_dao_memoria = UsuarioDAOMemoria()
@@ -63,21 +65,35 @@ class BaseTestRegistro(unittest.TestCase):
         )
 
         usuario_service_modulo.usuario_dao = self.usuario_dao_memoria
-        usuario_service_modulo.onboarding_service_instancia = self.onboarding_service_memoria
+        usuario_service_modulo.onboarding_service_instancia = (
+            self.onboarding_service_memoria
+        )
 
     def tearDown(self) -> None:
         # Restaurar referencias originales
         usuario_service_modulo.usuario_dao = self._orig_usuario_dao
-        usuario_service_modulo.onboarding_service_instancia = self._orig_onboarding_service
+        usuario_service_modulo.onboarding_service_instancia = (
+            self._orig_onboarding_service
+        )
 
     def _crear_documentos_transportista_validos(self) -> list[CargarDocumentoDTO]:
         """Genera la lista con los 5 documentos requeridos en formatos válidos."""
         return [
-            CargarDocumentoDTO(tipo=TipoDocumento.LICENCIA_CONDUCIR, archivo="docs/licencia.pdf"),
-            CargarDocumentoDTO(tipo=TipoDocumento.PADRON_VEHICULO, archivo="docs/padron.jpg"),
-            CargarDocumentoDTO(tipo=TipoDocumento.REVISION_TECNICA, archivo="docs/rev_tec.jpeg"),
-            CargarDocumentoDTO(tipo=TipoDocumento.SEGURO_CARGA, archivo="docs/seguro.png"),
-            CargarDocumentoDTO(tipo=TipoDocumento.ANTECEDENTES, archivo="docs/antecedentes.pdf"),
+            CargarDocumentoDTO(
+                tipo=TipoDocumento.LICENCIA_CONDUCIR, archivo="docs/licencia.pdf"
+            ),
+            CargarDocumentoDTO(
+                tipo=TipoDocumento.PADRON_VEHICULO, archivo="docs/padron.jpg"
+            ),
+            CargarDocumentoDTO(
+                tipo=TipoDocumento.REVISION_TECNICA, archivo="docs/rev_tec.jpeg"
+            ),
+            CargarDocumentoDTO(
+                tipo=TipoDocumento.SEGURO_CARGA, archivo="docs/seguro.png"
+            ),
+            CargarDocumentoDTO(
+                tipo=TipoDocumento.ANTECEDENTES, archivo="docs/antecedentes.pdf"
+            ),
         ]
 
     def _crear_perfil_dador_valido(
@@ -121,7 +137,9 @@ class TestCA01RegistroExitoso(BaseTestRegistro):
 
         # Contraseña hasheada (no texto plano)
         self.assertNotEqual(usuario_creado.password_hash, "passwordSegura123")
-        self.assertEqual(usuario_creado.password_hash, hash_password("passwordSegura123"))
+        self.assertEqual(
+            usuario_creado.password_hash, hash_password("passwordSegura123")
+        )
 
         # Verificación de persistencia en SQLite/DAO
         guardado = self.usuario_dao_memoria.obtener_por_id(usuario_creado.id)
@@ -137,7 +155,9 @@ class TestCA01RegistroExitoso(BaseTestRegistro):
 
     def test_registro_exitoso_dador_carga_con_perfil_tributario(self) -> None:
         """Dador de carga completa datos y perfil tributario -> Cuenta creada con rol DADOR_CARGA y EN_REVISION."""
-        perfil = self._crear_perfil_dador_valido(correo_facturacion="contacto@pacificosrl.cl")
+        perfil = self._crear_perfil_dador_valido(
+            correo_facturacion="contacto@pacificosrl.cl"
+        )
         dto = UsuarioCrear(
             nombre="Marcela Gerente",
             email="marcela@pacificosrl.cl",
@@ -159,7 +179,10 @@ class TestCA01RegistroExitoso(BaseTestRegistro):
         self.assertIsNotNone(perfil_guardado)
         assert perfil_guardado is not None
         self.assertEqual(perfil_guardado.rut_id_empresa, "76123456-0")
-        self.assertEqual(perfil_guardado.datos_facturacion.razon_social, "Transportes del Pacífico S.A.")
+        self.assertEqual(
+            perfil_guardado.datos_facturacion.razon_social,
+            "Transportes del Pacífico S.A.",
+        )
 
     def test_registro_exitoso_a_traves_del_router(self) -> None:
         """El endpoint en auth_router delega correctamente y responde con el nuevo usuario."""
@@ -306,7 +329,10 @@ class TestCA03CamposObligatoriosIncompletos(BaseTestRegistro):
                 rol=RolUsuario.ADMIN_BACKOFFICE,
                 password="password123",
             )
-        self.assertIn("El rol al registrarse solo puede ser TRANSPORTISTA o DADOR_CARGA", str(ctx.exception))
+        self.assertIn(
+            "El rol al registrarse solo puede ser TRANSPORTISTA o DADOR_CARGA",
+            str(ctx.exception),
+        )
 
     def test_rol_invalido_cadena_desconocida(self) -> None:
         """Un rol inexistente debe lanzar ValidationError."""
@@ -339,20 +365,24 @@ class TestCA03CamposObligatoriosIncompletos(BaseTestRegistro):
     def test_email_faltante(self) -> None:
         """El correo electrónico es un campo obligatorio."""
         with self.assertRaises(ValidationError):
-            UsuarioCrear.model_validate({
-                "nombre": "Juan Valenzuela",
-                "rol": "TRANSPORTISTA",
-                "password": "password123",
-            })
+            UsuarioCrear.model_validate(
+                {
+                    "nombre": "Juan Valenzuela",
+                    "rol": "TRANSPORTISTA",
+                    "password": "password123",
+                }
+            )
 
     def test_password_faltante(self) -> None:
         """La contraseña es un campo obligatorio."""
         with self.assertRaises(ValidationError):
-            UsuarioCrear.model_validate({
-                "nombre": "Juan Valenzuela",
-                "email": "juan@correo.cl",
-                "rol": "TRANSPORTISTA",
-            })
+            UsuarioCrear.model_validate(
+                {
+                    "nombre": "Juan Valenzuela",
+                    "email": "juan@correo.cl",
+                    "rol": "TRANSPORTISTA",
+                }
+            )
 
     def test_perfil_dador_datos_facturacion_incompletos(self) -> None:
         """El perfil tributario exige razon_social y direccion válidas."""
@@ -554,8 +584,12 @@ class TestCA07ValidacionPerfilTributario(BaseTestRegistro):
 
     def test_correo_facturacion_valido_aceptado(self) -> None:
         """Correo de facturación con sintaxis válida es admitido."""
-        perfil = self._crear_perfil_dador_valido(correo_facturacion="cobranzas@empresa.com")
-        self.assertEqual(perfil.datos_facturacion.correo_facturacion, "cobranzas@empresa.com")
+        perfil = self._crear_perfil_dador_valido(
+            correo_facturacion="cobranzas@empresa.com"
+        )
+        self.assertEqual(
+            perfil.datos_facturacion.correo_facturacion, "cobranzas@empresa.com"
+        )
 
     def test_correo_facturacion_invalido_rechazado(self) -> None:
         """Correo de facturación sin formato válido debe ser rechazado."""
@@ -600,8 +634,12 @@ class TestCA07ValidacionPerfilTributario(BaseTestRegistro):
         perfil_db = self.dador_dao_memoria.get_by_user_id(creado.id)
         self.assertIsNotNone(perfil_db)
         assert perfil_db is not None
-        self.assertEqual(perfil_db.datos_facturacion.correo_facturacion, email_facturacion)
-        self.assertNotEqual(creado.email, perfil_db.datos_facturacion.correo_facturacion)
+        self.assertEqual(
+            perfil_db.datos_facturacion.correo_facturacion, email_facturacion
+        )
+        self.assertNotEqual(
+            creado.email, perfil_db.datos_facturacion.correo_facturacion
+        )
 
 
 class TestPersistenciaSQLiteIntegracion(unittest.TestCase):
@@ -649,4 +687,3 @@ class TestPersistenciaSQLiteIntegracion(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

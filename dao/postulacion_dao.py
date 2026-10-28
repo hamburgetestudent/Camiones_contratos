@@ -16,12 +16,16 @@ class PostulacionDAO(BaseDAO[PostulacionModelo, UUID]):
         pass
 
     @abstractmethod
-    def obtener_por_transportista(self, transportista_id: UUID) -> list[PostulacionModelo]:
+    def obtener_por_transportista(
+        self, transportista_id: UUID
+    ) -> list[PostulacionModelo]:
         """Obtiene todas las postulaciones enviadas por un transportista especifico."""
         pass
 
     @abstractmethod
-    def rechazar_postulaciones(self, contrato_id: UUID, ganadora_id: UUID) -> list[PostulacionModelo]:
+    def rechazar_postulaciones(
+        self, contrato_id: UUID, ganadora_id: UUID
+    ) -> list[PostulacionModelo]:
         """Marca como RECHAZADA toda postulacion del contrato excepto la seleccionada."""
         pass
 
@@ -49,9 +53,15 @@ class PostulacionDAOMemoria(DAOMemoria[PostulacionModelo, UUID], PostulacionDAO)
     def obtener_por_contrato(self, contrato_id: UUID) -> list[PostulacionModelo]:
         """Obtiene todas las postulaciones asociadas a un contrato o carga."""
         with self._lock:
-            return [postulacion for postulacion in self._almacenamiento.values() if postulacion.carga_id == contrato_id]
+            return [
+                postulacion
+                for postulacion in self._almacenamiento.values()
+                if postulacion.carga_id == contrato_id
+            ]
 
-    def obtener_por_transportista(self, transportista_id: UUID) -> list[PostulacionModelo]:
+    def obtener_por_transportista(
+        self, transportista_id: UUID
+    ) -> list[PostulacionModelo]:
         """Obtiene todas las postulaciones enviadas por un transportista especifico."""
         with self._lock:
             return [
@@ -60,14 +70,19 @@ class PostulacionDAOMemoria(DAOMemoria[PostulacionModelo, UUID], PostulacionDAO)
                 if postulacion.transportista_id == transportista_id
             ]
 
-    def rechazar_postulaciones(self, contrato_id: UUID, ganadora_id: UUID) -> list[PostulacionModelo]:
+    def rechazar_postulaciones(
+        self, contrato_id: UUID, ganadora_id: UUID
+    ) -> list[PostulacionModelo]:
         """Marca todas las demas postulaciones de un contrato como RECHAZADA,
         salvo la postulacion ganadora de forma atomica.
         """
         with self._lock:
             modificadas: list[PostulacionModelo] = []
             for postulacion in self.obtener_por_contrato(contrato_id):
-                if postulacion.id != ganadora_id and postulacion.estado != EstadoPostulacion.RECHAZADA:
+                if (
+                    postulacion.id != ganadora_id
+                    and postulacion.estado != EstadoPostulacion.RECHAZADA
+                ):
                     postulacion.estado = EstadoPostulacion.RECHAZADA
                     self._almacenamiento[postulacion.id] = postulacion
                     modificadas.append(postulacion)
