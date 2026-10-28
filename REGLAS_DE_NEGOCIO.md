@@ -1,6 +1,72 @@
 # 📜 Catálogo Oficial de Reglas de Negocio del Sistema
 ## Plataforma de Digitalización y Centralización de Contratos de Transporte Terrestre de Carga (*MansoViaje*)
 
+---
+
+## 📌 1. Resumen Ejecutivo de Reglas de Negocio (Vista Rápida)
+
+Esta sección consolida las **38 reglas de negocio principales** del sistema para consulta rápida de desarrolladores, QA y evaluadores:
+
+### 📊 Tabla Resumen de Reglas de Negocio
+
+| ID Regla | Módulo / Dominio | Requisito / Condición Principal | Restricción Técnica / Lógica | Impacto / Error HTTP |
+| :--- | :--- | :--- | :--- | :--- |
+| **`RN-CFG-01`** | Configuración Global | Tasa de IVA por defecto 19% | $0.0 \le \text{IVA} \le 1.0$ | `HTTP 400 Bad Request` |
+| **`RN-CFG-02`** | Configuración Global | Tolerancia financiera máxima | $\text{Tolerancia} = 0.01$, no negativa ($\ge 0$) | `HTTP 400 Bad Request` |
+| **`RN-CFG-03`** | Configuración Global | Anticipación mínima de salida | $\ge 2\text{ horas}$, no negativa ($\ge 0$) | `HTTP 400 Bad Request` |
+| **`RN-CFG-04`** | Configuración Global | Mutabilidad en caliente | Modificación runtime vía Singleton en `PATCH /configuracion` | Actualización sin reinicio |
+| **`RN-IAM-01`** | Identidad y Acceso | Roles permitidos en autoregistro | Solo `TRANSPORTISTA` o `DADOR_CARGA` (`ADMIN` es interno) | `HTTP 400 Bad Request` |
+| **`RN-IAM-02`** | Identidad y Acceso | Normalización de roles legados | `INDEPENDIENTE` $\to$ `TRANSPORTISTA`; `EMPRESA` $\to$ `DADOR_CARGA` | Normalización automática |
+| **`RN-IAM-03`** | Identidad y Acceso | Correo único e insensible a caja | Regex `^[\w\.-]+@[\w\.-]+\.\w+$`, unicidad global en DB | `HTTP 400 Bad Request` |
+| **`RN-IAM-04`** | Identidad y Acceso | Contraseña segura | Longitud $\ge 6$ caracteres, hash SHA-256 | `HTTP 422 Unprocessable` |
+| **`RN-IAM-05`** | Identidad y Acceso | Estado inicial de cuenta | Nuevos usuarios inician automáticamente en `EN_REVISION` | Requiere KYC |
+| **`RN-IAM-06`** | Identidad y Acceso | Anti-enumeración de usuarios | Credenciales inválidas arrojan error 401 idéntico y genérico | `HTTP 401 Unauthorized` |
+| **`RN-IAM-07`** | Identidad y Acceso | Tokens OAuth2 Bearer | JWT HS256 con vigencia de 8 horas (claims: sub, email, rol, exp) | `HTTP 200 OK` |
+| **`RN-KYC-01`** | Onboarding y KYC | Legajo documental transportista | Exactamente 5 obligatorios: Licencia, Padrón, Revisión, Seguro, Antecedentes | Legajo incompleto |
+| **`RN-KYC-02`** | Onboarding y KYC | Formatos de archivo válidos | Extensiones obligatorias: `.pdf`, `.jpg`, `.jpeg`, `.png` | `HTTP 422 Unprocessable` |
+| **`RN-KYC-03`** | Onboarding y KYC | Recarga de documentos | Actualiza archivo y reinicia estado a `PENDIENTE` | Requiere nueva revisión |
+| **`RN-KYC-04`** | Onboarding y KYC | Regla tripartita de estado global | `APROBADO` (5 aprobados), `RECHAZADO` ($\ge 1$ rechazado), `PENDIENTE` (resto) | Define habilitación |
+| **`RN-KYC-05`** | Onboarding y KYC | Validación de RUT Dador | Algoritmo chileno Módulo 11 (longitud, formato y dígito verificador) | `HTTP 422 Unprocessable` |
+| **`RN-KYC-06`** | Onboarding y KYC | Datos de facturación | Razón social $\ge 2$ chars, dirección $\ge 3$ chars, correo válido | `HTTP 422 Unprocessable` |
+| **`RN-KYC-07`** | Onboarding y KYC | Actualización de perfil tributario | Modificación de RUT o facturación reinicia estado a `PENDIENTE` | Requiere nueva revisión |
+| **`RN-KYC-08`** | Onboarding y KYC | Exclusividad Backoffice | Solo usuarios administradores aprueban/rechazan documentos y dadores | Control de acceso RBAC |
+| **`RN-CON-01`** | Ciclo de Contratos | Compliance Gating de Dador | Dador debe tener KYC `APROBADO` para poder crear contratos | `HTTP 403 Forbidden` |
+| **`RN-CON-02`** | Ciclo de Contratos | Estado inicial de contrato | Todo contrato creado inicia estrictamente en `BORRADOR` | `HTTP 201 Created` |
+| **`RN-CON-03`** | Ciclo de Contratos | Máquina de estados finitos | Matriz estricta de transiciones legales entre 10 estados posibles | `HTTP 400 Bad Request` |
+| **`RN-CON-04`** | Ciclo de Contratos | Invariante de publicación | `PUBLICADO`/`EN_SUBASTA` no permite transportista y fija fecha UTC | `HTTP 400 Bad Request` |
+| **`RN-CON-05`** | Ciclo de Contratos | Invariante de adjudicación | Paso a `ADJUDICADO` exige obligatoriamente asignar `id_transportista` | `HTTP 400 Bad Request` |
+| **`RN-CAR-01`** | Carga y Ruta | Normalización de ruta | Origen y destino en mayúsculas, sin espacios superfluos, $\ge 3$ caracteres | Sanitización automática |
+| **`RN-CAR-02`** | Carga y Ruta | Ruta válida | Origen y destino deben ser diferentes (`origen != destino`) | `HTTP 400 Bad Request` |
+| **`RN-CAR-03`** | Carga y Ruta | Cronología temporal | Salida $> t_{\text{actual}} + 2\text{h}$, Llegada $>$ Salida, Cierre $\le$ Salida | `HTTP 400 Bad Request` |
+| **`RN-CAR-04`** | Carga y Ruta | Capacidad y sobrepeso | Peso total carga $\le$ Capacidad camión ($P_{\text{total}} \le C_{\text{camión}}$) | `HTTP 400 Bad Request` |
+| **`RN-CAR-05`** | Carga y Ruta | Tipología especial de carga | Refrigerada $\to$ Termo; Peligrosa $\to$ Código ONU 4 dígitos; Valores $\to$ Blindaje; Frágil $\to$ Embalaje $\ge 10$ chars | `HTTP 400 Bad Request` |
+| **`RN-ECO-01`** | Consistencia Económica | Catálogo de divisas | Monedas homologadas: `CLP`, `UF`, `UTM`, `USD`, `EUR`, `CNY`, `BRL` | `HTTP 422 Unprocessable` |
+| **`RN-ECO-02`** | Consistencia Económica | Positividad de importes | $\text{Neto} > 0$, $\text{IVA} \ge 0$, $\text{Total} > 0$ | `HTTP 422 Unprocessable` |
+| **`RN-ECO-03`** | Consistencia Económica | Cuadratura contable universal | $\|(\text{Neto} + \text{IVA}) - \text{Total}\| \le 0.01$ | `HTTP 400 Bad Request` |
+| **`RN-ECO-04`** | Consistencia Económica | Cálculo y tolerancia IVA CLP | $\text{IVA} = 19\%$ del Neto con holgura máxima de \$5 CLP por redondeo | `HTTP 400 Bad Request` |
+| **`RN-SUB-01`** | Subastas y Ofertas | Cargas elegibles | Solo cargas en `PUBLICADO`, `EN_SUBASTA` o `EN_POSTULACION` | Filtro en consulta |
+| **`RN-SUB-02`** | Subastas y Ofertas | Compliance Gating Transportista | Transportista debe tener KYC global `APROBADO` para poder postular | `HTTP 400 Bad Request` |
+| **`RN-SUB-03`** | Subastas y Ofertas | Piso mínimo tarifario | Oferta debe ser mayor o igual a \$5.000 CLP | `HTTP 422 Unprocessable` |
+| **`RN-SUB-04`** | Subastas y Ofertas | Tiempo de entrega | Tiempo estimado de entrega debe ser $> 0$ horas | `HTTP 422 Unprocessable` |
+| **`RN-SUB-05`** | Subastas y Ofertas | Transición automática de carga | Primera postulación avanza contrato automáticamente a `EN_POSTULACION` | Avance automático |
+| **`RN-SUB-06`** | Subastas y Ofertas | Adjudicación atómica | Oferta ganadora pasa a `SELECCIONADA`, competidoras a `RECHAZADA`, y contrato a `ADJUDICADO` | Operación atómica en DAO |
+| **`RN-SUB-07`** | Subastas y Ofertas | Control de expiración | Cierre sin ofertas declara `DESIERTA` ($\to$ `CANCELADO`); con ofertas declara `CERRADA` (permite adjudicación) | `HTTP 400 Bad Request` |
+| **`RN-TRK-01..05`**| Seguimiento y Disputas | Flujo operativo en viaje | Tránsito $\to$ Entrega $\to$ Liquidación Escrow. Disputas solo en viaje/entrega, resueltas por mediación (`FINALIZADO`) o arbitraje (`CANCELADO`) | `HTTP 400 Bad Request` |
+| **`RN-DAT-01..03`**| Persistencia e Integridad | Concurrencia y consistencia | Thread-safety con `threading.RLock`, llaves foráneas SQLite (`PRAGMA foreign_keys = ON`), búsquedas normalizadas `LOWER(email)` | Integridad de datos |
+
+---
+
+### 💡 Puntos Clave para Recordar
+1. **Doble Bloqueo de Seguridad (Compliance Gating):**
+   * Un Dador no puede publicar ni crear contratos sin KYC tributario aprobado (`RN-CON-01`).
+   * Un Transportista no puede ofertar ni postular a viajes sin sus 5 documentos aprobados (`RN-SUB-02`).
+2. **Determinismo en Estados:** Las transiciones de contratos y postulaciones no usan flags booleanos dispersos; se rigen por máquinas de estado finito formales con control de estados terminales (`RN-CON-03`, `RN-SUB-06`).
+3. **Consistencia Financiera Rigurosa:** El sistema valida tanto la ecuación fundamental contable universal como las reglas tributarias locales chilenas (IVA 19% en CLP) con márgenes tolerantes a diferencias de coma flotante (`RN-ECO-03`, `RN-ECO-04`).
+
+---
+
+## 🧭 Catálogo Detallado y Especificación Técnica de Reglas de Negocio
+
 ### Estructura de Clasificación de Reglas
 Las reglas están identificadas unívocamente mediante la nomenclatura `RN-[MÓDULO]-[NÚMERO]`:
 * `RN-CFG`: Configuración y Parámetros Globales.
@@ -363,6 +429,13 @@ Implementado en `domain/postulacion.py`, `services/subasta_service.py` y `router
   4. El contrato de carga transiciona formalmente a `EstadoContrato.ADJUDICADO`, inscribiendo el `id_transportista` de la oferta ganadora.
 * **Trazabilidad:** `services/subasta_service.py` (Líneas 139-186), `dao/postulacion_dao.py` (Líneas 57-65).
 
+### RN-SUB-07: Control de Expiración de Subastas (Desierta vs. Cerrada)
+* **Descripción:** Si la fecha actual supera el plazo límite establecido en `f_cierre_postulaciones`:
+  1. **Subasta Desierta:** Si el plazo expiró y no se recibieron postulaciones previas, la subasta se declara `DESIERTA` y el contrato transiciona automáticamente al estado terminal `EstadoContrato.CANCELADO`.
+  2. **Subasta Cerrada:** Si el plazo expiró pero la carga ya contaba con al menos una oferta registrada, la subasta se declara `CERRADA`. Se rechaza cualquier nuevo intento de postulación, pero se mantiene la facultad del dador de carga de adjudicar el flete seleccionando a una de las ofertas recibidas.
+* **Comportamiento ante Infracción al Postular Fuera de Plazo:** Arroja `ValueError("El plazo para postular ha expirado (...). La subasta se declara desierta.")` o `ValueError("El plazo para postular ha expirado (...). La subasta se encuentra cerrada.")` (`HTTP 400 Bad Request`).
+* **Trazabilidad:** `services/subasta_service.py` (Líneas 135-150, 225-262), `tests/test_subasta_expiracion.py`.
+
 ---
 
 ## 9. Seguimiento Operativo, Entrega y Disputas (`RN-TRK`)
@@ -464,6 +537,7 @@ Implementado en `dao/base_dao.py`, `dao/sqlite_db.py`, `dao/usuario_dao.py` y `d
 | **RN-SUB-04** | Tiempo estimado de entrega $> 0$ | `domain/postulacion.py` | `POST /subastas/postular` | `HTTP 422 ValidationError` |
 | **RN-SUB-05** | Avance automático a `EN_POSTULACION` | `services/subasta_service.py` | `POST /subastas/postular` | Transición de estado |
 | **RN-SUB-06** | Adjudicación y descarte de competidores | `services/subasta_service.py` | `POST /subastas/adjudicar` | Mutación atómica en DAO |
+| **RN-SUB-07** | Expiración de subasta (Desierta / Cerrada) | `services/subasta_service.py` | `POST /subastas/postular` | `HTTP 400 ValueError` |
 | **RN-TRK-01** | Transición a `EN_TRANSITO` desde `ADJUDICADO` | `domain/maquina_estados.py` | `PATCH /contratos/{id}/estado` | `HTTP 400 ValueError` |
 | **RN-TRK-02** | Transición a `ENTREGADO` desde `EN_TRANSITO` | `domain/maquina_estados.py` | `PATCH /contratos/{id}/estado` | `HTTP 400 ValueError` |
 | **RN-TRK-03** | Apertura de `EN_DISPUTA` en viaje/entrega | `domain/maquina_estados.py` | `PATCH /contratos/{id}/estado` | `HTTP 400 ValueError` |
