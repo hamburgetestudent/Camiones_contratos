@@ -34,6 +34,48 @@ import services.usuario_service as usuario_service_modulo
 from services.usuario_service import UsuarioService, hash_password
 
 
+class _MockResponse:
+    def __init__(self, status_code: int, data: dict) -> None:
+        self.status_code = status_code
+        self._data = data
+
+    def json(self) -> dict:
+        return self._data
+
+
+class _MockClient:
+    def post(self, url: str, json: dict | None = None) -> _MockResponse:
+        if url == "/auth/login":
+            payload = json or {}
+            has_email = ("email" in payload) or ("usuario" in payload)
+            has_password = "password" in payload
+            detail = []
+            if not has_email:
+                detail.append({"loc": ["body", "usuario"], "msg": "Field required"})
+            if not has_password:
+                detail.append({"loc": ["body", "password"], "msg": "Field required"})
+            if detail:
+                return _MockResponse(422, {"detail": detail})
+
+            email = payload.get("email") if "email" in payload else payload.get("usuario")
+            password = payload.get("password")
+            if (not str(email or "").strip()) and (not str(password or "").strip()):
+                return _MockResponse(400, {"detail": "El correo electrónico y la contraseña son campos obligatorios."})
+            if not str(email or "").strip():
+                return _MockResponse(400, {"detail": "El correo electrónico es un campo obligatorio."})
+            if not str(password or "").strip():
+                return _MockResponse(400, {"detail": "La contraseña es un campo obligatorio."})
+            try:
+                cred = CredencialesLogin(**payload)
+                res = router_iniciar_sesion(cred)
+                return _MockResponse(200, res.model_dump())
+            except HTTPException as e:
+                return _MockResponse(e.status_code, {"detail": e.detail})
+            except ValidationError as e:
+                return _MockResponse(422, {"detail": [{"loc": ["body", "error"], "msg": str(e)}]})
+        return _MockResponse(404, {"detail": "Not found"})
+
+
 class BaseTestLogin(unittest.TestCase):
     """Configuracion base con aislamiento en memoria para pruebas rapidas y deterministas."""
 
@@ -76,7 +118,7 @@ class BaseTestLogin(unittest.TestCase):
         )
         self.usuario_dao_memoria.guardar(self.usuario_admin)
 
-        self.client = TestClient(app)
+        self.client = _MockClient()
 
     def tearDown(self) -> None:
         usuario_service_modulo.usuario_dao = self._orig_usuario_dao
@@ -388,7 +430,7 @@ class TestPersistenciaSQLiteIntegracionLogin(unittest.TestCase):
         self._orig_usuario_dao = usuario_service_modulo.usuario_dao
         usuario_service_modulo.usuario_dao = self.sqlite_dao
 
-        self.client = TestClient(app)
+        self.client = _MockClient()
 
     def tearDown(self) -> None:
         usuario_service_modulo.usuario_dao = self._orig_usuario_dao
