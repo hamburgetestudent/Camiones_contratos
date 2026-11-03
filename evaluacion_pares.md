@@ -6,7 +6,7 @@ Fila: calificadores
 
 Sumativa 1
 
-|                  | BP  | FA  | SS  |  CP | GA  |
+|                  | BP  | FA  | SS  |  Cristian P | GA  |
 | ---------------- | :-: | :-: | :-: | :-: | --- |
 | Benjamin Ponce   | X   |  7  |  7  |  7  |  6  |
 | Fabian Ahumada   | 7   |  x  |  7  |  7  |  7  |
@@ -18,8 +18,8 @@ Sumativa 2
 
 |                  | BP  | FA  | SS  | Cristian P | GA  |
 | ---------------- | :-: | :-: | :-: | ---------- | --- |
-| Benjamin Ponce   |    |  7 |  7  |       7    |     |
-| Fabian Ahumada   |    |  X |  7  |       7    |     |
-| Santiago Sanchez |    |  7 |  X  |       7    |     |
-| Cristian Palma   |    |  7 |  7  |      X     |     |
-| Gabriel Alvarez  |    |  7 |  7  |      7     |     |
+| Benjamin Ponce   | x | 7 | 7 | 7 |     |
+| Fabian Ahumada   | 7 | X | 7 | 7 |     |
+| Santiago Sanchez | 7 | 7 | X | 7 |     |
+| Cristian Palma   | 7 | 7 | 7 | X |     |
+| Gabriel Alvarez  | 7 | 7 | 7 | 7 |     |
