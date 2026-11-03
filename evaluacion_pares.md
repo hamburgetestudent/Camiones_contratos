@@ -4,6 +4,8 @@ integrantes: Santiago Sanchez, Fabian Ahumada, Benjamin Ponce
 Columna: calificados
 Fila: calificadores 
 
+Sumativa 1
+
 |                  | BP  | FA  | SS  |  CP | GA  |
 | ---------------- | :-: | :-: | :-: | :-: | --- |
 | Benjamin Ponce   | X   |  7  |  7  |  7  |  6  |
@@ -11,3 +13,13 @@ Fila: calificadores
 | Santiago Sanchez | 7   |  7  |  X  |  7  |  7  |
 | Cristian Palma   | 7   |  7  |  7  |  x  |  7  |
 | Gabriel Alvarez  | 5   | 6.7 |  7  | 6.5 |  x  |
+
+Sumativa 2
+
+|                  | BP  | FA  | SS  | Cristian P | GA  |
+| ---------------- | :-: | :-: | :-: | ---------- | --- |
+| Benjamin Ponce   |    |  7 |  7  |       7    |     |
+| Fabian Ahumada   |    |  X |  7  |       7    |     |
+| Santiago Sanchez |    |  7 |  X  |       7    |     |
+| Cristian Palma   |    |  7 |  7  |      X     |     |
+| Gabriel Alvarez  |    |  7 |  7  |      7     |     |
