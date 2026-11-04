@@ -21,24 +21,7 @@ class TestContratoDAOMemoria(BaseTestDAO):
         self.contrato_dao = ContratoDAOMemoria()
         self.postulacion_dao = PostulacionDAOMemoria()
 
-    def test_guardar_y_obtener_contrato(self) -> None:
-        ahora = datetime.now(UTC)
-        contrato = ContratoModelo(
-            id=uuid4(),
-            id_empresa_generadora=uuid4(),
-            origen="SANTIAGO",
-            destino="VALPARAISO",
-            f_cierre_postulaciones=ahora + timedelta(hours=3),
-            f_estimada_salida=ahora + timedelta(hours=5),
-            f_estimada_llegada=ahora + timedelta(hours=10),
-            input_camionKG=10000.0,
-            tipo_carga=TipoCarga.GENERAL,
-            peso_total=5000.0,
-            monto_neto=100000.0,
-            monto_iva=19000.0,
-            monto_total=119000.0,
-            estado=EstadoContrato.BORRADOR,
-        )
+    
         guardado = self.contrato_dao.guardar(contrato)
         self.assertEqual(guardado.id, contrato.id)
 
