@@ -99,6 +99,25 @@ pytest inicio_test.py -v
 
 ---
 
+## Contratos de diseño: precondiciones, postcondiciones e invariantes
+
+Las reglas de uso de las operaciones principales están documentadas en el docstring de cada función, bajo los encabezados **Precondiciones**, **Postcondiciones** e **Invariantes**. Cuando se viola una precondición la operación falla con un error claro (`ValueError`, `PermissionError` o `HTTPException`) y **no modifica el estado**.
+
+| Operación | Dónde está el contrato | Endpoint para probarlo | Qué se puede mostrar |
+|---|---|---|---|
+| Cambio de estado de contrato (máquina de estados) | [`domain/maquina_estados.py`](domain/maquina_estados.py) · `MaquinaEstadosContrato.cambiar_estado` (línea 100) | `PATCH /contratos/{contrato_id}/estado` | Pre: transición permitida y `id_transportista` al adjudicar. Post: `estado` actualizado. Inv: CANCELADO/FINALIZADO son terminales. |
+| Validación de un contrato | [`domain/modelos.py`](domain/modelos.py) · `ContratoBase.validar_reglas_de_negocio` (línea 219) | `POST /contratos` | Invariantes: fechas, capacidad del camión, requisitos por tipo de carga, coherencia neto + IVA = total. |
+| Creación de contrato | [`services/contrato_service.py`](services/contrato_service.py) · `crear_contrato` (línea 25) | `POST /contratos` | Pre: dador de carga con KYC APROBADO. Post: contrato persistido en BORRADOR. |
+| Postulación a una carga | [`services/subasta_service.py`](services/subasta_service.py) · `postular_a_carga` (línea 102) | `POST /subastas/postular` | Pre: onboarding aprobado, carga existente y en estado disponible. Post: postulación POSTULADA y contrato en EN_POSTULACION. |
+| Adjudicación de subasta | [`services/subasta_service.py`](services/subasta_service.py) · `adjudicar_subasta` (línea 167) | `POST /subastas/adjudicar` | Post "todo o nada": una oferta SELECCIONADA, las demás RECHAZADA, contrato ADJUDICADO. Si falla, nada cambia. |
+| Validación de documentos KYC | [`services/onboarding_service.py`](services/onboarding_service.py) · `validar_documento` (línea 174) | `PATCH /onboarding/admin/documentos/{documento_id}/validar` | Pre: documento existente y estado APROBADO o RECHAZADO. Post: estado persistido. |
+| Registro de usuario | [`services/usuario_service.py`](services/usuario_service.py) · `registrar_usuario` (línea 24) | `POST /auth/registro` | Pre: email único, password de al menos 6 caracteres. Post: se guarda el hash, nunca la clave en claro. |
+| Configuración de reglas de negocio | [`domain/reglas.py`](domain/reglas.py) · `ReglasNegocio.actualizar_configuracion` (línea 48) | `PATCH /configuracion` | Pre: IVA entre 0 y 1, tolerancia y anticipación no negativas. Post: configuración vigente retornada. |
+
+Las pruebas que verifican estos contratos están en `tests/contratos/`, `tests/subastas/`, `tests/onboarding/`, `tests/usuarios/` y `tests/configuracion/`. Las pruebas de regresión de la adjudicación son `test_regresion_adjudicar_con_transicion_invalida_no_deja_estado_a_medias` (`tests/subastas/test_adjudicar_subasta.py`) y `test_rechazo_carga_en_borrador` (`tests/subastas/test_postular_a_carga.py`).
+
+---
+
 ## Verificación post-instalación
 
 Para confirmar que el servidor y los módulos están funcionando correctamente:

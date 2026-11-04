@@ -39,3 +39,33 @@ class TestAdjudicarSubasta(BaseTestSubastas):
         carga_actualizada = self.contrato_dao.obtener_por_id(carga.id)
         self.assertEqual(carga_actualizada.estado, EstadoContrato.ADJUDICADO)
         self.assertEqual(carga_actualizada.id_transportista, self.transportista_id)
+
+    def test_regresion_adjudicar_con_transicion_invalida_no_deja_estado_a_medias(
+        self,
+    ) -> None:
+        """Regresion (postcondicion todo o nada): si el contrato no puede pasar a
+        ADJUDICADO, ninguna postulacion debe quedar SELECCIONADA ni RECHAZADA.
+        """
+        carga = self.crear_carga_publicada()
+        p1 = self.subasta_service.postular_a_carga(
+            self.crear_dto_postulacion(carga.id, transportista_id=self.transportista_id)
+        )
+        p2 = self.subasta_service.postular_a_carga(
+            self.crear_dto_postulacion(
+                carga.id, transportista_id=self.transportista_2_id
+            )
+        )
+        # El contrato avanza a un estado desde el cual no se puede adjudicar
+        carga_actual = self.contrato_dao.obtener_por_id(carga.id)
+        carga_actual.estado = EstadoContrato.EN_TRANSITO
+        self.contrato_dao.actualizar(carga.id, carga_actual)
+
+        with self.assertRaises(ValueError):
+            self.subasta_service.adjudicar_subasta(carga.id, p1.id)
+
+        for postulacion_id in (p1.id, p2.id):
+            self.assertEqual(
+                self.postulacion_dao.obtener_por_id(postulacion_id).estado,
+                EstadoPostulacion.POSTULADA,
+            )
+        self.assertIsNone(self.contrato_dao.obtener_por_id(carga.id).id_transportista)

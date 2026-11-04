@@ -104,7 +104,25 @@ class MaquinaEstadosContrato(MaquinaEstadosBase[EstadoContrato]):
         id_transportista: UUID | None = None,
         id_camion: UUID | None = None,
     ) -> Any:
-        """Aplica la transicion de estado validando invariantes y reglas de negocio."""
+        """Aplica la transicion de estado validando invariantes y reglas de negocio.
+
+        Precondiciones:
+            - ``nuevo_estado`` figura en ``TRANSICIONES_PERMITIDAS[estado_actual]``.
+            - Hacia PUBLICADO / EN_SUBASTA: el contrato no tiene transportista asignado.
+            - Hacia ADJUDICADO: ``id_transportista`` es obligatorio.
+
+        Postcondiciones:
+            - ``contrato_data.estado == nuevo_estado``.
+            - Hacia PUBLICADO / EN_SUBASTA: ``fecha_publicacion`` queda definida.
+            - Hacia ADJUDICADO: ``id_transportista`` (y ``id_camion`` si se informo) quedan asignados.
+
+        Invariantes:
+            - CANCELADO y FINALIZADO son estados terminales (no admiten transiciones).
+            - Un contrato EN_SUBASTA o PUBLICADO nunca tiene transportista asignado.
+
+        Raises:
+            ValueError: Si se viola alguna precondicion (el contrato no se modifica).
+        """
         if not cls.validar_transicion(contrato_data.estado, nuevo_estado):
             raise ValueError(
                 "Transicion de estado no permitida, no se puede pasar de "

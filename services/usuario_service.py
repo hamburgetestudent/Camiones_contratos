@@ -22,6 +22,20 @@ def hash_password(password: str) -> str:
 class UsuarioService:
     @staticmethod
     def registrar_usuario(usuario_data: UsuarioCrear) -> UsuarioModelo:
+        """Registra un usuario nuevo y, si corresponde, sus datos de onboarding.
+
+        Precondiciones:
+            - ``usuario_data`` cumple las validaciones de ``UsuarioCrear`` (email valido,
+              rol permitido, password de al menos 6 caracteres).
+            - El email no esta registrado previamente.
+
+        Postcondiciones:
+            - El usuario queda persistido con ``password_hash`` (nunca la clave en claro).
+            - Si se enviaron documentos o perfil tributario, quedan cargados en PENDIENTE.
+
+        Raises:
+            HTTPException: 400 si el email ya existe.
+        """
         # Validar si el email ya existe utilizando obt_por_email
         usuario_existente = usuario_dao.obt_por_email(usuario_data.email)
         if usuario_existente:

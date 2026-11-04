@@ -115,7 +115,7 @@ class ServicioSubasta:
             onboarding_aprobado (bool, optional): Estado de verificacion de antecedentes/flota. Defaults to True.
 
         Returns:
-            PostulacionModelo: Entidad de postulacion persistida con estado PENDIENTE.
+            PostulacionModelo: Entidad de postulacion persistida con estado POSTULADA.
 
         Raises:
             ValueError: Si el onboarding no esta aprobado, si el contrato no existe o si no admite ofertas.
@@ -131,7 +131,9 @@ class ServicioSubasta:
                 f"La carga/contrato con ID {datos_postulacion.carga_id} no existe"
             )
 
-        if contrato.estado in ESTADOS_NO_POSTULABLES:
+        # Precondicion: solo cargas visibles para el transportista admiten ofertas
+        # (un BORRADOR o un contrato en transito tampoco deben recibirlas).
+        if contrato.estado not in ESTADOS_CARGA_DISPONIBLES:
             raise ValueError(
                 f"La carga se encuentra en estado '{contrato.estado.value}' y no acepta nuevas postulaciones"
             )
@@ -183,6 +185,17 @@ class ServicioSubasta:
         if not postulacion or postulacion.carga_id != carga_id:
             raise ValueError(
                 f"La postulacion con ID {postulacion_id} no pertenece al contrato indicado"
+            )
+
+        # Precondicion: validar la transicion ANTES de mutar nada, para que la
+        # postcondicion "todo o nada" se cumpla (evita ofertas SELECCIONADA con
+        # un contrato que sigue en BORRADOR, EN_TRANSITO, etc.).
+        if not MaquinaEstadosContrato.validar_transicion(
+            contrato.estado, EstadoContrato.ADJUDICADO
+        ):
+            raise ValueError(
+                "Transicion de estado no permitida, no se puede pasar de "
+                f"{contrato.estado.value} a {EstadoContrato.ADJUDICADO.value}"
             )
 
         # 1. Marcar postulacion como SELECCIONADA
