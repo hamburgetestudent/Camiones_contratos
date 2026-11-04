@@ -13,7 +13,9 @@ contrato_dao = ContratoDAOMemoria()
 postulacion_dao = PostulacionDAOMemoria()
 
 servicio_contrato = ServicioContrato(dao=contrato_dao)
-servicio_subasta = ServicioSubasta(contrato_dao=contrato_dao, postulacion_dao=postulacion_dao)
+servicio_subasta = ServicioSubasta(
+    contrato_dao=contrato_dao, postulacion_dao=postulacion_dao
+)
 
 
 def obtener_servicio_contrato() -> ServicioContrato:

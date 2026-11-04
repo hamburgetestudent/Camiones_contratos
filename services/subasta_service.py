@@ -39,7 +39,9 @@ def estimar_distancia_entre_puntos(origen: str, destino: str) -> float:
 class ServicioSubasta:
     """Orquesta la exploracion de cargas, envio de ofertas y adjudicacion de subastas."""
 
-    def __init__(self, contrato_dao: ContratoDAO, postulacion_dao: PostulacionDAO) -> None:
+    def __init__(
+        self, contrato_dao: ContratoDAO, postulacion_dao: PostulacionDAO
+    ) -> None:
         """Inicializa el servicio inyectando los DAOs de contratos y postulaciones.
 
         Args:
@@ -73,11 +75,18 @@ class ServicioSubasta:
 
         if region and region.strip():
             filtro_region = region.strip().lower()
-            cargas = [c for c in cargas if filtro_region in c.origen.lower() or filtro_region in c.destino.lower()]
+            cargas = [
+                c
+                for c in cargas
+                if filtro_region in c.origen.lower()
+                or filtro_region in c.destino.lower()
+            ]
 
         if tipo_carroceria and tipo_carroceria.strip():
             filtro_carroceria = tipo_carroceria.strip().lower()
-            cargas = [c for c in cargas if filtro_carroceria in c.tipo_carga.value.lower()]
+            cargas = [
+                c for c in cargas if filtro_carroceria in c.tipo_carga.value.lower()
+            ]
 
         if distancia_max_km is not None and distancia_max_km > 0:
 
@@ -106,19 +115,25 @@ class ServicioSubasta:
             onboarding_aprobado (bool, optional): Estado de verificacion de antecedentes/flota. Defaults to True.
 
         Returns:
-            PostulacionModelo: Entidad de postulacion persistida con estado PENDIENTE.
+            PostulacionModelo: Entidad de postulacion persistida con estado POSTULADA.
 
         Raises:
             ValueError: Si el onboarding no esta aprobado, si el contrato no existe o si no admite ofertas.
         """
         if not onboarding_aprobado:
-            raise ValueError("El transportista debe tener su onboarding en estado 'APROBADO' para postular")
+            raise ValueError(
+                "El transportista debe tener su onboarding en estado 'APROBADO' para postular"
+            )
 
         contrato = self.contrato_dao.obtener_por_id(datos_postulacion.carga_id)
         if not contrato:
-            raise ValueError(f"La carga/contrato con ID {datos_postulacion.carga_id} no existe")
+            raise ValueError(
+                f"La carga/contrato con ID {datos_postulacion.carga_id} no existe"
+            )
 
-        if contrato.estado in ESTADOS_NO_POSTULABLES:
+        # Precondicion: solo cargas visibles para el transportista admiten ofertas
+        # (un BORRADOR o un contrato en transito tampoco deben recibirlas).
+        if contrato.estado not in ESTADOS_CARGA_DISPONIBLES:
             raise ValueError(
                 f"La carga se encuentra en estado '{contrato.estado.value}' y no acepta nuevas postulaciones"
             )
@@ -162,11 +177,26 @@ class ServicioSubasta:
             raise ValueError(f"La carga/contrato con ID {carga_id} no fue encontrada")
 
         if contrato.estado in ESTADOS_NO_POSTULABLES:
-            raise ValueError(f"El contrato ya fue adjudicado, finalizado o cancelado (Estado: {contrato.estado.value})")
+            raise ValueError(
+                f"El contrato ya fue adjudicado, finalizado o cancelado (Estado: {contrato.estado.value})"
+            )
 
         postulacion = self.postulacion_dao.obtener_por_id(postulacion_id)
         if not postulacion or postulacion.carga_id != carga_id:
-            raise ValueError(f"La postulacion con ID {postulacion_id} no pertenece al contrato indicado")
+            raise ValueError(
+                f"La postulacion con ID {postulacion_id} no pertenece al contrato indicado"
+            )
+
+        # Precondicion: validar la transicion ANTES de mutar nada, para que la
+        # postcondicion "todo o nada" se cumpla (evita ofertas SELECCIONADA con
+        # un contrato que sigue en BORRADOR, EN_TRANSITO, etc.).
+        if not MaquinaEstadosContrato.validar_transicion(
+            contrato.estado, EstadoContrato.ADJUDICADO
+        ):
+            raise ValueError(
+                "Transicion de estado no permitida, no se puede pasar de "
+                f"{contrato.estado.value} a {EstadoContrato.ADJUDICADO.value}"
+            )
 
         # 1. Marcar postulacion como SELECCIONADA
         postulacion.estado = EstadoPostulacion.SELECCIONADA

@@ -52,7 +52,9 @@ class UsuarioDAOMemoria(DAOMemoria[UsuarioModelo, UUID], UsuarioDAO):
 class UsuarioDAOSQLite(UsuarioDAO):
     """Implementacion persistente en SQLite del DAO de usuarios."""
 
-    def __init__(self, db_path: str | Path | None = None, cargar_semilla: bool = True) -> None:
+    def __init__(
+        self, db_path: str | Path | None = None, cargar_semilla: bool = True
+    ) -> None:
         self._db_path = Path(db_path) if db_path else DEFAULT_DB_PATH
         self._lock = threading.RLock()
         inicializar_bd(self._db_path, cargar_semilla=cargar_semilla)
@@ -116,14 +118,20 @@ class UsuarioDAOSQLite(UsuarioDAO):
                     str(entidad.id),
                     entidad.nombre,
                     entidad.email.strip().lower(),
-                    entidad.rol.value if isinstance(entidad.rol, RolUsuario) else str(entidad.rol),
+                    entidad.rol.value
+                    if isinstance(entidad.rol, RolUsuario)
+                    else str(entidad.rol),
                     entidad.password_hash,
-                    entidad.estado.value if isinstance(entidad.estado, EstadoUsuario) else str(entidad.estado),
+                    entidad.estado.value
+                    if isinstance(entidad.estado, EstadoUsuario)
+                    else str(entidad.estado),
                 ),
             )
         return entidad
 
-    def actualizar(self, entidad_id: UUID, entidad: UsuarioModelo) -> UsuarioModelo | None:
+    def actualizar(
+        self, entidad_id: UUID, entidad: UsuarioModelo
+    ) -> UsuarioModelo | None:
         """Actualiza un usuario existente en SQLite. Retorna None si no existe."""
         with self._lock, obtener_conexion(self._db_path) as conn:
             cursor = conn.execute(
@@ -135,9 +143,13 @@ class UsuarioDAOSQLite(UsuarioDAO):
                 (
                     entidad.nombre,
                     entidad.email.strip().lower(),
-                    entidad.rol.value if isinstance(entidad.rol, RolUsuario) else str(entidad.rol),
+                    entidad.rol.value
+                    if isinstance(entidad.rol, RolUsuario)
+                    else str(entidad.rol),
                     entidad.password_hash,
-                    entidad.estado.value if isinstance(entidad.estado, EstadoUsuario) else str(entidad.estado),
+                    entidad.estado.value
+                    if isinstance(entidad.estado, EstadoUsuario)
+                    else str(entidad.estado),
                     str(entidad_id),
                 ),
             )
@@ -148,16 +160,19 @@ class UsuarioDAOSQLite(UsuarioDAO):
     def eliminar(self, entidad_id: UUID) -> bool:
         """Elimina un usuario por su UUID en SQLite."""
         with self._lock, obtener_conexion(self._db_path) as conn:
-            cursor = conn.execute("DELETE FROM usuarios WHERE id = ?", (str(entidad_id),))
+            cursor = conn.execute(
+                "DELETE FROM usuarios WHERE id = ?", (str(entidad_id),)
+            )
             return cursor.rowcount > 0
 
     def existe(self, entidad_id: UUID) -> bool:
         """Verifica si el usuario existe en SQLite."""
         with self._lock, obtener_conexion(self._db_path) as conn:
-            cursor = conn.execute("SELECT 1 FROM usuarios WHERE id = ?", (str(entidad_id),))
+            cursor = conn.execute(
+                "SELECT 1 FROM usuarios WHERE id = ?", (str(entidad_id),)
+            )
             return cursor.fetchone() is not None
 
     obt_por_email = obtener_por_email
     obt_email = obtener_por_email
     get_by_email = obtener_por_email
-

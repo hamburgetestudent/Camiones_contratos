@@ -51,10 +51,25 @@ class ReglasNegocio:
         tolerancia_max: float | None = None,
         anticipacion_min_h: int | None = None,
     ) -> dict[str, Any]:
-        """Actualiza los parametros globales validando los rangos y tipos permitidos."""
+        """Actualiza los parametros globales validando los rangos y tipos permitidos.
+
+        Precondiciones:
+            - ``0 <= iva_porcentaje <= 1``.
+            - ``tolerancia_max >= 0`` y ``anticipacion_min_h >= 0``.
+
+        Postcondiciones:
+            - Los parametros informados (no ``None``) quedan actualizados y se retorna
+              la configuracion vigente completa.
+            - Los parametros omitidos conservan su valor.
+
+        Raises:
+            ValueError: Si un valor esta fuera de rango.
+        """
         if iva_porcentaje is not None:
             if not (0 <= iva_porcentaje <= 1):
-                raise ValueError("El porcentaje del IVA debe estar entre 0 y 1 (ejemplo: 0.19 para 19%)")
+                raise ValueError(
+                    "El porcentaje del IVA debe estar entre 0 y 1 (ejemplo: 0.19 para 19%)"
+                )
             cls.IVA_PORCENTAJE = float(iva_porcentaje)
 
         if tolerancia_max is not None:

@@ -22,10 +22,27 @@ def hash_password(password: str) -> str:
 class UsuarioService:
     @staticmethod
     def registrar_usuario(usuario_data: UsuarioCrear) -> UsuarioModelo:
+        """Registra un usuario nuevo y, si corresponde, sus datos de onboarding.
+
+        Precondiciones:
+            - ``usuario_data`` cumple las validaciones de ``UsuarioCrear`` (email valido,
+              rol permitido, password de al menos 6 caracteres).
+            - El email no esta registrado previamente.
+
+        Postcondiciones:
+            - El usuario queda persistido con ``password_hash`` (nunca la clave en claro).
+            - Si se enviaron documentos o perfil tributario, quedan cargados en PENDIENTE.
+
+        Raises:
+            HTTPException: 400 si el email ya existe.
+        """
         # Validar si el email ya existe utilizando obt_por_email
         usuario_existente = usuario_dao.obt_por_email(usuario_data.email)
         if usuario_existente:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El email ya está registrado")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El email ya está registrado",
+            )
 
         # Crear modelo de base de datos
         nuevo_usuario = UsuarioModelo(
@@ -67,7 +84,9 @@ class UsuarioService:
         """Obtiene un usuario por su UUID desde SQLite."""
         usuario = usuario_dao.obtener_por_id(usuario_id)
         if not usuario:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado"
+            )
         return usuario
 
     @staticmethod
@@ -81,10 +100,16 @@ class UsuarioService:
 
         usuario = usuario_dao.obt_por_email(email.strip())
         if not usuario:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales inválidas")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Credenciales inválidas",
+            )
 
         if usuario.password_hash != hash_password(password):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales inválidas")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Credenciales inválidas",
+            )
 
         return usuario
 
@@ -111,14 +136,22 @@ class UsuarioService:
             )
 
         usuario = UsuarioService.autenticar_usuario(email, password)
-        rol_valor = usuario.rol.value if hasattr(usuario.rol, "value") else str(usuario.rol)
-        estado_valor = usuario.estado.value if hasattr(usuario.estado, "value") else str(usuario.estado)
+        rol_valor = (
+            usuario.rol.value if hasattr(usuario.rol, "value") else str(usuario.rol)
+        )
+        estado_valor = (
+            usuario.estado.value
+            if hasattr(usuario.estado, "value")
+            else str(usuario.estado)
+        )
 
-        access_token = crear_token_acceso({
-            "sub": str(usuario.id),
-            "email": usuario.email,
-            "rol": rol_valor,
-        })
+        access_token = crear_token_acceso(
+            {
+                "sub": str(usuario.id),
+                "email": usuario.email,
+                "rol": rol_valor,
+            }
+        )
 
         return RespuestaLogin(
             access_token=access_token,

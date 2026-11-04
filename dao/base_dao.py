@@ -100,7 +100,9 @@ class DAOMemoria(BaseDAO[E, ID], Generic[E, ID]):  # noqa: UP046
 
     def __init__(self, extractor_id: Callable[[E], ID] | None = None) -> None:
         self._almacenamiento: dict[ID, E] = {}
-        self._extractor_id: Callable[[E], ID] = extractor_id or (lambda entidad: getattr(entidad, "id"))
+        self._extractor_id: Callable[[E], ID] = extractor_id or (
+            lambda entidad: getattr(entidad, "id")
+        )
         self._lock = threading.RLock()
 
     def obtener_por_id(self, entidad_id: ID) -> E | None:
@@ -152,6 +154,7 @@ class DAOMemoria(BaseDAO[E, ID], Generic[E, ID]):  # noqa: UP046
     update = actualizar
     delete = eliminar
     exists = existe
+
 
 # Alias para retrocompatibilidad con importaciones previas
 BD_DAO = BaseDAO

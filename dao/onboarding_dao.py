@@ -33,7 +33,9 @@ class DocumentoDAOInMemory(BaseDAO[DocumentoTransportista, UUID]):
         self._db[entidad.id] = entidad
         return entidad
 
-    def actualizar(self, entidad_id: UUID, entidad: DocumentoTransportista) -> DocumentoTransportista | None:
+    def actualizar(
+        self, entidad_id: UUID, entidad: DocumentoTransportista
+    ) -> DocumentoTransportista | None:
         if entidad_id in self._db:
             self._db[entidad_id] = entidad
             return entidad
@@ -52,7 +54,9 @@ class DocumentoDAOInMemory(BaseDAO[DocumentoTransportista, UUID]):
         """Obtiene todos los documentos cargados por un transportista."""
         return [doc for doc in self._db.values() if doc.user_id == user_id]
 
-    def get_by_user_and_tipo(self, user_id: UUID, tipo: TipoDocumento) -> DocumentoTransportista | None:
+    def get_by_user_and_tipo(
+        self, user_id: UUID, tipo: TipoDocumento
+    ) -> DocumentoTransportista | None:
         """Obtiene el documento de un tipo específico para un transportista."""
         for doc in self._db.values():
             if doc.user_id == user_id and doc.tipo == tipo:
@@ -61,7 +65,9 @@ class DocumentoDAOInMemory(BaseDAO[DocumentoTransportista, UUID]):
 
     def get_pendientes(self) -> list[DocumentoTransportista]:
         """Obtiene todos los documentos en estado PENDIENTE."""
-        return [doc for doc in self._db.values() if doc.estado == EstadoValidacion.PENDIENTE]
+        return [
+            doc for doc in self._db.values() if doc.estado == EstadoValidacion.PENDIENTE
+        ]
 
     # Alias en ingles y nombres previos
     get_id = obtener_por_id
@@ -121,7 +127,11 @@ class DadorCargaDAOInMemory(BaseDAO[DadorCarga, UUID]):
 
     def get_pendientes(self) -> list[DadorCarga]:
         """Obtiene todos los perfiles de dador de carga en estado PENDIENTE."""
-        return [dador for dador in self._db.values() if dador.estado_validacion == EstadoValidacion.PENDIENTE]
+        return [
+            dador
+            for dador in self._db.values()
+            if dador.estado_validacion == EstadoValidacion.PENDIENTE
+        ]
 
     # Alias en ingles y nombres previos
     get_id = obtener_por_id
@@ -136,7 +146,9 @@ class DadorCargaDAOInMemory(BaseDAO[DadorCarga, UUID]):
 class DocumentoDAOSQLite(BaseDAO[DocumentoTransportista, UUID]):
     """Repositorio persistente en SQLite para los documentos de los transportistas."""
 
-    def __init__(self, db_path: str | Path | None = None, cargar_semilla: bool = True) -> None:
+    def __init__(
+        self, db_path: str | Path | None = None, cargar_semilla: bool = True
+    ) -> None:
         self._db_path = Path(db_path) if db_path else DEFAULT_DB_PATH
         self._lock = threading.RLock()
         inicializar_bd(self._db_path, cargar_semilla=cargar_semilla)
@@ -183,15 +195,21 @@ class DocumentoDAOSQLite(BaseDAO[DocumentoTransportista, UUID]):
                 (
                     str(entidad.id),
                     str(entidad.user_id),
-                    entidad.tipo.value if isinstance(entidad.tipo, TipoDocumento) else str(entidad.tipo),
+                    entidad.tipo.value
+                    if isinstance(entidad.tipo, TipoDocumento)
+                    else str(entidad.tipo),
                     entidad.archivo,
-                    entidad.estado.value if isinstance(entidad.estado, EstadoValidacion) else str(entidad.estado),
+                    entidad.estado.value
+                    if isinstance(entidad.estado, EstadoValidacion)
+                    else str(entidad.estado),
                     entidad.created_at.isoformat(),
                 ),
             )
         return entidad
 
-    def actualizar(self, entidad_id: UUID, entidad: DocumentoTransportista) -> DocumentoTransportista | None:
+    def actualizar(
+        self, entidad_id: UUID, entidad: DocumentoTransportista
+    ) -> DocumentoTransportista | None:
         with self._lock, obtener_conexion(self._db_path) as conn:
             cursor = conn.execute(
                 """
@@ -201,9 +219,13 @@ class DocumentoDAOSQLite(BaseDAO[DocumentoTransportista, UUID]):
                 """,
                 (
                     str(entidad.user_id),
-                    entidad.tipo.value if isinstance(entidad.tipo, TipoDocumento) else str(entidad.tipo),
+                    entidad.tipo.value
+                    if isinstance(entidad.tipo, TipoDocumento)
+                    else str(entidad.tipo),
                     entidad.archivo,
-                    entidad.estado.value if isinstance(entidad.estado, EstadoValidacion) else str(entidad.estado),
+                    entidad.estado.value
+                    if isinstance(entidad.estado, EstadoValidacion)
+                    else str(entidad.estado),
                     entidad.created_at.isoformat(),
                     str(entidad_id),
                 ),
@@ -237,7 +259,9 @@ class DocumentoDAOSQLite(BaseDAO[DocumentoTransportista, UUID]):
             )
             return [self._fila_a_modelo(fila) for fila in cursor.fetchall()]
 
-    def get_by_user_and_tipo(self, user_id: UUID, tipo: TipoDocumento) -> DocumentoTransportista | None:
+    def get_by_user_and_tipo(
+        self, user_id: UUID, tipo: TipoDocumento
+    ) -> DocumentoTransportista | None:
         """Obtiene el documento de un tipo específico para un transportista desde SQLite."""
         valor_tipo = tipo.value if isinstance(tipo, TipoDocumento) else str(tipo)
         with self._lock, obtener_conexion(self._db_path) as conn:
@@ -269,7 +293,9 @@ class DocumentoDAOSQLite(BaseDAO[DocumentoTransportista, UUID]):
 class DadorCargaDAOSQLite(BaseDAO[DadorCarga, UUID]):
     """Repositorio persistente en SQLite para perfiles y correos de facturación de dadores de carga."""
 
-    def __init__(self, db_path: str | Path | None = None, cargar_semilla: bool = True) -> None:
+    def __init__(
+        self, db_path: str | Path | None = None, cargar_semilla: bool = True
+    ) -> None:
         self._db_path = Path(db_path) if db_path else DEFAULT_DB_PATH
         self._lock = threading.RLock()
         inicializar_bd(self._db_path, cargar_semilla=cargar_semilla)
@@ -367,12 +393,16 @@ class DadorCargaDAOSQLite(BaseDAO[DadorCarga, UUID]):
 
     def eliminar(self, entidad_id: UUID) -> bool:
         with self._lock, obtener_conexion(self._db_path) as conn:
-            cursor = conn.execute("DELETE FROM dadores_carga WHERE id = ?", (str(entidad_id),))
+            cursor = conn.execute(
+                "DELETE FROM dadores_carga WHERE id = ?", (str(entidad_id),)
+            )
             return cursor.rowcount > 0
 
     def existe(self, entidad_id: UUID) -> bool:
         with self._lock, obtener_conexion(self._db_path) as conn:
-            cursor = conn.execute("SELECT 1 FROM dadores_carga WHERE id = ?", (str(entidad_id),))
+            cursor = conn.execute(
+                "SELECT 1 FROM dadores_carga WHERE id = ?", (str(entidad_id),)
+            )
             return cursor.fetchone() is not None
 
     def get_by_user_id(self, user_id: UUID) -> DadorCarga | None:
@@ -422,4 +452,3 @@ class DadorCargaDAOSQLite(BaseDAO[DadorCarga, UUID]):
     save = guardar
     update = actualizar
     delete = eliminar
-

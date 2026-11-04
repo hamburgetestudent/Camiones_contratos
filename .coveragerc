@@ -1,0 +1,22 @@
+[run]
+branch = True
+source =
+    dao
+    domain
+    routers
+    services
+omit =
+    tests/*
+    .venv/*
+    frontend/*
+
+[report]
+show_missing = True
+precision = 1
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    pass
+

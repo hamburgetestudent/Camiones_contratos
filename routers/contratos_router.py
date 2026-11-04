@@ -21,9 +21,15 @@ class SolicitudCambioEstado(BaseModel):
         id_camion (Optional[UUID]): Identificador del vehículo o camión asignado a la operación.
     """
 
-    nuevo_estado: EstadoContrato = Field(..., description="Nuevo estado al que avanzara el contrato")
-    id_transportista: UUID | None = Field(None, description="Identificador del transportista asignado")
-    id_camion: UUID | None = Field(None, description="Identificador del camion asignado")
+    nuevo_estado: EstadoContrato = Field(
+        ..., description="Nuevo estado al que avanzara el contrato"
+    )
+    id_transportista: UUID | None = Field(
+        None, description="Identificador del transportista asignado"
+    )
+    id_camion: UUID | None = Field(
+        None, description="Identificador del camion asignado"
+    )
 
     model_config = ConfigDict(extra="forbid")
 

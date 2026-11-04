@@ -36,7 +36,9 @@ class TipoDocumento(StrEnum):
 
 class DocumentoTransportistaBase(BaseModel):
     tipo: TipoDocumento = Field(..., description="Tipo de documento requerido")
-    archivo: str = Field(..., min_length=3, description="Ruta o referencia simulada al archivo cargado")
+    archivo: str = Field(
+        ..., min_length=3, description="Ruta o referencia simulada al archivo cargado"
+    )
 
     @field_validator("archivo")
     @classmethod
@@ -53,7 +55,9 @@ class CargarDocumentoDTO(BaseModel):
     """Payload para la carga simulada de un documento por parte del transportista."""
 
     tipo: TipoDocumento = Field(..., description="Tipo de documento requerido")
-    archivo: str = Field(..., min_length=3, description="Ruta o referencia simulada al archivo cargado")
+    archivo: str = Field(
+        ..., min_length=3, description="Ruta o referencia simulada al archivo cargado"
+    )
 
     @field_validator("archivo")
     @classmethod
@@ -69,15 +73,21 @@ class CargarDocumentoDTO(BaseModel):
 class ValidarDocumentoDTO(BaseModel):
     """Payload para aprobacion o rechazo de un documento por Backoffice/Admin."""
 
-    estado: EstadoValidacion = Field(..., description="Nuevo estado del documento (APROBADO o RECHAZADO)")
+    estado: EstadoValidacion = Field(
+        ..., description="Nuevo estado del documento (APROBADO o RECHAZADO)"
+    )
 
 
 class DocumentoTransportista(DocumentoTransportistaBase):
     """Entidad completa del documento del transportista."""
 
-    id: UUID = Field(default_factory=uuid4, description="Identificador unico del documento")
+    id: UUID = Field(
+        default_factory=uuid4, description="Identificador unico del documento"
+    )
     user_id: UUID = Field(..., description="UUID del usuario transportista")
-    estado: EstadoValidacion = Field(default=EstadoValidacion.PENDIENTE, description="Estado de validacion")
+    estado: EstadoValidacion = Field(
+        default=EstadoValidacion.PENDIENTE, description="Estado de validacion"
+    )
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         description="Fecha y hora de carga del documento",
@@ -100,7 +110,9 @@ class EstadoOnboardingTransportistaDTO(BaseModel):
 
 
 class DatosFacturacion(BaseModel):
-    razon_social: str = Field(..., min_length=2, description="Razon social o nombre tributario de la empresa")
+    razon_social: str = Field(
+        ..., min_length=2, description="Razon social o nombre tributario de la empresa"
+    )
     direccion: str = Field(..., min_length=3, description="Direccion tributaria")
     correo_facturacion: str = Field(
         ...,
@@ -112,19 +124,31 @@ class DatosFacturacion(BaseModel):
 class CrearPerfilDadorDTO(BaseModel):
     """Payload para registrar o actualizar los datos tributarios del dador de carga."""
 
-    rut_id_empresa: str = Field(..., min_length=3, description="RUT o ID tributario de la empresa")
-    datos_facturacion: DatosFacturacion = Field(..., description="Datos de facturacion tributaria")
+    rut_id_empresa: str = Field(
+        ..., min_length=3, description="RUT o ID tributario de la empresa"
+    )
+    datos_facturacion: DatosFacturacion = Field(
+        ..., description="Datos de facturacion tributaria"
+    )
 
     @field_validator("rut_id_empresa")
     @classmethod
     def validar_rut_formato(cls, valor: str) -> str:
         valor_limpio = valor.strip().upper().replace(".", "")
         if len(valor_limpio) < 3:
-            raise ValueError("El RUT/ID de empresa debe tener al menos 3 caracteres validos")
+            raise ValueError(
+                "El RUT/ID de empresa debe tener al menos 3 caracteres validos"
+            )
 
         rut_sin_guion = valor_limpio.replace("-", "")
-        if len(rut_sin_guion) < 7 or not rut_sin_guion[:-1].isdigit() or rut_sin_guion[-1] not in "0123456789K":
-            raise ValueError("Formato de RUT inválido: debe contener entre 7 y 9 dígitos incluyendo el verificador")
+        if (
+            len(rut_sin_guion) < 7
+            or not rut_sin_guion[:-1].isdigit()
+            or rut_sin_guion[-1] not in "0123456789K"
+        ):
+            raise ValueError(
+                "Formato de RUT inválido: debe contener entre 7 y 9 dígitos incluyendo el verificador"
+            )
 
         cuerpo = rut_sin_guion[:-1]
         dv_recibido = rut_sin_guion[-1]
@@ -133,7 +157,9 @@ class CrearPerfilDadorDTO(BaseModel):
         dv_esperado = "0" if resto == 11 else ("K" if resto == 10 else str(resto))
 
         if dv_recibido != dv_esperado:
-            raise ValueError(f"Dígito verificador del RUT inválido: se esperaba '{dv_esperado}'")
+            raise ValueError(
+                f"Dígito verificador del RUT inválido: se esperaba '{dv_esperado}'"
+            )
 
         return valor_limpio
 
@@ -150,7 +176,9 @@ class ValidarPerfilDadorDTO(BaseModel):
 class DadorCarga(BaseModel):
     """Entidad completa del perfil del dador de carga."""
 
-    id: UUID = Field(default_factory=uuid4, description="Identificador unico del perfil dador")
+    id: UUID = Field(
+        default_factory=uuid4, description="Identificador unico del perfil dador"
+    )
     user_id: UUID = Field(..., description="UUID del usuario dador de carga")
     rut_id_empresa: str = Field(..., description="RUT o ID de empresa")
     datos_facturacion: DatosFacturacion = Field(..., description="Datos de facturacion")

@@ -26,7 +26,10 @@ def manejar_excepcion_http(error: Exception) -> HTTPException:
     mensaje = str(error)
     mensaje_minuscula = mensaje.lower()
 
-    if any(patron in mensaje_minuscula for patron in ["no fue encontrad", "no existe", "not found"]):
+    if any(
+        patron in mensaje_minuscula
+        for patron in ["no fue encontrad", "no existe", "not found"]
+    ):
         return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=mensaje)
 
     return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=mensaje)

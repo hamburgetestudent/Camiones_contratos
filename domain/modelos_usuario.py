@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from typing import Any, Optional, Union
 from uuid import UUID, uuid4
 
@@ -10,8 +11,6 @@ from domain.modelos_onboarding import (
     CrearPerfilDadorDTO,
     DatosFacturacion,
 )
-
-import sys
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -29,13 +28,17 @@ class RolUsuario(StrEnum):
     EMPRESA = "EMPRESA"
     INDEPENDIENTE = "INDEPENDIENTE"
 
+
 class EstadoUsuario(StrEnum):
     EN_REVISION = "EN_REVISION"
     APROBADO = "APROBADO"
 
+
 class UsuarioBase(BaseModel):
     nombre: str = Field(..., min_length=2, description="Nombre del usuario")
-    email: str = Field(..., pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$", description="Correo electrónico único")
+    email: str = Field(
+        ..., pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$", description="Correo electrónico único"
+    )
     rol: RolUsuario = Field(..., description="Rol del usuario en el sistema")
 
 
@@ -97,11 +100,16 @@ class UsuarioCrear(UsuarioBase):
         if v == RolUsuario.EMPRESA:
             return RolUsuario.DADOR_CARGA
         if v not in (RolUsuario.TRANSPORTISTA, RolUsuario.DADOR_CARGA):
-            raise ValueError("El rol al registrarse solo puede ser TRANSPORTISTA o DADOR_CARGA")
+            raise ValueError(
+                "El rol al registrarse solo puede ser TRANSPORTISTA o DADOR_CARGA"
+            )
         return v
 
 
 class UsuarioModelo(UsuarioBase):
     id: UUID = Field(default_factory=uuid4, description="ID unico del usuario")
     password_hash: str = Field(..., description="Hash de la contrasena")
-    estado: EstadoUsuario = Field(default=EstadoUsuario.EN_REVISION, description="Estado del usuario en el sistema")
+    estado: EstadoUsuario = Field(
+        default=EstadoUsuario.EN_REVISION,
+        description="Estado del usuario en el sistema",
+    )

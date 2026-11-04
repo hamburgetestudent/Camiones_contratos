@@ -16,7 +16,9 @@ import time
 from typing import Any
 
 # Clave secreta configurable por variable de entorno o clave por defecto para desarrollo
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "secreto_super_seguro_plataforma_camiones_2026")
+SECRET_KEY = os.getenv(
+    "JWT_SECRET_KEY", "secreto_super_seguro_plataforma_camiones_2026"
+)
 ALGORITMO = "HS256"
 EXPIRACION_DEFAULT_MINUTOS = 60 * 8  # 8 horas de sesion
 
@@ -58,14 +60,20 @@ def crear_token_acceso(
         "typ": "JWT",
     }
 
-    header_bytes = json.dumps(header, separators=(",", ":"), sort_keys=True).encode("utf-8")
-    payload_bytes = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
+    header_bytes = json.dumps(header, separators=(",", ":"), sort_keys=True).encode(
+        "utf-8"
+    )
+    payload_bytes = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode(
+        "utf-8"
+    )
 
     header_b64 = _base64url_encode(header_bytes)
     payload_b64 = _base64url_encode(payload_bytes)
 
     contenido_a_firmar = f"{header_b64}.{payload_b64}".encode("utf-8")
-    firma = hmac.new(clave_secreta.encode("utf-8"), contenido_a_firmar, hashlib.sha256).digest()
+    firma = hmac.new(
+        clave_secreta.encode("utf-8"), contenido_a_firmar, hashlib.sha256
+    ).digest()
     firma_b64 = _base64url_encode(firma)
 
     return f"{header_b64}.{payload_b64}.{firma_b64}"
@@ -92,7 +100,9 @@ def decodificar_token_acceso(
         header_b64, payload_b64, firma_b64 = partes
         contenido_a_firmar = f"{header_b64}.{payload_b64}".encode("utf-8")
 
-        firma_esperada = hmac.new(clave_secreta.encode("utf-8"), contenido_a_firmar, hashlib.sha256).digest()
+        firma_esperada = hmac.new(
+            clave_secreta.encode("utf-8"), contenido_a_firmar, hashlib.sha256
+        ).digest()
         firma_recibida = _base64url_decode(firma_b64)
 
         if not hmac.compare_digest(firma_esperada, firma_recibida):
@@ -109,4 +119,3 @@ def decodificar_token_acceso(
         return payload
     except Exception:
         return None
-

@@ -4,12 +4,9 @@ Proporciona una clase base generica para maquinas de estados y la logica de cont
 """
 
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Generic, TypeVar
 from uuid import UUID
-from enum import StrEnum
-
-
 
 S = TypeVar("S", bound=StrEnum)
 
@@ -107,7 +104,25 @@ class MaquinaEstadosContrato(MaquinaEstadosBase[EstadoContrato]):
         id_transportista: UUID | None = None,
         id_camion: UUID | None = None,
     ) -> Any:
-        """Aplica la transicion de estado validando invariantes y reglas de negocio."""
+        """Aplica la transicion de estado validando invariantes y reglas de negocio.
+
+        Precondiciones:
+            - ``nuevo_estado`` figura en ``TRANSICIONES_PERMITIDAS[estado_actual]``.
+            - Hacia PUBLICADO / EN_SUBASTA: el contrato no tiene transportista asignado.
+            - Hacia ADJUDICADO: ``id_transportista`` es obligatorio.
+
+        Postcondiciones:
+            - ``contrato_data.estado == nuevo_estado``.
+            - Hacia PUBLICADO / EN_SUBASTA: ``fecha_publicacion`` queda definida.
+            - Hacia ADJUDICADO: ``id_transportista`` (y ``id_camion`` si se informo) quedan asignados.
+
+        Invariantes:
+            - CANCELADO y FINALIZADO son estados terminales (no admiten transiciones).
+            - Un contrato EN_SUBASTA o PUBLICADO nunca tiene transportista asignado.
+
+        Raises:
+            ValueError: Si se viola alguna precondicion (el contrato no se modifica).
+        """
         if not cls.validar_transicion(contrato_data.estado, nuevo_estado):
             raise ValueError(
                 "Transicion de estado no permitida, no se puede pasar de "
@@ -116,13 +131,17 @@ class MaquinaEstadosContrato(MaquinaEstadosBase[EstadoContrato]):
 
         if nuevo_estado in (EstadoContrato.PUBLICADO, EstadoContrato.EN_SUBASTA):
             if getattr(contrato_data, "id_transportista", None) is not None:
-                raise ValueError("Un contrato en subasta o publicado no puede tener un transportista asignado previo.")
+                raise ValueError(
+                    "Un contrato en subasta o publicado no puede tener un transportista asignado previo."
+                )
             if not getattr(contrato_data, "fecha_publicacion", None):
                 contrato_data.fecha_publicacion = datetime.now(UTC)
 
         elif nuevo_estado == EstadoContrato.ADJUDICADO:
             if not id_transportista:
-                raise ValueError("Para adjudicar un contrato se requiere indicar obligatoriamente 'id_transportista'")
+                raise ValueError(
+                    "Para adjudicar un contrato se requiere indicar obligatoriamente 'id_transportista'"
+                )
             contrato_data.id_transportista = id_transportista
             if id_camion:
                 contrato_data.id_camion = id_camion

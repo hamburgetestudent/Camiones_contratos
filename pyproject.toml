@@ -1,0 +1,37 @@
+[tool.ruff]
+# Versión de Python objetivo
+target-version = "py310"
+
+# Longitud máxima de línea (estándar Black / PEP 8)
+line-length = 88
+
+# Carpetas y rutas ignoradas
+exclude = [
+    ".git",
+    ".pytest_cache",
+    ".ruff_cache",
+    "venv",
+    "dist",
+    "node_modules",
+    "frontend",
+]
+
+[tool.ruff.lint]
+# E / W: pycodestyle (PEP 8)
+# F: Pyflakes (detección de variables/módulos sin uso y errores)
+# I: isort (ordenamiento estándar de importaciones)
+select = ["E", "F", "W", "I"]
+ignore = [
+    "E501",  # Dejar que el formateador maneje el salto de línea sin advertencia estricta del linter
+]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+known-first-party = ["dao", "domain", "routers", "services"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+skip-magic-trailing-comma = false
+
