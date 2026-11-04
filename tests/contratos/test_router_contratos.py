@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from uuid import uuid4
 from domain.maquina_estados import EstadoContrato
 from routers.contratos_router import (
     SolicitudCambioEstado,
@@ -22,7 +21,9 @@ class TestRouterContratos(BaseTestContratos):
         contrato = crear_contrato(datos, contrato_service=self.contrato_service)
         self.assertEqual(contrato.estado, EstadoContrato.BORRADOR)
 
-        recuperado = obtener_contrato(contrato.id, contrato_service=self.contrato_service)
+        recuperado = obtener_contrato(
+            contrato.id, contrato_service=self.contrato_service
+        )
         self.assertEqual(recuperado.id, contrato.id)
 
         todos = listar_contratos(contrato_service=self.contrato_service)
@@ -39,4 +40,3 @@ class TestRouterContratos(BaseTestContratos):
             contrato_service=self.contrato_service,
         )
         self.assertEqual(actualizado.estado, EstadoContrato.PUBLICADO)
-

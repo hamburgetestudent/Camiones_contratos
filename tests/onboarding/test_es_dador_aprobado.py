@@ -15,7 +15,9 @@ class TestEsDadorAprobado(BaseTestOnboarding):
         perfil = self.onboarding_service.registrar_o_actualizar_perfil_dador(
             user_id=self.dador_id,
             rut_id_empresa="76123456-0",
-            datos_facturacion=DatosFacturacion(razon_social="Test", direccion="Dir", correo_facturacion="a@b.cl"),
+            datos_facturacion=DatosFacturacion(
+                razon_social="Test", direccion="Dir", correo_facturacion="a@b.cl"
+            ),
         )
         self.assertFalse(self.onboarding_service.es_dador_aprobado(self.dador_id))
 
@@ -23,7 +25,9 @@ class TestEsDadorAprobado(BaseTestOnboarding):
         perfil = self.onboarding_service.registrar_o_actualizar_perfil_dador(
             user_id=self.dador_id,
             rut_id_empresa="76123456-0",
-            datos_facturacion=DatosFacturacion(razon_social="Test", direccion="Dir", correo_facturacion="a@b.cl"),
+            datos_facturacion=DatosFacturacion(
+                razon_social="Test", direccion="Dir", correo_facturacion="a@b.cl"
+            ),
         )
         self.onboarding_service.validar_dador(perfil.id, EstadoValidacion.APROBADO)
         self.assertTrue(self.onboarding_service.es_dador_aprobado(self.dador_id))

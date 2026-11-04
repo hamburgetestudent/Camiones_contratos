@@ -64,7 +64,9 @@ class _AssertHttpExceptionContext:
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> bool:
         if exc_type is None:
-            self.test_case.fail(f"Se esperaba HTTPException con status {self.expected_status}, pero no se lanzó ninguna excepción.")
+            self.test_case.fail(
+                f"Se esperaba HTTPException con status {self.expected_status}, pero no se lanzó ninguna excepción."
+            )
         if not issubclass(exc_type, HTTPException):
             return False  # Propagar otra excepción
 

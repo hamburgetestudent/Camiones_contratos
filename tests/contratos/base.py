@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
+
 from dao.contrato_dao import ContratoDAOMemoria
 from dao.onboarding_dao import DadorCargaDAOInMemory, DocumentoDAOInMemory
 from domain.modelos import ContratoCrear, Moneda, TipoCarga
@@ -15,7 +16,7 @@ from tests.base import BaseTestCase
 
 class BaseTestContratos(BaseTestCase):
     """Clase base DRY para pruebas del ciclo de vida de contratos.
-    
+
     Hereda de tests.base.BaseTestCase y provee aislamiento
     completo de servicios, DAOs y generadores de datos semilla válidos.
     """
@@ -80,4 +81,3 @@ class BaseTestContratos(BaseTestCase):
             monto_total=monto_total,
             numero_onu=numero_onu,
         )
-

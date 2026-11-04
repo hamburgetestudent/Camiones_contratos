@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from uuid import uuid4
+
 from pydantic import ValidationError
+
 from domain.postulacion import (
+    TARIFA_MINIMA_POSTULACION_CLP,
     EstadoPostulacion,
     MaquinaEstadoPostulacion,
     PostulacionCrear,
-    TARIFA_MINIMA_POSTULACION_CLP,
 )
 from tests.subastas.base import BaseTestSubastas
 
@@ -36,7 +38,18 @@ class TestModelosPostulacion(BaseTestSubastas):
         self.assertEqual(dto.precio_oferta, 5000.0)
 
     def test_transiciones_maquina_postulacion(self) -> None:
-        self.assertTrue(MaquinaEstadoPostulacion.validar_transicion(EstadoPostulacion.POSTULADA, EstadoPostulacion.SELECCIONADA))
-        self.assertTrue(MaquinaEstadoPostulacion.validar_transicion(EstadoPostulacion.POSTULADA, EstadoPostulacion.RECHAZADA))
-        self.assertFalse(MaquinaEstadoPostulacion.validar_transicion(EstadoPostulacion.BORRADOR, EstadoPostulacion.SELECCIONADA))
-
+        self.assertTrue(
+            MaquinaEstadoPostulacion.validar_transicion(
+                EstadoPostulacion.POSTULADA, EstadoPostulacion.SELECCIONADA
+            )
+        )
+        self.assertTrue(
+            MaquinaEstadoPostulacion.validar_transicion(
+                EstadoPostulacion.POSTULADA, EstadoPostulacion.RECHAZADA
+            )
+        )
+        self.assertFalse(
+            MaquinaEstadoPostulacion.validar_transicion(
+                EstadoPostulacion.BORRADOR, EstadoPostulacion.SELECCIONADA
+            )
+        )

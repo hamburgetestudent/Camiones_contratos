@@ -4,18 +4,19 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
+
 from dao.contrato_dao import ContratoDAOMemoria
 from dao.postulacion_dao import PostulacionDAOMemoria
 from domain.maquina_estados import EstadoContrato
 from domain.modelos import ContratoModelo, Moneda, TipoCarga
-from domain.postulacion import EstadoPostulacion, PostulacionCrear, PostulacionModelo
+from domain.postulacion import PostulacionCrear
 from services.subasta_service import ServicioSubasta
 from tests.base import BaseTestCase
 
 
 class BaseTestSubastas(BaseTestCase):
     """Clase base DRY para pruebas del motor de subastas.
-    
+
     Hereda de tests.base.BaseTestCase y provee aislamiento
     completo de persistencia, DAOs en memoria y creadores de cargas de prueba.
     """
@@ -43,7 +44,7 @@ class BaseTestSubastas(BaseTestCase):
     ) -> ContratoModelo:
         """Helper DRY para crear y persistir una carga en subasta/postulación."""
         ahora = datetime.now(UTC)
-        requiere_termo = (tipo_carga == TipoCarga.REFRIGERADA)
+        requiere_termo = tipo_carga == TipoCarga.REFRIGERADA
         contrato = ContratoModelo(
             id=uuid4(),
             id_empresa_generadora=self.empresa_id,

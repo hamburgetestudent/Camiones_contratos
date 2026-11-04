@@ -22,5 +22,6 @@ class TestObtenerConfiguracion(BaseTestConfiguracion):
         self.assertIs(instancia1, instancia2)
 
     def test_alias_obt_configuracion(self) -> None:
-        self.assertEqual(ReglasNegocio.obt_configuracion(), ReglasNegocio.obtener_configuracion())
-
+        self.assertEqual(
+            ReglasNegocio.obt_configuracion(), ReglasNegocio.obtener_configuracion()
+        )

@@ -21,7 +21,6 @@ from pathlib import Path
 from uuid import UUID, uuid4
 
 from fastapi import HTTPException
-from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
 import services.usuario_service as usuario_service_modulo
@@ -33,7 +32,6 @@ from domain.modelos_usuario import (
     UsuarioCrear,
     UsuarioModelo,
 )
-from main import app
 from routers.auth_router import iniciar_sesion as router_iniciar_sesion
 from services.security import decodificar_token_acceso
 from services.usuario_service import UsuarioService, hash_password
@@ -62,14 +60,25 @@ class _MockClient:
             if detail:
                 return _MockResponse(422, {"detail": detail})
 
-            email = payload.get("email") if "email" in payload else payload.get("usuario")
+            email = (
+                payload.get("email") if "email" in payload else payload.get("usuario")
+            )
             password = payload.get("password")
             if (not str(email or "").strip()) and (not str(password or "").strip()):
-                return _MockResponse(400, {"detail": "El correo electrónico y la contraseña son campos obligatorios."})
+                return _MockResponse(
+                    400,
+                    {
+                        "detail": "El correo electrónico y la contraseña son campos obligatorios."
+                    },
+                )
             if not str(email or "").strip():
-                return _MockResponse(400, {"detail": "El correo electrónico es un campo obligatorio."})
+                return _MockResponse(
+                    400, {"detail": "El correo electrónico es un campo obligatorio."}
+                )
             if not str(password or "").strip():
-                return _MockResponse(400, {"detail": "La contraseña es un campo obligatorio."})
+                return _MockResponse(
+                    400, {"detail": "La contraseña es un campo obligatorio."}
+                )
             try:
                 cred = CredencialesLogin(**payload)
                 res = router_iniciar_sesion(cred)
@@ -77,7 +86,9 @@ class _MockClient:
             except HTTPException as e:
                 return _MockResponse(e.status_code, {"detail": e.detail})
             except ValidationError as e:
-                return _MockResponse(422, {"detail": [{"loc": ["body", "error"], "msg": str(e)}]})
+                return _MockResponse(
+                    422, {"detail": [{"loc": ["body", "error"], "msg": str(e)}]}
+                )
         return _MockResponse(404, {"detail": "Not found"})
 
 
