@@ -42,9 +42,11 @@ python -m venv venv
 # En Linux/macOS:
 source venv/bin/activate
 # En Windows:
-venv\Scripts\activate
+cd Camiones_contratos
 
 pip install -r requirements.txt
+
+python main.py
 uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
 > La documentación interactiva de la API estará disponible en `http://127.0.0.1:8000/docs`.
