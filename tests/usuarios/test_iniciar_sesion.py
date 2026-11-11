@@ -46,3 +46,51 @@ class TestIniciarSesion(BaseTestUsuarios):
         )
         with self.assertRaises(CredencialesInvalidasError):
             servicio.iniciar_sesion(cred)
+
+
+    # ============================================================
+    # TD-01: PRUEBA DE CARACTERIZACIÓN - AUTENTICACIÓN
+    # Clase 3.1: Refactorización sistemática
+    #
+    # Objetivo:
+    # Proteger el comportamiento actual de LoginService cuando
+    # las credenciales son válidas, pero el usuario no tiene
+    # información de perfil disponible.
+    #
+    # Esta prueba debe seguir funcionando después de refactorizar.
+    # ============================================================
+    def test_login_sin_datos_usuario(self) -> None:
+        """Verifica el login cuando el validador no entrega un perfil."""
+
+        # Simulamos un validador que acepta las credenciales,
+        # pero no dispone de información adicional del usuario.
+        class ValidadorSinDatos:
+            def validar(self, usuario: str, password: str) -> bool:
+                return True
+
+            def obtener_datos_usuario(self, usuario: str):
+                return None
+
+        # Preparamos credenciales válidas para la prueba.
+        credenciales = CredencialesLogin(
+            usuario="sinperfil@ejemplo.cl",
+            password="clave123",
+        )
+
+        # Ejecutamos el comportamiento original de LoginService.
+        servicio = LoginService(ValidadorSinDatos())
+        respuesta = servicio.iniciar_sesion(credenciales)
+
+        # Comprobamos los valores predeterminados de la respuesta.
+        self.assertEqual(respuesta.rol, "USUARIO")
+        self.assertEqual(respuesta.usuario, "sinperfil@ejemplo.cl")
+        self.assertEqual(respuesta.email, "sinperfil@ejemplo.cl")
+        self.assertIsNone(respuesta.id)
+        self.assertIsNone(respuesta.nombre)
+        self.assertIsNone(respuesta.estado)
+
+        # Verificamos que el token conserve los datos esperados.
+        claims = decodificar_token_acceso(respuesta.access_token)
+        self.assertIsNotNone(claims)
+        self.assertEqual(claims["sub"], "sinperfil@ejemplo.cl")
+        self.assertEqual(claims["rol"], "USUARIO")
