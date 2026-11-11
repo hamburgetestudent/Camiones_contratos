@@ -17,7 +17,9 @@ class TestRouterAuth(BaseTestUsuarios):
     """Pruebas dedicadas a las funciones endpoint de routers/auth_router.py."""
 
     def test_iniciar_sesion_endpoint(self) -> None:
-        cred = CredencialesLogin(usuario="juan.chofer@transporte.cl", password=self.password_comun)
+        cred = CredencialesLogin(
+            usuario="juan.chofer@transporte.cl", password=self.password_comun
+        )
         respuesta = iniciar_sesion(cred)
         self.assertEqual(respuesta.rol, RolUsuario.TRANSPORTISTA.value)
         self.assertEqual(respuesta.token_type.lower(), "bearer")
@@ -33,4 +35,3 @@ class TestRouterAuth(BaseTestUsuarios):
 
         recuperado = obtener_usuario(self.usuario_dador.id)
         self.assertEqual(recuperado.id, self.usuario_dador.id)
-

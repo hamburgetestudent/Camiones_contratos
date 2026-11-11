@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from uuid import UUID, uuid4
+
+import services.onboarding_service as onboarding_service_modulo
 from dao.onboarding_dao import DadorCargaDAOInMemory, DocumentoDAOInMemory
 from domain.modelos_onboarding import (
     CrearPerfilDadorDTO,
@@ -11,16 +13,14 @@ from domain.modelos_onboarding import (
     TipoDocumento,
 )
 from services.onboarding_service import (
-    DOCUMENTOS_REQUERIDOS_TRANSPORTISTA,
     OnboardingService,
 )
-import services.onboarding_service as onboarding_service_modulo
 from tests.base import BaseTestCase
 
 
 class BaseTestOnboarding(BaseTestCase):
     """Clase base DRY para pruebas de onboarding y compliance KYC.
-    
+
     Hereda de tests.base.BaseTestCase y provee aislamiento
     completo de servicios y DAOs en memoria.
     """
@@ -82,4 +82,3 @@ class BaseTestOnboarding(BaseTestCase):
                 correo_facturacion=correo,
             ),
         )
-

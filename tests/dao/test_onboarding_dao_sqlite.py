@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from uuid import uuid4
+
 from dao.onboarding_dao import DadorCargaDAOSQLite, DocumentoDAOSQLite
 from dao.sqlite_db import inicializar_bd
 from domain.modelos_onboarding import (
@@ -60,5 +61,6 @@ class TestOnboardingDAOSQLite(BaseTestDAO):
         self.assertIsNotNone(recuperado)
         assert recuperado is not None
         self.assertEqual(recuperado.rut_id_empresa, "76123456-0")
-        self.assertEqual(recuperado.datos_facturacion.razon_social, "Empresa Minera SpA")
-
+        self.assertEqual(
+            recuperado.datos_facturacion.razon_social, "Empresa Minera SpA"
+        )

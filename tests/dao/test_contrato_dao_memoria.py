@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
+
 from dao.contrato_dao import ContratoDAOMemoria
 from dao.postulacion_dao import PostulacionDAOMemoria
 from domain.maquina_estados import EstadoContrato

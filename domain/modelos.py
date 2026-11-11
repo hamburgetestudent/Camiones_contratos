@@ -212,7 +212,20 @@ class ContratoBase(BaseModel):
 
     @model_validator(mode="after")
     def validar_reglas_de_negocio(self) -> "ContratoBase":
-        #Ejecuta todos los validadores de dominio en secuencia logica.
+        """Ejecuta todos los validadores de dominio en secuencia logica.
+
+        Invariantes de un contrato valido (se verifican en cada construccion del modelo):
+            - Salida con >= ``ReglasNegocio.ANTICIPACION_MIN_H`` horas de anticipacion;
+              llegada posterior a la salida; cierre de postulaciones <= salida.
+            - ``origen != destino`` y ``peso_total <= input_camionKG``.
+            - REFRIGERADA / PERECEDERA requieren termo; PELIGROSA requiere codigo ONU
+              valido; VALORES requiere blindaje; FRAGIL requiere embalaje >= 10 caracteres.
+            - ``monto_neto + monto_iva == monto_total`` (tolerancia ``TOLERANCIA_MAX``) y,
+              en CLP, IVA = 19 % del neto (tolerancia ``TOLERANCIA_IVA_CLP``).
+
+        Raises:
+            ValueError: Si alguna invariante falla (Pydantic lo reporta como error 422/400).
+        """
         self._validar_fechas()
         self._validar_carga_y_capacidad()
         self._validar_requerimientos_especiales()

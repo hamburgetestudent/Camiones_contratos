@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from uuid import uuid4
+
 from domain.maquina_estados import EstadoContrato
 from domain.postulacion import EstadoPostulacion
 from tests.subastas.base import BaseTestSubastas
@@ -15,7 +16,9 @@ class TestPostularACarga(BaseTestSubastas):
         carga = self.crear_carga_publicada()
         dto = self.crear_dto_postulacion(carga_id=carga.id)
 
-        postulacion = self.subasta_service.postular_a_carga(dto, onboarding_aprobado=True)
+        postulacion = self.subasta_service.postular_a_carga(
+            dto, onboarding_aprobado=True
+        )
         self.assertEqual(postulacion.carga_id, carga.id)
         self.assertEqual(postulacion.transportista_id, self.transportista_id)
         self.assertEqual(postulacion.estado, EstadoPostulacion.POSTULADA)
@@ -45,3 +48,13 @@ class TestPostularACarga(BaseTestSubastas):
         with self.assertRaises(ValueError) as ctx:
             self.subasta_service.postular_a_carga(dto, onboarding_aprobado=True)
         self.assertIn("no acepta", str(ctx.exception).lower())
+
+    def test_rechazo_carga_en_borrador(self) -> None:
+        """Precondicion: un contrato BORRADOR aun no es visible ni admite ofertas."""
+        carga = self.crear_carga_publicada(estado=EstadoContrato.BORRADOR)
+        dto = self.crear_dto_postulacion(carga_id=carga.id)
+
+        with self.assertRaises(ValueError) as ctx:
+            self.subasta_service.postular_a_carga(dto, onboarding_aprobado=True)
+        self.assertIn("no acepta", str(ctx.exception).lower())
+        self.assertEqual(self.postulacion_dao.obtener_por_contrato(carga.id), [])

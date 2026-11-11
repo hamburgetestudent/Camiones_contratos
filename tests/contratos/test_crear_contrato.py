@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from uuid import uuid4
+
 from domain.maquina_estados import EstadoContrato
 from tests.contratos.base import BaseTestContratos
 
@@ -31,5 +32,6 @@ class TestCrearContrato(BaseTestContratos):
         with self.assertRaises(PermissionError) as ctx:
             self.contrato_service.crear_contrato(datos)
 
-        self.assertIn("no cuenta con su verificacion kyc/onboarding", str(ctx.exception).lower())
-
+        self.assertIn(
+            "no cuenta con su verificacion kyc/onboarding", str(ctx.exception).lower()
+        )

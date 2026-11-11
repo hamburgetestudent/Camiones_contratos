@@ -43,4 +43,3 @@ class TestBaseDAOMemoria(BaseTestDAO):
         self.assertTrue(borrado)
         self.assertFalse(self.dao.existe(1))
         self.assertFalse(self.dao.eliminar(1))  # Segunda vez retorna False
-

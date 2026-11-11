@@ -23,7 +23,20 @@ class ServicioContrato:
         self.onboarding_service = onboarding_service or onboarding_service_instancia
 
     def crear_contrato(self, datos: ContratoCrear) -> ContratoModelo:
-        #Crea un nuevo contrato en estado BORRADOR y lo persiste via DAO.
+        """Crea un nuevo contrato en estado BORRADOR y lo persiste via DAO.
+
+        Precondiciones:
+            - ``datos`` ya cumple las reglas de ``ContratoBase`` (fechas, capacidad,
+              requisitos por tipo de carga, coherencia financiera).
+            - La empresa generadora tiene su KYC/Onboarding en estado APROBADO.
+
+        Postcondiciones:
+            - El contrato queda persistido con estado BORRADOR y un ``id`` nuevo.
+            - Si la empresa no esta aprobada, no se persiste nada.
+
+        Raises:
+            PermissionError: Si el dador de carga no esta aprobado.
+        """
         if not self.onboarding_service.es_dador_aprobado(datos.id_empresa_generadora):
             raise PermissionError(
                 f"La empresa generadora {datos.id_empresa_generadora} no cuenta con su "

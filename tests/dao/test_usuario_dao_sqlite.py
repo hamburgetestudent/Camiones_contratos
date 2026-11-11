@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from uuid import uuid4
+
 from dao.usuario_dao import UsuarioDAOSQLite
 from domain.modelos_usuario import EstadoUsuario, RolUsuario, UsuarioModelo
 from tests.dao.base import BaseTestDAO
@@ -50,14 +51,32 @@ class TestUsuarioDAOSQLite(BaseTestDAO):
         self.assertEqual(recuperado.id, user.id)
 
     def test_obtener_todos(self) -> None:
-        self.usuario_dao.guardar(UsuarioModelo(nombre="U1", email="u1@test.cl", rol=RolUsuario.TRANSPORTISTA, password_hash="h1"))
-        self.usuario_dao.guardar(UsuarioModelo(nombre="U2", email="u2@test.cl", rol=RolUsuario.DADOR_CARGA, password_hash="h2"))
+        self.usuario_dao.guardar(
+            UsuarioModelo(
+                nombre="U1",
+                email="u1@test.cl",
+                rol=RolUsuario.TRANSPORTISTA,
+                password_hash="h1",
+            )
+        )
+        self.usuario_dao.guardar(
+            UsuarioModelo(
+                nombre="U2",
+                email="u2@test.cl",
+                rol=RolUsuario.DADOR_CARGA,
+                password_hash="h2",
+            )
+        )
         todos = self.usuario_dao.obtener_todos()
         self.assertEqual(len(todos), 2)
 
     def test_eliminar_usuario(self) -> None:
-        user = UsuarioModelo(nombre="U3", email="u3@test.cl", rol=RolUsuario.TRANSPORTISTA, password_hash="h3")
+        user = UsuarioModelo(
+            nombre="U3",
+            email="u3@test.cl",
+            rol=RolUsuario.TRANSPORTISTA,
+            password_hash="h3",
+        )
         self.usuario_dao.guardar(user)
         self.assertTrue(self.usuario_dao.eliminar(user.id))
         self.assertIsNone(self.usuario_dao.obtener_por_id(user.id))
-

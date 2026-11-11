@@ -38,4 +38,3 @@ class TestActualizarConfiguracion(BaseTestConfiguracion):
     def test_rechazo_anticipacion_negativa(self) -> None:
         with self.assertRaises(ValueError):
             ReglasNegocio.actualizar_configuracion(anticipacion_min_h=-1)
-

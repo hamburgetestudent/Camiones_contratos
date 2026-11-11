@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sqlite3
+
 from dao.sqlite_db import cargar_datos_semilla, inicializar_bd
 from tests.dao.base import BaseTestDAO
 
@@ -34,12 +35,16 @@ class TestSqliteDBInicializar(BaseTestDAO):
         total = cursor.fetchone()[0]
         conn.close()
 
-        self.assertGreaterEqual(total, 3)  # Al menos admin, transportista y dador semilla
+        self.assertGreaterEqual(
+            total, 3
+        )  # Al menos admin, transportista y dador semilla
 
     def test_cargar_datos_semilla_idempotente(self) -> None:
         inicializar_bd(self.db_path)
         cargar_datos_semilla(self.db_path)
-        cargar_datos_semilla(self.db_path)  # Segunda ejecución sin error por email UNIQUE
+        cargar_datos_semilla(
+            self.db_path
+        )  # Segunda ejecución sin error por email UNIQUE
 
         conn = sqlite3.connect(str(self.db_path))
         cursor = conn.cursor()

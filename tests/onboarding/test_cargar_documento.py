@@ -29,7 +29,9 @@ class TestCargarDocumento(BaseTestOnboarding):
         )
         # Se aprueba
         self.onboarding_service.validar_documento(doc1.id, EstadoValidacion.APROBADO)
-        self.assertEqual(self.doc_dao.get_by_id(doc1.id).estado, EstadoValidacion.APROBADO)
+        self.assertEqual(
+            self.doc_dao.get_by_id(doc1.id).estado, EstadoValidacion.APROBADO
+        )
 
         # Se vuelve a cargar el mismo tipo -> Debe actualizar archivo y volver a PENDIENTE
         doc2 = self.onboarding_service.cargar_documento(
@@ -40,4 +42,3 @@ class TestCargarDocumento(BaseTestOnboarding):
         self.assertEqual(doc2.id, doc1.id)
         self.assertEqual(doc2.archivo, "docs/padron_nuevo.jpg")
         self.assertEqual(doc2.estado, EstadoValidacion.PENDIENTE)
-

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from uuid import UUID, uuid4
+from uuid import uuid4
+
+import services.usuario_service as usuario_service_modulo
 from dao.onboarding_dao import DadorCargaDAOInMemory, DocumentoDAOInMemory
 from dao.usuario_dao import UsuarioDAOMemoria
 from domain.modelos_onboarding import (
@@ -11,16 +13,20 @@ from domain.modelos_onboarding import (
     DatosFacturacion,
     TipoDocumento,
 )
-from domain.modelos_usuario import EstadoUsuario, RolUsuario, UsuarioCrear, UsuarioModelo
+from domain.modelos_usuario import (
+    EstadoUsuario,
+    RolUsuario,
+    UsuarioCrear,
+    UsuarioModelo,
+)
 from services.onboarding_service import OnboardingService
-import services.usuario_service as usuario_service_modulo
 from services.usuario_service import hash_password
 from tests.base import BaseTestCase
 
 
 class BaseTestUsuarios(BaseTestCase):
     """Clase base DRY para pruebas de usuarios y autenticación.
-    
+
     Hereda de tests.base.BaseTestCase y provee aislamiento
     completo de usuarios y DAOs en memoria para pruebas rápidas y deterministas.
     """
@@ -28,7 +34,9 @@ class BaseTestUsuarios(BaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self._orig_usuario_dao = usuario_service_modulo.usuario_dao
-        self._orig_onboarding_service = usuario_service_modulo.onboarding_service_instancia
+        self._orig_onboarding_service = (
+            usuario_service_modulo.onboarding_service_instancia
+        )
 
         self.usuario_dao = UsuarioDAOMemoria()
         self.doc_dao = DocumentoDAOInMemory()
@@ -79,7 +87,9 @@ class BaseTestUsuarios(BaseTestCase):
 
     def tearDown(self) -> None:
         usuario_service_modulo.usuario_dao = self._orig_usuario_dao
-        usuario_service_modulo.onboarding_service_instancia = self._orig_onboarding_service
+        usuario_service_modulo.onboarding_service_instancia = (
+            self._orig_onboarding_service
+        )
         super().tearDown()
 
     def crear_dto_transportista_valido(
@@ -89,9 +99,15 @@ class BaseTestUsuarios(BaseTestCase):
     ) -> UsuarioCrear:
         """Helper DRY para crear un payload válido de transportista con sus 5 documentos."""
         documentos = [
-            CargarDocumentoDTO(tipo=TipoDocumento.LICENCIA_CONDUCIR, archivo="docs/lic.pdf"),
-            CargarDocumentoDTO(tipo=TipoDocumento.PADRON_VEHICULO, archivo="docs/pad.jpg"),
-            CargarDocumentoDTO(tipo=TipoDocumento.REVISION_TECNICA, archivo="docs/rev.jpeg"),
+            CargarDocumentoDTO(
+                tipo=TipoDocumento.LICENCIA_CONDUCIR, archivo="docs/lic.pdf"
+            ),
+            CargarDocumentoDTO(
+                tipo=TipoDocumento.PADRON_VEHICULO, archivo="docs/pad.jpg"
+            ),
+            CargarDocumentoDTO(
+                tipo=TipoDocumento.REVISION_TECNICA, archivo="docs/rev.jpeg"
+            ),
             CargarDocumentoDTO(tipo=TipoDocumento.SEGURO_CARGA, archivo="docs/seg.png"),
             CargarDocumentoDTO(tipo=TipoDocumento.ANTECEDENTES, archivo="docs/ant.pdf"),
         ]
@@ -125,4 +141,3 @@ class BaseTestUsuarios(BaseTestCase):
             password=self.password_comun,
             perfil_tributario=perfil,
         )
-

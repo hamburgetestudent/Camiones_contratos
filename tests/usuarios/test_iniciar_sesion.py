@@ -14,7 +14,9 @@ class TestIniciarSesion(BaseTestUsuarios):
     """Pruebas dedicadas a la emisión de token OAuth2 Bearer y LoginService (CA-01, CA-02, CA-03)."""
 
     def test_inicio_sesion_exitoso_emite_token_y_rol(self) -> None:
-        cred = CredencialesLogin(usuario="juan.chofer@transporte.cl", password=self.password_comun)
+        cred = CredencialesLogin(
+            usuario="juan.chofer@transporte.cl", password=self.password_comun
+        )
         respuesta = UsuarioService.iniciar_sesion(cred)
 
         self.assertIsInstance(respuesta, RespuestaLogin)
@@ -31,12 +33,16 @@ class TestIniciarSesion(BaseTestUsuarios):
 
     def test_login_service_con_validador_exitoso(self) -> None:
         servicio = LoginService(ValidadorUsuario())
-        cred = CredencialesLogin(usuario="marcela@empresa.cl", password=self.password_comun)
+        cred = CredencialesLogin(
+            usuario="marcela@empresa.cl", password=self.password_comun
+        )
         resp = servicio.iniciar_sesion(cred)
         self.assertEqual(resp.rol, RolUsuario.DADOR_CARGA.value)
 
     def test_login_service_con_validador_credenciales_invalidas(self) -> None:
         servicio = LoginService(ValidadorUsuario())
-        cred = CredencialesLogin(usuario="marcela@empresa.cl", password="passwordIncorrecta")
+        cred = CredencialesLogin(
+            usuario="marcela@empresa.cl", password="passwordIncorrecta"
+        )
         with self.assertRaises(CredencialesInvalidasError):
             servicio.iniciar_sesion(cred)

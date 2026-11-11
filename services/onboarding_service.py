@@ -174,7 +174,21 @@ class OnboardingService:
     def validar_documento(
         self, documento_id: UUID, nuevo_estado: EstadoValidacion
     ) -> DocumentoTransportista:
-        """Aprueba o rechaza un documento especifico."""
+        """Aprueba o rechaza un documento especifico.
+
+        Precondiciones:
+            - El documento ``documento_id`` existe.
+            - ``nuevo_estado`` es APROBADO o RECHAZADO (no se puede volver a PENDIENTE).
+
+        Postcondiciones:
+            - El documento queda persistido con ``nuevo_estado``.
+            - El estado global del transportista se recalcula en
+              ``obtener_estado_transportista``: APROBADO solo si los 5 documentos
+              requeridos estan APROBADOS.
+
+        Raises:
+            ValueError: Si el documento no existe o el estado no es valido.
+        """
         doc = self.documento_dao.get_id(documento_id)
         if not doc:
             raise ValueError(f"No se encontro el documento con ID {documento_id}")
