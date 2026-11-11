@@ -18,8 +18,8 @@ Sumativa 2
 
 |                  | BP  | FA  | SS  | Cristian P | GA  |
 | ---------------- | :-: | :-: | :-: | ---------- | --- |
-| Benjamin Ponce   | x | 7 | 7 | 7 |     |
-| Fabian Ahumada   | 7 | X | 7 | 7 |     |
-| Santiago Sanchez | 7 | 7 | X | 7 |     |
-| Cristian Palma   | 7 | 7 | 7 | X |     |
-| Gabriel Alvarez  | 7 | 7 | 7 | 7 |     |
+| Benjamin Ponce   | x | 7 | 7 | 7 | 7 |
+| Fabian Ahumada   | 7 | X | 7 | 7 | 7 |
+| Santiago Sanchez | 7 | 7 | X | 7 | 7 |
+| Cristian Palma   | 7 | 7 | 7 | X | 7 |
+| Gabriel Alvarez  | 7 | 7 | 7 | 7 | x |
