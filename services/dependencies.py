@@ -1,21 +1,15 @@
-"""Modulo centralizado de inyeccion de dependencias y singletons para servicios y DAOs.
+"""Modulo centralizado de inyeccion de dependencias y singletons para los servicios.
 
-Evita acoplamiento cruzado y facilita sustitucion de adaptadores.
+Los servicios acceden directamente a SQLite (ver ``database.conexion``); aqui solo
+se crean las instancias compartidas que consumen los routers.
 """
 
-from dao.contrato_dao import ContratoDAOMemoria
-from dao.postulacion_dao import PostulacionDAOMemoria
 from services.contrato_service import ServicioContrato
 from services.subasta_service import ServicioSubasta
 
-# Instancias compartidas a nivel de aplicacion
-contrato_dao = ContratoDAOMemoria()
-postulacion_dao = PostulacionDAOMemoria()
-
-servicio_contrato = ServicioContrato(dao=contrato_dao)
-servicio_subasta = ServicioSubasta(
-    contrato_dao=contrato_dao, postulacion_dao=postulacion_dao
-)
+# Instancias compartidas a nivel de aplicacion (usan la base de datos por defecto)
+servicio_contrato = ServicioContrato()
+servicio_subasta = ServicioSubasta()
 
 
 def obtener_servicio_contrato() -> ServicioContrato:
