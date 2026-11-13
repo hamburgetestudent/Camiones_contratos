@@ -10,8 +10,40 @@ import tempfile
 import unittest
 from pathlib import Path
 from typing import Any
+from unittest import mock
 
 from fastapi import HTTPException
+
+from database import conexion
+from database.conexion import inicializar_bd
+
+
+def crear_bd_aislada(
+    test_case: unittest.TestCase, cargar_semilla: bool = False
+) -> Path:
+    """Crea una base SQLite temporal y redirige ``DEFAULT_DB_PATH`` hacia ella.
+
+    Todo servicio que use la ruta por defecto (incluidos los singletons de los
+    routers) opera sobre esta base durante el test. Al terminar, la ruta original
+    se restaura y el directorio temporal se elimina.
+
+    Args:
+        test_case: Test que gobierna el ciclo de vida de la base (usa ``addCleanup``).
+        cargar_semilla: Si es True, carga los usuarios/perfiles/documentos semilla.
+
+    Returns:
+        Ruta del archivo SQLite temporal ya inicializado.
+    """
+    directorio = tempfile.TemporaryDirectory()
+    test_case.addCleanup(directorio.cleanup)
+    ruta = Path(directorio.name) / "test_camiones.db"
+    inicializar_bd(ruta, cargar_semilla=cargar_semilla)
+
+    parche = mock.patch.object(conexion, "DEFAULT_DB_PATH", ruta)
+    parche.start()
+    # Registrado despues del cleanup del directorio => se ejecuta antes (LIFO).
+    test_case.addCleanup(parche.stop)
+    return ruta
 
 
 class BaseTestCase(unittest.TestCase):
@@ -31,6 +63,10 @@ class BaseTestCase(unittest.TestCase):
                 pass
         self._temp_dirs.clear()
         super().tearDown()
+
+    def preparar_bd_aislada(self, cargar_semilla: bool = False) -> Path:
+        """Crea una base SQLite temporal aislada para este test (ver ``crear_bd_aislada``)."""
+        return crear_bd_aislada(self, cargar_semilla=cargar_semilla)
 
     def crear_directorio_temporal(self) -> Path:
         """Crea un directorio temporal que se limpiará automáticamente en tearDown."""
