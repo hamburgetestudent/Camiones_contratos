@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-from uuid import uuid4
+from uuid import UUID, uuid4
 
-import services.usuario_service as usuario_service_modulo
-from dao.onboarding_dao import DadorCargaDAOInMemory, DocumentoDAOInMemory
-from dao.usuario_dao import UsuarioDAOMemoria
+from database.conexion import obtener_conexion
 from domain.modelos_onboarding import (
     CargarDocumentoDTO,
     CrearPerfilDadorDTO,
@@ -20,7 +18,11 @@ from domain.modelos_usuario import (
     UsuarioModelo,
 )
 from services.onboarding_service import OnboardingService
-from services.usuario_service import hash_password
+from services.usuario_service import (
+    buscar_usuario_por_id,
+    guardar_usuario,
+    hash_password,
+)
 from tests.base import BaseTestCase
 
 
@@ -28,26 +30,15 @@ class BaseTestUsuarios(BaseTestCase):
     """Clase base DRY para pruebas de usuarios y autenticación.
 
     Hereda de tests.base.BaseTestCase y provee aislamiento
-    completo de usuarios y DAOs en memoria para pruebas rápidas y deterministas.
+    completo de usuarios sobre una base SQLite temporal (la ruta por defecto
+    queda redirigida a ella, por lo que ``UsuarioService`` y el singleton de
+    onboarding operan sobre la misma base aislada).
     """
 
     def setUp(self) -> None:
         super().setUp()
-        self._orig_usuario_dao = usuario_service_modulo.usuario_dao
-        self._orig_onboarding_service = (
-            usuario_service_modulo.onboarding_service_instancia
-        )
-
-        self.usuario_dao = UsuarioDAOMemoria()
-        self.doc_dao = DocumentoDAOInMemory()
-        self.dador_dao = DadorCargaDAOInMemory()
-        self.onboarding_service = OnboardingService(
-            documento_dao=self.doc_dao,
-            dador_dao=self.dador_dao,
-        )
-
-        usuario_service_modulo.usuario_dao = self.usuario_dao
-        usuario_service_modulo.onboarding_service_instancia = self.onboarding_service
+        self.db_path = self.preparar_bd_aislada()
+        self.onboarding_service = OnboardingService(db_path=self.db_path)
 
         self.password_comun = "passwordSegura123"
         self.hash_comun = hash_password(self.password_comun)
@@ -61,7 +52,7 @@ class BaseTestUsuarios(BaseTestCase):
             password_hash=self.hash_comun,
             estado=EstadoUsuario.APROBADO,
         )
-        self.usuario_dao.guardar(self.usuario_transportista)
+        self.guardar_usuario_bd(self.usuario_transportista)
 
         # Semilla dador de carga
         self.usuario_dador = UsuarioModelo(
@@ -72,7 +63,7 @@ class BaseTestUsuarios(BaseTestCase):
             password_hash=self.hash_comun,
             estado=EstadoUsuario.APROBADO,
         )
-        self.usuario_dao.guardar(self.usuario_dador)
+        self.guardar_usuario_bd(self.usuario_dador)
 
         # Semilla admin
         self.usuario_admin = UsuarioModelo(
@@ -83,14 +74,17 @@ class BaseTestUsuarios(BaseTestCase):
             password_hash=self.hash_comun,
             estado=EstadoUsuario.APROBADO,
         )
-        self.usuario_dao.guardar(self.usuario_admin)
+        self.guardar_usuario_bd(self.usuario_admin)
 
-    def tearDown(self) -> None:
-        usuario_service_modulo.usuario_dao = self._orig_usuario_dao
-        usuario_service_modulo.onboarding_service_instancia = (
-            self._orig_onboarding_service
-        )
-        super().tearDown()
+    def guardar_usuario_bd(self, usuario: UsuarioModelo) -> UsuarioModelo:
+        """Persiste un usuario directamente en SQLite (datos semilla del test)."""
+        with obtener_conexion(self.db_path) as conn:
+            return guardar_usuario(conn, usuario)
+
+    def leer_usuario_bd(self, usuario_id: UUID) -> UsuarioModelo | None:
+        """Lee un usuario directamente de SQLite (verifica persistencia real)."""
+        with obtener_conexion(self.db_path) as conn:
+            return buscar_usuario_por_id(conn, usuario_id)
 
     def crear_dto_transportista_valido(
         self,

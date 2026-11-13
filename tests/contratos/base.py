@@ -5,11 +5,10 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
-from dao.contrato_dao import ContratoDAOMemoria
-from dao.onboarding_dao import DadorCargaDAOInMemory, DocumentoDAOInMemory
-from domain.modelos import ContratoCrear, Moneda, TipoCarga
+from database.conexion import obtener_conexion
+from domain.modelos import ContratoCrear, ContratoModelo, Moneda, TipoCarga
 from domain.modelos_onboarding import DatosFacturacion, EstadoValidacion
-from services.contrato_service import ServicioContrato
+from services.contrato_service import ServicioContrato, buscar_contrato
 from services.onboarding_service import OnboardingService
 from tests.base import BaseTestCase
 
@@ -18,20 +17,15 @@ class BaseTestContratos(BaseTestCase):
     """Clase base DRY para pruebas del ciclo de vida de contratos.
 
     Hereda de tests.base.BaseTestCase y provee aislamiento
-    completo de servicios, DAOs y generadores de datos semilla válidos.
+    completo de servicios sobre una base SQLite temporal y generadores de datos semilla válidos.
     """
 
     def setUp(self) -> None:
         super().setUp()
-        self.contrato_dao = ContratoDAOMemoria()
-        self.doc_dao = DocumentoDAOInMemory()
-        self.dador_dao = DadorCargaDAOInMemory()
-        self.onboarding_service = OnboardingService(
-            documento_dao=self.doc_dao,
-            dador_dao=self.dador_dao,
-        )
+        self.db_path = self.preparar_bd_aislada()
+        self.onboarding_service = OnboardingService(db_path=self.db_path)
         self.contrato_service = ServicioContrato(
-            dao=self.contrato_dao,
+            db_path=self.db_path,
             onboarding_service=self.onboarding_service,
         )
 
@@ -50,6 +44,11 @@ class BaseTestContratos(BaseTestCase):
 
         self.transportista_id = uuid4()
         self.camion_id = uuid4()
+
+    def leer_contrato_bd(self, contrato_id: UUID) -> ContratoModelo | None:
+        """Lee un contrato directamente de SQLite (verifica persistencia real)."""
+        with obtener_conexion(self.db_path) as conn:
+            return buscar_contrato(conn, contrato_id)
 
     def crear_datos_contrato_validos(
         self,

@@ -12,7 +12,7 @@ class TestEsDadorAprobado(BaseTestOnboarding):
     def test_retorna_false_si_no_registrado_o_pendiente(self) -> None:
         self.assertFalse(self.onboarding_service.es_dador_aprobado(self.dador_id))
 
-        perfil = self.onboarding_service.registrar_o_actualizar_perfil_dador(
+        self.onboarding_service.registrar_o_actualizar_perfil_dador(
             user_id=self.dador_id,
             rut_id_empresa="76123456-0",
             datos_facturacion=DatosFacturacion(

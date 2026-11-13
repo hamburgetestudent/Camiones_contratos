@@ -34,7 +34,7 @@ class TestObtenerEstadoTransportista(BaseTestOnboarding):
             self.transportista_id, estado=EstadoValidacion.APROBADO
         )
         # Rechazamos la revisión técnica
-        doc_rev = self.doc_dao.get_by_user_and_tipo(
+        doc_rev = self.obtener_documento(
             self.transportista_id, TipoDocumento.REVISION_TECNICA
         )
         self.onboarding_service.validar_documento(

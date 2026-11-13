@@ -4,11 +4,10 @@ from __future__ import annotations
 
 from uuid import UUID, uuid4
 
-import services.onboarding_service as onboarding_service_modulo
-from dao.onboarding_dao import DadorCargaDAOInMemory, DocumentoDAOInMemory
 from domain.modelos_onboarding import (
     CrearPerfilDadorDTO,
     DatosFacturacion,
+    DocumentoTransportista,
     EstadoValidacion,
     TipoDocumento,
 )
@@ -22,28 +21,26 @@ class BaseTestOnboarding(BaseTestCase):
     """Clase base DRY para pruebas de onboarding y compliance KYC.
 
     Hereda de tests.base.BaseTestCase y provee aislamiento
-    completo de servicios y DAOs en memoria.
+    completo de servicios sobre una base SQLite temporal. El singleton que usan
+    los routers apunta a la misma base (ver ``preparar_bd_aislada``).
     """
 
     def setUp(self) -> None:
         super().setUp()
-        self.doc_dao = DocumentoDAOInMemory()
-        self.dador_dao = DadorCargaDAOInMemory()
-        self.onboarding_service = OnboardingService(
-            documento_dao=self.doc_dao,
-            dador_dao=self.dador_dao,
-        )
-
-        # Sobrescribir singleton para routers
-        self._orig_singleton = onboarding_service_modulo.onboarding_service_instancia
-        onboarding_service_modulo.onboarding_service_instancia = self.onboarding_service
+        self.db_path = self.preparar_bd_aislada()
+        self.onboarding_service = OnboardingService(db_path=self.db_path)
 
         self.transportista_id = uuid4()
         self.dador_id = uuid4()
 
-    def tearDown(self) -> None:
-        onboarding_service_modulo.onboarding_service_instancia = self._orig_singleton
-        super().tearDown()
+    def obtener_documento(
+        self, user_id: UUID, tipo: TipoDocumento
+    ) -> DocumentoTransportista | None:
+        """Lee de SQLite el documento de un tipo dado para un transportista."""
+        for doc in self.onboarding_service.listar_documentos_transportista(user_id):
+            if doc.tipo == tipo:
+                return doc
+        return None
 
     def cargar_los_5_documentos(
         self,
