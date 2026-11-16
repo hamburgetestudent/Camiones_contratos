@@ -1,0 +1,22 @@
+{
+  "name": "camiones-contratos",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Plataforma de gestión de contratos de transporte y subastas (FastAPI + Electron)",
+  "scripts": {
+    "dev": "node dev.mjs",
+    "start": "node dev.mjs",
+    "build": "npm --prefix frontend run build",
+    "test": "node scripts/run-py.mjs run_tests.py",
+    "test:html": "node scripts/run-py.mjs run_tests.py --html",
+    "test:clean": "node scripts/run-py.mjs run_tests.py --clean",
+    "lint": "node scripts/run-py.mjs -m ruff check .",
+    "lint:fix": "node scripts/run-py.mjs -m ruff check --fix .",
+    "format:py": "node scripts/run-py.mjs -m ruff format .",
+    "format:py:check": "node scripts/run-py.mjs -m ruff format --check .",
+    "format:front": "npm --prefix frontend run format",
+    "format:front:check": "npm --prefix frontend run format:check",
+    "format": "npm run format:py && npm run format:front",
+    "format:check": "npm run format:py:check && npm run format:front:check"
+  }
+}
