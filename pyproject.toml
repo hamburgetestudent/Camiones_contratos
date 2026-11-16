@@ -27,7 +27,7 @@ ignore = [
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
-known-first-party = ["dao", "domain", "routers", "services"]
+known-first-party = ["database", "domain", "routers", "services"]
 
 [tool.ruff.format]
 quote-style = "double"

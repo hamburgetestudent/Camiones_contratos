@@ -5,11 +5,15 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
-from dao.contrato_dao import ContratoDAOMemoria
-from dao.postulacion_dao import PostulacionDAOMemoria
+from database.conexion import obtener_conexion
 from domain.maquina_estados import EstadoContrato
 from domain.modelos import ContratoModelo, Moneda, TipoCarga
-from domain.postulacion import PostulacionCrear
+from domain.postulacion import PostulacionCrear, PostulacionModelo
+from services.contrato_service import (
+    actualizar_contrato,
+    buscar_contrato,
+    guardar_contrato,
+)
 from services.subasta_service import ServicioSubasta
 from tests.base import BaseTestCase
 
@@ -18,17 +22,13 @@ class BaseTestSubastas(BaseTestCase):
     """Clase base DRY para pruebas del motor de subastas.
 
     Hereda de tests.base.BaseTestCase y provee aislamiento
-    completo de persistencia, DAOs en memoria y creadores de cargas de prueba.
+    completo de persistencia (base SQLite temporal) y creadores de cargas de prueba.
     """
 
     def setUp(self) -> None:
         super().setUp()
-        self.contrato_dao = ContratoDAOMemoria()
-        self.postulacion_dao = PostulacionDAOMemoria()
-        self.subasta_service = ServicioSubasta(
-            contrato_dao=self.contrato_dao,
-            postulacion_dao=self.postulacion_dao,
-        )
+        self.db_path = self.preparar_bd_aislada()
+        self.subasta_service = ServicioSubasta(db_path=self.db_path)
 
         self.transportista_id = uuid4()
         self.transportista_2_id = uuid4()
@@ -64,7 +64,30 @@ class BaseTestSubastas(BaseTestCase):
             monto_total=238000.0,
             estado=estado,
         )
-        return self.contrato_dao.guardar(contrato)
+        with obtener_conexion(self.db_path) as conn:
+            return guardar_contrato(conn, contrato)
+
+    def leer_contrato_bd(self, contrato_id: UUID) -> ContratoModelo | None:
+        """Lee un contrato directamente de SQLite (verifica persistencia real)."""
+        with obtener_conexion(self.db_path) as conn:
+            return buscar_contrato(conn, contrato_id)
+
+    def forzar_estado_contrato(self, contrato_id: UUID, estado: EstadoContrato) -> None:
+        """Fuerza el estado de un contrato en SQLite, saltandose la maquina de estados."""
+        with obtener_conexion(self.db_path) as conn:
+            contrato = buscar_contrato(conn, contrato_id)
+            assert contrato is not None
+            contrato.estado = estado
+            actualizar_contrato(conn, contrato_id, contrato)
+
+    def leer_postulacion_bd(
+        self, carga_id: UUID, postulacion_id: UUID
+    ) -> PostulacionModelo | None:
+        """Lee una postulacion persistida a traves del listado de la carga."""
+        for postulacion in self.subasta_service.listar_postulaciones_carga(carga_id):
+            if postulacion.id == postulacion_id:
+                return postulacion
+        return None
 
     def crear_dto_postulacion(
         self,
