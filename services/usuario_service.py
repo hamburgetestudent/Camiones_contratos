@@ -1,17 +1,91 @@
 import hashlib
+import sqlite3
 from uuid import UUID
 
 from fastapi import HTTPException, status
 
-from dao.usuario_dao import UsuarioDAOSQLite
+from database.conexion import obtener_conexion, transaccion_exclusiva
 from domain.modelos_login import CredencialesLogin, RespuestaLogin
 from domain.modelos_onboarding import CrearPerfilDadorDTO
-from domain.modelos_usuario import UsuarioCrear, UsuarioModelo
+from domain.modelos_usuario import (
+    EstadoUsuario,
+    RolUsuario,
+    UsuarioCrear,
+    UsuarioModelo,
+)
 from services.onboarding_service import onboarding_service_instancia
 from services.security import crear_token_acceso
 
-# Instancia global respaldada por SQLite para acceder a los datos de los usuarios
-usuario_dao = UsuarioDAOSQLite()
+# ---------------------------------------------------------------------------
+# SQL: tabla ``usuarios`` (usa la base de datos por defecto de database.conexion)
+# ---------------------------------------------------------------------------
+
+_SELECT_USUARIO = "SELECT id, nombre, email, rol, password_hash, estado FROM usuarios"
+
+
+def _fila_a_usuario(fila: sqlite3.Row) -> UsuarioModelo:
+    """Convierte una fila de SQLite en una instancia de UsuarioModelo."""
+    return UsuarioModelo(
+        id=UUID(fila["id"]),
+        nombre=fila["nombre"],
+        email=fila["email"],
+        rol=RolUsuario(fila["rol"]),
+        password_hash=fila["password_hash"],
+        estado=EstadoUsuario(fila["estado"]),
+    )
+
+
+def buscar_usuario_por_id(
+    conn: sqlite3.Connection, usuario_id: UUID
+) -> UsuarioModelo | None:
+    """Obtiene un usuario por su UUID, o None si no existe."""
+    fila = conn.execute(
+        f"{_SELECT_USUARIO} WHERE id = ?", (str(usuario_id),)
+    ).fetchone()
+    return _fila_a_usuario(fila) if fila else None
+
+
+def buscar_usuario_por_email(
+    conn: sqlite3.Connection, email: str
+) -> UsuarioModelo | None:
+    """Busca un usuario por correo (insensible a mayusculas y espacios extremos)."""
+    fila = conn.execute(
+        f"{_SELECT_USUARIO} WHERE lower(trim(email)) = ?", (email.strip().lower(),)
+    ).fetchone()
+    return _fila_a_usuario(fila) if fila else None
+
+
+def buscar_todos_los_usuarios(conn: sqlite3.Connection) -> list[UsuarioModelo]:
+    """Retorna todos los usuarios en orden de creacion."""
+    filas = conn.execute(
+        f"{_SELECT_USUARIO} ORDER BY created_at ASC, rowid ASC"
+    ).fetchall()
+    return [_fila_a_usuario(fila) for fila in filas]
+
+
+def guardar_usuario(conn: sqlite3.Connection, usuario: UsuarioModelo) -> UsuarioModelo:
+    """Inserta el usuario o, si su ID ya existe, actualiza sus campos. El correo se guarda en minusculas."""
+    conn.execute(
+        """
+        INSERT INTO usuarios (id, nombre, email, rol, password_hash, estado)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+            nombre = excluded.nombre,
+            email = excluded.email,
+            rol = excluded.rol,
+            password_hash = excluded.password_hash,
+            estado = excluded.estado
+        """,
+        (
+            str(usuario.id),
+            usuario.nombre,
+            usuario.email.strip().lower(),
+            RolUsuario(usuario.rol).value,
+            usuario.password_hash,
+            EstadoUsuario(usuario.estado).value,
+        ),
+    )
+    return usuario
 
 
 def hash_password(password: str) -> str:
@@ -36,24 +110,22 @@ class UsuarioService:
         Raises:
             HTTPException: 400 si el email ya existe.
         """
-        # Validar si el email ya existe utilizando obt_por_email
-        usuario_existente = usuario_dao.obt_por_email(usuario_data.email)
-        if usuario_existente:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="El email ya está registrado",
+        # Comprobar unicidad del email y guardar en una sola transaccion (evita
+        # que dos registros simultaneos con el mismo email pasen la comprobacion).
+        with transaccion_exclusiva() as conn:
+            if buscar_usuario_por_email(conn, usuario_data.email):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="El email ya está registrado",
+                )
+
+            nuevo_usuario = UsuarioModelo(
+                nombre=usuario_data.nombre,
+                email=usuario_data.email,
+                rol=usuario_data.rol,
+                password_hash=hash_password(usuario_data.password),
             )
-
-        # Crear modelo de base de datos
-        nuevo_usuario = UsuarioModelo(
-            nombre=usuario_data.nombre,
-            email=usuario_data.email,
-            rol=usuario_data.rol,
-            password_hash=hash_password(usuario_data.password),
-        )
-
-        # Guardar en la base de datos SQLite
-        usuario_guardado = usuario_dao.guardar(nuevo_usuario)
+            usuario_guardado = guardar_usuario(conn, nuevo_usuario)
 
         # Si adjuntó documentos de transportista en el registro, persistirlos en SQLite
         if usuario_data.documentos:
@@ -77,12 +149,14 @@ class UsuarioService:
     @staticmethod
     def listar_usuarios() -> list[UsuarioModelo]:
         """Lista todos los usuarios almacenados en SQLite."""
-        return usuario_dao.obtener_todos()
+        with obtener_conexion() as conn:
+            return buscar_todos_los_usuarios(conn)
 
     @staticmethod
     def obtener_usuario(usuario_id: UUID) -> UsuarioModelo:
         """Obtiene un usuario por su UUID desde SQLite."""
-        usuario = usuario_dao.obtener_por_id(usuario_id)
+        with obtener_conexion() as conn:
+            usuario = buscar_usuario_por_id(conn, usuario_id)
         if not usuario:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado"
@@ -98,7 +172,8 @@ class UsuarioService:
                 detail="Correo electrónico y contraseña requeridos",
             )
 
-        usuario = usuario_dao.obt_por_email(email.strip())
+        with obtener_conexion() as conn:
+            usuario = buscar_usuario_por_email(conn, email.strip())
         if not usuario:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -178,4 +253,5 @@ class ValidadorUsuario:
 
     def obtener_datos_usuario(self, usuario: str) -> UsuarioModelo | None:
         """Obtiene los datos del usuario autenticado por su email."""
-        return usuario_dao.obt_por_email(usuario)
+        with obtener_conexion() as conn:
+            return buscar_usuario_por_email(conn, usuario)

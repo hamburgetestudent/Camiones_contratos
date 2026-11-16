@@ -44,7 +44,7 @@ def crear_contrato(
     datos_contrato: ContratoCrear,
     contrato_service: ServicioContratoDep,
 ) -> ContratoModelo:
-    """Crea un contrato aplicando las validaciones de negocio en el modelo Pydantic y persistiendo via DAO."""
+    """Crea un contrato aplicando las validaciones de negocio en el modelo Pydantic y persistiendo en SQLite."""
     try:
         return contrato_service.crear_contrato(datos_contrato)
     except PermissionError as error:
@@ -89,7 +89,7 @@ obt_contrato = obtener_contrato
 def listar_contratos(
     contrato_service: ServicioContratoDep,
 ) -> list[ContratoModelo]:
-    """Retorna la lista de todos los contratos almacenados en el DAO."""
+    """Retorna la lista de todos los contratos almacenados en SQLite."""
     return contrato_service.listar_contratos()
 
 

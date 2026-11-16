@@ -1,8 +1,13 @@
-"""Gestión de conexión, esquema y datos semilla para la base de datos SQLite.
+"""Conexion, esquema y datos semilla de la base de datos SQLite.
 
-Provee almacenamiento relacional persistente para usuarios, correos, perfiles
-tributarios de dadores de carga y documentos de onboarding de transportistas
-utilizando el módulo estándar ``sqlite3`` de Python.
+Es la unica puerta de entrada a la base de datos: los servicios abren su
+conexion con ``obtener_conexion`` (o ``transaccion_exclusiva`` cuando deben
+leer y escribir de forma atomica) y ejecutan su SQL directamente, sin capas
+intermedias de acceso a datos.
+
+El esquema vive en ``schema.sql`` y se aplica de forma perezosa e idempotente
+la primera vez que se abre una conexion hacia una ruta dada, de modo que
+importar un servicio nunca crea ni modifica archivos de base de datos.
 """
 
 from __future__ import annotations
@@ -10,6 +15,7 @@ from __future__ import annotations
 import hashlib
 import os
 import sqlite3
+import threading
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
@@ -23,50 +29,12 @@ DEFAULT_DB_PATH = Path(
     )
 )
 
-SCHEMA_SQL = """
-PRAGMA foreign_keys = ON;
+RUTA_ESQUEMA = Path(__file__).resolve().parent / "schema.sql"
+SCHEMA_SQL = RUTA_ESQUEMA.read_text(encoding="utf-8")
 
-CREATE TABLE IF NOT EXISTS usuarios (
-    id TEXT PRIMARY KEY,
-    nombre TEXT NOT NULL,
-    email TEXT NOT NULL UNIQUE COLLATE NOCASE,
-    rol TEXT NOT NULL,
-    password_hash TEXT NOT NULL,
-    estado TEXT NOT NULL DEFAULT 'EN_REVISION',
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
-CREATE INDEX IF NOT EXISTS idx_usuarios_email ON usuarios(email COLLATE NOCASE);
-CREATE INDEX IF NOT EXISTS idx_usuarios_rol ON usuarios(rol);
-
-CREATE TABLE IF NOT EXISTS dadores_carga (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL UNIQUE,
-    rut_id_empresa TEXT NOT NULL,
-    razon_social TEXT NOT NULL,
-    direccion TEXT NOT NULL,
-    correo_facturacion TEXT NOT NULL,
-    estado_validacion TEXT NOT NULL DEFAULT 'PENDIENTE',
-    FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
-);
-
-CREATE INDEX IF NOT EXISTS idx_dadores_user_id ON dadores_carga(user_id);
-CREATE INDEX IF NOT EXISTS idx_dadores_rut ON dadores_carga(rut_id_empresa);
-
-CREATE TABLE IF NOT EXISTS documentos_transportista (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    tipo TEXT NOT NULL,
-    archivo TEXT NOT NULL,
-    estado TEXT NOT NULL DEFAULT 'PENDIENTE',
-    created_at TEXT NOT NULL,
-     UNIQUE(user_id, tipo),
-    FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
-);
-
-CREATE INDEX IF NOT EXISTS idx_documentos_user_id ON documentos_transportista(user_id);
-CREATE INDEX IF NOT EXISTS idx_documentos_estado ON documentos_transportista(estado);
-"""
+# Rutas cuyo esquema ya fue aplicado en este proceso (evita repetir el script).
+_esquemas_aplicados: set[str] = set()
+_candado_esquema = threading.Lock()
 
 
 def _hash_password(password: str) -> str:
@@ -74,10 +42,34 @@ def _hash_password(password: str) -> str:
     return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
 
+def _asegurar_esquema(ruta: str) -> None:
+    """Aplica ``schema.sql`` sobre ``ruta`` si aun no se hizo (o si el archivo desaparecio).
+
+    Usa una conexion propia y de vida corta: asi las pragmas del script no se
+    filtran a las conexiones de trabajo.
+    """
+    if ruta in _esquemas_aplicados and os.path.exists(ruta):
+        return
+    with _candado_esquema:
+        conn = sqlite3.connect(ruta)
+        try:
+            conn.executescript(SCHEMA_SQL)
+            conn.commit()
+        finally:
+            conn.close()
+        _esquemas_aplicados.add(ruta)
+
+
 @contextmanager
 def obtener_conexion(db_path: str | Path | None = None) -> Iterator[sqlite3.Connection]:
-    """Context manager que entrega una conexión SQLite configurada con Row factory."""
+    """Entrega una conexion SQLite con ``Row`` factory dentro de una transaccion.
+
+    Al salir del bloque sin error se hace ``commit``; ante una excepcion se hace
+    ``rollback`` y se propaga. La ruta por defecto se resuelve en cada llamada,
+    por lo que puede redirigirse (p. ej. en pruebas) cambiando ``DEFAULT_DB_PATH``.
+    """
     ruta = str(db_path or DEFAULT_DB_PATH)
+    _asegurar_esquema(ruta)
     conn = sqlite3.connect(ruta, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     try:
@@ -90,12 +82,26 @@ def obtener_conexion(db_path: str | Path | None = None) -> Iterator[sqlite3.Conn
         conn.close()
 
 
+@contextmanager
+def transaccion_exclusiva(
+    db_path: str | Path | None = None,
+) -> Iterator[sqlite3.Connection]:
+    """Como ``obtener_conexion`` pero reservando el derecho de escritura desde el inicio.
+
+    Usar cuando una operacion lee un estado, valida y luego escribe: ningun otro
+    escritor puede intercalarse entre la lectura y la escritura, y todos los
+    cambios se confirman juntos o ninguno (postcondicion "todo o nada").
+    """
+    with obtener_conexion(db_path) as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        yield conn
+
+
 def inicializar_bd(
     db_path: str | Path | None = None, cargar_semilla: bool = True
 ) -> None:
-    """Crea las tablas en SQLite si no existen e inserta datos de prueba iniciales si está vacía."""
-    with obtener_conexion(db_path) as conn:
-        conn.executescript(SCHEMA_SQL)
+    """Crea las tablas si no existen y, opcionalmente, carga los datos semilla iniciales."""
+    _asegurar_esquema(str(db_path or DEFAULT_DB_PATH))
 
     if cargar_semilla:
         cargar_datos_semilla(db_path)

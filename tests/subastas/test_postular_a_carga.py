@@ -24,7 +24,7 @@ class TestPostularACarga(BaseTestSubastas):
         self.assertEqual(postulacion.estado, EstadoPostulacion.POSTULADA)
 
         # La carga debe transicionar a EN_POSTULACION si estaba en PUBLICADO
-        carga_actualizada = self.contrato_dao.obtener_por_id(carga.id)
+        carga_actualizada = self.leer_contrato_bd(carga.id)
         self.assertEqual(carga_actualizada.estado, EstadoContrato.EN_POSTULACION)
 
     def test_rechazo_transportista_sin_onboarding(self) -> None:
@@ -57,4 +57,4 @@ class TestPostularACarga(BaseTestSubastas):
         with self.assertRaises(ValueError) as ctx:
             self.subasta_service.postular_a_carga(dto, onboarding_aprobado=True)
         self.assertIn("no acepta", str(ctx.exception).lower())
-        self.assertEqual(self.postulacion_dao.obtener_por_contrato(carga.id), [])
+        self.assertEqual(self.subasta_service.listar_postulaciones_carga(carga.id), [])
