@@ -8,7 +8,7 @@ from tests.base import BaseTestCase
 
 class BaseTestConfiguracion(BaseTestCase):
     """Clase base DRY para pruebas de reglas de negocio globales.
-    
+
     Hereda de tests.base.BaseTestCase y asegura el reseteo
     a los valores por defecto antes y después de cada prueba.
     """
@@ -20,4 +20,3 @@ class BaseTestConfiguracion(BaseTestCase):
     def tearDown(self) -> None:
         ReglasNegocio.reseteo_defaults()
         super().tearDown()
-

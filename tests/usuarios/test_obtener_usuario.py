@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from uuid import uuid4
+
 from services.usuario_service import UsuarioService
 from tests.usuarios.base import BaseTestUsuarios
 

@@ -21,15 +21,30 @@ class TestMaquinaEstados(BaseTestContratos):
         )
 
     def test_validar_transicion_metodo(self) -> None:
-        self.assertTrue(MaquinaEstadosContrato.validar_transicion(EstadoContrato.BORRADOR, EstadoContrato.PUBLICADO))
-        self.assertFalse(MaquinaEstadosContrato.validar_transicion(EstadoContrato.BORRADOR, EstadoContrato.ENTREGADO))
+        self.assertTrue(
+            MaquinaEstadosContrato.validar_transicion(
+                EstadoContrato.BORRADOR, EstadoContrato.PUBLICADO
+            )
+        )
+        self.assertFalse(
+            MaquinaEstadosContrato.validar_transicion(
+                EstadoContrato.BORRADOR, EstadoContrato.ENTREGADO
+            )
+        )
 
     def test_estados_terminales(self) -> None:
-        self.assertTrue(MaquinaEstadosContrato.estado_terminal(EstadoContrato.FINALIZADO))
-        self.assertTrue(MaquinaEstadosContrato.estado_terminal(EstadoContrato.CANCELADO))
-        self.assertFalse(MaquinaEstadosContrato.estado_terminal(EstadoContrato.PUBLICADO))
+        self.assertTrue(
+            MaquinaEstadosContrato.estado_terminal(EstadoContrato.FINALIZADO)
+        )
+        self.assertTrue(
+            MaquinaEstadosContrato.estado_terminal(EstadoContrato.CANCELADO)
+        )
+        self.assertFalse(
+            MaquinaEstadosContrato.estado_terminal(EstadoContrato.PUBLICADO)
+        )
 
     def test_transicion_desde_en_disputa(self) -> None:
         permitidos = MaquinaEstadosContrato.obtener_estados(EstadoContrato.EN_DISPUTA)
-        self.assertEqual(permitidos, {EstadoContrato.FINALIZADO, EstadoContrato.CANCELADO})
-
+        self.assertEqual(
+            permitidos, {EstadoContrato.FINALIZADO, EstadoContrato.CANCELADO}
+        )

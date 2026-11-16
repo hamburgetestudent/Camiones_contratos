@@ -137,6 +137,7 @@ El reporte generado por `coverage.py` evalúa dos criterios clave:
    ```python
    from tests.base import BaseTestCase
 
+
    class TestMiFuncionalidad(BaseTestCase):
        def setUp(self) -> None:
            super().setUp()

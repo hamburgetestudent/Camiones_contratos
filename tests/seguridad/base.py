@@ -7,7 +7,7 @@ from tests.base import BaseTestCase
 
 class BaseTestSeguridad(BaseTestCase):
     """Clase base DRY para pruebas de seguridad.
-    
+
     Hereda de tests.base.BaseTestCase y provee datos semilla,
     claves secretas y claims de prueba compartidas.
     """
@@ -20,4 +20,3 @@ class BaseTestSeguridad(BaseTestCase):
             "email": "test@camiones.cl",
             "rol": "TRANSPORTISTA",
         }
-

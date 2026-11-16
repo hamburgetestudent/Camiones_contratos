@@ -22,20 +22,27 @@ class TestRegistrarPerfilDador(BaseTestOnboarding):
         )
         self.assertEqual(perfil.user_id, self.dador_id)
         self.assertEqual(perfil.rut_id_empresa, "77987654-3")
-        self.assertEqual(perfil.datos_facturacion.razon_social, "Agrícola del Valle SpA")
+        self.assertEqual(
+            perfil.datos_facturacion.razon_social, "Agrícola del Valle SpA"
+        )
         self.assertEqual(perfil.estado_validacion, EstadoValidacion.PENDIENTE)
 
     def test_actualizacion_perfil_existente(self) -> None:
         self.onboarding_service.registrar_o_actualizar_perfil_dador(
             user_id=self.dador_id,
             rut_id_empresa="77987654-3",
-            datos_facturacion=DatosFacturacion(razon_social="Original", direccion="Dir 1", correo_facturacion="a@b.cl"),
+            datos_facturacion=DatosFacturacion(
+                razon_social="Original", direccion="Dir 1", correo_facturacion="a@b.cl"
+            ),
         )
         # Actualización
         actualizado = self.onboarding_service.registrar_o_actualizar_perfil_dador(
             user_id=self.dador_id,
             rut_id_empresa="77987654-3",
-            datos_facturacion=DatosFacturacion(razon_social="Nueva Razón", direccion="Dir 2", correo_facturacion="b@b.cl"),
+            datos_facturacion=DatosFacturacion(
+                razon_social="Nueva Razón",
+                direccion="Dir 2",
+                correo_facturacion="b@b.cl",
+            ),
         )
         self.assertEqual(actualizado.datos_facturacion.razon_social, "Nueva Razón")
-

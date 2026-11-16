@@ -23,4 +23,3 @@ class TestBase64UrlDecode(BaseTestSeguridad):
             muestra = b"X" * tamano
             codificado = _base64url_encode(muestra)
             self.assertEqual(_base64url_decode(codificado), muestra)
-

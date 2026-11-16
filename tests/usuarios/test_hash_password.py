@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+
 from services.usuario_service import hash_password
 from tests.usuarios.base import BaseTestUsuarios
 

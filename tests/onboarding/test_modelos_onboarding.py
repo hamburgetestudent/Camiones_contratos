@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from pydantic import ValidationError
+
 from domain.modelos_onboarding import (
     CargarDocumentoDTO,
-    CrearPerfilDadorDTO,
     DatosFacturacion,
     TipoDocumento,
 )
@@ -17,13 +17,17 @@ class TestModelosOnboarding(BaseTestOnboarding):
 
     def test_extensiones_permitidas_documentos(self) -> None:
         for ext in (".pdf", ".jpg", ".jpeg", ".png", ".PDF", ".PNG"):
-            dto = CargarDocumentoDTO(tipo=TipoDocumento.LICENCIA_CONDUCIR, archivo=f"archivo{ext}")
+            dto = CargarDocumentoDTO(
+                tipo=TipoDocumento.LICENCIA_CONDUCIR, archivo=f"archivo{ext}"
+            )
             self.assertEqual(dto.archivo, f"archivo{ext}")
 
     def test_extension_invalida_documentos_rechazada(self) -> None:
         for ext in (".doc", ".exe", ".txt", ".zip"):
             with self.assertRaises(ValidationError):
-                CargarDocumentoDTO(tipo=TipoDocumento.LICENCIA_CONDUCIR, archivo=f"archivo{ext}")
+                CargarDocumentoDTO(
+                    tipo=TipoDocumento.LICENCIA_CONDUCIR, archivo=f"archivo{ext}"
+                )
 
     def test_ruts_chilenos_validos_con_modulo_11(self) -> None:
         ruts_validos = [
@@ -48,4 +52,8 @@ class TestModelosOnboarding(BaseTestOnboarding):
 
     def test_validacion_correo_facturacion(self) -> None:
         with self.assertRaises(ValidationError):
-            DatosFacturacion(razon_social="Empresa", direccion="Dir", correo_facturacion="invalido_sin_arroba")
+            DatosFacturacion(
+                razon_social="Empresa",
+                direccion="Dir",
+                correo_facturacion="invalido_sin_arroba",
+            )

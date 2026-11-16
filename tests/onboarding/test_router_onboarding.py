@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from uuid import uuid4
 from domain.modelos_onboarding import (
     CargarDocumentoDTO,
     EstadoValidacion,
@@ -28,8 +27,12 @@ class TestRouterOnboarding(BaseTestOnboarding):
     """Pruebas dedicadas a las funciones endpoint de routers/onboarding_router.py."""
 
     def test_cargar_y_listar_documentos_transportista(self) -> None:
-        payload = CargarDocumentoDTO(tipo=TipoDocumento.LICENCIA_CONDUCIR, archivo="doc.pdf")
-        doc_creado = cargar_documento_transportista(payload=payload, x_user_id=self.transportista_id)
+        payload = CargarDocumentoDTO(
+            tipo=TipoDocumento.LICENCIA_CONDUCIR, archivo="doc.pdf"
+        )
+        doc_creado = cargar_documento_transportista(
+            payload=payload, x_user_id=self.transportista_id
+        )
         self.assertEqual(doc_creado.tipo, TipoDocumento.LICENCIA_CONDUCIR)
 
         lista = listar_documentos_transportista(x_user_id=self.transportista_id)
@@ -49,15 +52,22 @@ class TestRouterOnboarding(BaseTestOnboarding):
 
     def test_validar_documento_y_dador_admin(self) -> None:
         # Cargar documento
-        payload_doc = CargarDocumentoDTO(tipo=TipoDocumento.LICENCIA_CONDUCIR, archivo="doc.pdf")
-        doc = cargar_documento_transportista(payload_doc, x_user_id=self.transportista_id)
+        payload_doc = CargarDocumentoDTO(
+            tipo=TipoDocumento.LICENCIA_CONDUCIR, archivo="doc.pdf"
+        )
+        doc = cargar_documento_transportista(
+            payload_doc, x_user_id=self.transportista_id
+        )
 
         # Listar pendientes admin
         pendientes_docs = listar_documentos_pendientes_admin()
         self.assertGreaterEqual(len(pendientes_docs), 1)
 
         # Validar admin
-        doc_val = validar_documento_admin(documento_id=doc.id, payload=ValidarDocumentoDTO(estado=EstadoValidacion.APROBADO))
+        doc_val = validar_documento_admin(
+            documento_id=doc.id,
+            payload=ValidarDocumentoDTO(estado=EstadoValidacion.APROBADO),
+        )
         self.assertEqual(doc_val.estado, EstadoValidacion.APROBADO)
 
         # Registrar perfil dador
@@ -69,5 +79,8 @@ class TestRouterOnboarding(BaseTestOnboarding):
         self.assertGreaterEqual(len(pendientes_dadores), 1)
 
         # Validar dador admin
-        dador_val = validar_dador_admin(dador_id=dador.id, payload=ValidarPerfilDadorDTO(estado_validacion=EstadoValidacion.APROBADO))
+        dador_val = validar_dador_admin(
+            dador_id=dador.id,
+            payload=ValidarPerfilDadorDTO(estado_validacion=EstadoValidacion.APROBADO),
+        )
         self.assertEqual(dador_val.estado_validacion, EstadoValidacion.APROBADO)

@@ -46,4 +46,3 @@ class TestExplorarCargas(BaseTestSubastas):
         resultados = self.subasta_service.explorar_cargas(distancia_max_km=100.0)
         self.assertEqual(len(resultados), 1)
         self.assertEqual(resultados[0].id, c_corta.id)
-

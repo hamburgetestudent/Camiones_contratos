@@ -17,3 +17,7 @@ coverage>=7.0.0
 # Testing & Cobertura
 coverage>=7.0.0
 python-dotenv>=1.0.0
+
+
+# Calidad de Código & Formateo
+ruff>=0.8.0

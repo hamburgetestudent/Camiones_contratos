@@ -63,13 +63,17 @@ class LoginService:
             rol_obj = datos_usuario.rol
             rol_valor = rol_obj.value if hasattr(rol_obj, "value") else str(rol_obj)
             estado_obj = datos_usuario.estado
-            estado = estado_obj.value if hasattr(estado_obj, "value") else str(estado_obj)
+            estado = (
+                estado_obj.value if hasattr(estado_obj, "value") else str(estado_obj)
+            )
 
-        access_token = crear_token_acceso({
-            "sub": user_id or email,
-            "email": email,
-            "rol": rol_valor,
-        })
+        access_token = crear_token_acceso(
+            {
+                "sub": user_id or email,
+                "email": email,
+                "rol": rol_valor,
+            }
+        )
 
         return RespuestaLogin(
             access_token=access_token,
@@ -82,4 +86,3 @@ class LoginService:
             email=email,
             estado=estado,
         )
-

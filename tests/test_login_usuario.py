@@ -15,23 +15,24 @@ Trazabilidad técnica:
 
 from __future__ import annotations
 
-import tempfile
 import unittest
-from pathlib import Path
 from uuid import UUID, uuid4
 
 from fastapi import HTTPException
-from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
-from dao.usuario_dao import UsuarioDAOMemoria, UsuarioDAOSQLite
+from database.conexion import obtener_conexion
 from domain.modelos_login import CredencialesLogin, RespuestaLogin
-from domain.modelos_usuario import EstadoUsuario, RolUsuario, UsuarioCrear, UsuarioModelo
-from main import app
+from domain.modelos_usuario import (
+    EstadoUsuario,
+    RolUsuario,
+    UsuarioCrear,
+    UsuarioModelo,
+)
 from routers.auth_router import iniciar_sesion as router_iniciar_sesion
-from services.security import crear_token_acceso, decodificar_token_acceso
-import services.usuario_service as usuario_service_modulo
-from services.usuario_service import UsuarioService, hash_password
+from services.security import decodificar_token_acceso
+from services.usuario_service import UsuarioService, guardar_usuario, hash_password
+from tests.base import crear_bd_aislada
 
 
 class _MockResponse:
@@ -57,14 +58,25 @@ class _MockClient:
             if detail:
                 return _MockResponse(422, {"detail": detail})
 
-            email = payload.get("email") if "email" in payload else payload.get("usuario")
+            email = (
+                payload.get("email") if "email" in payload else payload.get("usuario")
+            )
             password = payload.get("password")
             if (not str(email or "").strip()) and (not str(password or "").strip()):
-                return _MockResponse(400, {"detail": "El correo electrónico y la contraseña son campos obligatorios."})
+                return _MockResponse(
+                    400,
+                    {
+                        "detail": "El correo electrónico y la contraseña son campos obligatorios."
+                    },
+                )
             if not str(email or "").strip():
-                return _MockResponse(400, {"detail": "El correo electrónico es un campo obligatorio."})
+                return _MockResponse(
+                    400, {"detail": "El correo electrónico es un campo obligatorio."}
+                )
             if not str(password or "").strip():
-                return _MockResponse(400, {"detail": "La contraseña es un campo obligatorio."})
+                return _MockResponse(
+                    400, {"detail": "La contraseña es un campo obligatorio."}
+                )
             try:
                 cred = CredencialesLogin(**payload)
                 res = router_iniciar_sesion(cred)
@@ -72,19 +84,23 @@ class _MockClient:
             except HTTPException as e:
                 return _MockResponse(e.status_code, {"detail": e.detail})
             except ValidationError as e:
-                return _MockResponse(422, {"detail": [{"loc": ["body", "error"], "msg": str(e)}]})
+                return _MockResponse(
+                    422, {"detail": [{"loc": ["body", "error"], "msg": str(e)}]}
+                )
         return _MockResponse(404, {"detail": "Not found"})
 
 
 class BaseTestLogin(unittest.TestCase):
-    """Configuracion base con aislamiento en memoria para pruebas rapidas y deterministas."""
+    """Configuracion base con una base SQLite temporal aislada por test.
+
+    La ruta por defecto queda redirigida a esa base, por lo que ``UsuarioService``
+    autentica contra ella sin tocar ``camiones.db``.
+    """
 
     def setUp(self) -> None:
-        self._orig_usuario_dao = usuario_service_modulo.usuario_dao
-        self.usuario_dao_memoria = UsuarioDAOMemoria()
-        usuario_service_modulo.usuario_dao = self.usuario_dao_memoria
+        self.db_path = crear_bd_aislada(self)
 
-        # Crear usuarios semilla en memoria para pruebas
+        # Crear usuarios semilla en la base temporal para pruebas
         self.password_comun = "passwordSegura123"
         self.hash_comun = hash_password(self.password_comun)
 
@@ -96,7 +112,7 @@ class BaseTestLogin(unittest.TestCase):
             password_hash=self.hash_comun,
             estado=EstadoUsuario.APROBADO,
         )
-        self.usuario_dao_memoria.guardar(self.usuario_transportista)
+        self._guardar_usuario(self.usuario_transportista)
 
         self.usuario_dador = UsuarioModelo(
             id=uuid4(),
@@ -106,7 +122,7 @@ class BaseTestLogin(unittest.TestCase):
             password_hash=self.hash_comun,
             estado=EstadoUsuario.APROBADO,
         )
-        self.usuario_dao_memoria.guardar(self.usuario_dador)
+        self._guardar_usuario(self.usuario_dador)
 
         self.usuario_admin = UsuarioModelo(
             id=uuid4(),
@@ -116,12 +132,14 @@ class BaseTestLogin(unittest.TestCase):
             password_hash=self.hash_comun,
             estado=EstadoUsuario.APROBADO,
         )
-        self.usuario_dao_memoria.guardar(self.usuario_admin)
+        self._guardar_usuario(self.usuario_admin)
 
         self.client = _MockClient()
 
-    def tearDown(self) -> None:
-        usuario_service_modulo.usuario_dao = self._orig_usuario_dao
+    def _guardar_usuario(self, usuario: UsuarioModelo) -> None:
+        """Persiste un usuario semilla directamente en SQLite."""
+        with obtener_conexion(self.db_path) as conn:
+            guardar_usuario(conn, usuario)
 
 
 class TestCA01InicioSesionExitoso(BaseTestLogin):
@@ -295,7 +313,9 @@ class TestCA03CamposObligatorios(BaseTestLogin):
                 usuario="",
                 password="passwordValida123",
             )
-        self.assertIn("correo electrónico es un campo obligatorio", str(ctx.exception).lower())
+        self.assertIn(
+            "correo electrónico es un campo obligatorio", str(ctx.exception).lower()
+        )
 
     def test_rechazo_password_vacia_pydantic(self) -> None:
         """Modelo rechaza contrasena vacia e informa obligatoriedad."""
@@ -423,18 +443,9 @@ class TestPersistenciaSQLiteIntegracionLogin(unittest.TestCase):
     """Prueba de integración end-to-end conectada a base de datos SQLite real y aislada."""
 
     def setUp(self) -> None:
-        self.temp_dir = tempfile.TemporaryDirectory()
-        self.db_path = Path(self.temp_dir.name) / "test_login.db"
-
-        self.sqlite_dao = UsuarioDAOSQLite(db_path=self.db_path, cargar_semilla=False)
-        self._orig_usuario_dao = usuario_service_modulo.usuario_dao
-        usuario_service_modulo.usuario_dao = self.sqlite_dao
+        self.db_path = crear_bd_aislada(self)
 
         self.client = _MockClient()
-
-    def tearDown(self) -> None:
-        usuario_service_modulo.usuario_dao = self._orig_usuario_dao
-        self.temp_dir.cleanup()
 
     def test_flujo_completo_registro_y_login_en_sqlite(self) -> None:
         """Registra un usuario en SQLite y luego inicia sesion exitosamente emitiendo credenciales Bearer."""

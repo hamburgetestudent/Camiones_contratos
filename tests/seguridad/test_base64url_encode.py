@@ -26,4 +26,3 @@ class TestBase64UrlEncode(BaseTestSeguridad):
         datos = b"a"  # 'YQ==' en base64 normal
         resultado = _base64url_encode(datos)
         self.assertEqual(resultado, "YQ")
-

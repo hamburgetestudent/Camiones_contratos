@@ -16,10 +16,11 @@ class TestObtenerPerfilDador(BaseTestOnboarding):
         self.onboarding_service.registrar_o_actualizar_perfil_dador(
             user_id=self.dador_id,
             rut_id_empresa="76123456-0",
-            datos_facturacion=DatosFacturacion(razon_social="Test", direccion="Dir", correo_facturacion="a@b.cl"),
+            datos_facturacion=DatosFacturacion(
+                razon_social="Test", direccion="Dir", correo_facturacion="a@b.cl"
+            ),
         )
         perfil = self.onboarding_service.obtener_perfil_dador(self.dador_id)
         self.assertIsNotNone(perfil)
         assert perfil is not None
         self.assertEqual(perfil.rut_id_empresa, "76123456-0")
-

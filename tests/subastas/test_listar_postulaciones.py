@@ -15,14 +15,19 @@ class TestListarPostulaciones(BaseTestSubastas):
     def test_listar_multiples_postulaciones(self) -> None:
         carga = self.crear_carga_publicada()
         p1 = self.subasta_service.postular_a_carga(
-            self.crear_dto_postulacion(carga.id, transportista_id=self.transportista_id, precio_oferta=100000.0)
+            self.crear_dto_postulacion(
+                carga.id, transportista_id=self.transportista_id, precio_oferta=100000.0
+            )
         )
         p2 = self.subasta_service.postular_a_carga(
-            self.crear_dto_postulacion(carga.id, transportista_id=self.transportista_2_id, precio_oferta=95000.0)
+            self.crear_dto_postulacion(
+                carga.id,
+                transportista_id=self.transportista_2_id,
+                precio_oferta=95000.0,
+            )
         )
 
         lista = self.subasta_service.listar_postulaciones_carga(carga.id)
         self.assertEqual(len(lista), 2)
         ids = {p.id for p in lista}
         self.assertEqual(ids, {p1.id, p2.id})
-

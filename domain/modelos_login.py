@@ -3,7 +3,15 @@
 from __future__ import annotations
 
 from typing import Any, Union
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field, SecretStr, field_validator
+
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    ConfigDict,
+    Field,
+    SecretStr,
+    field_validator,
+)
 
 
 class CredencialesLogin(BaseModel):
@@ -57,11 +65,25 @@ class RespuestaLogin(BaseModel):
     """Respuesta emitida tras una autenticacion exitosa conforme a OAuth2 Bearer."""
 
     access_token: str = Field(..., description="Token de acceso OAuth2 Bearer firmado")
-    token_type: str = Field(default="bearer", description="Tipo de credencial emitida segun estandar OAuth2")
+    token_type: str = Field(
+        default="bearer", description="Tipo de credencial emitida segun estandar OAuth2"
+    )
     rol: str = Field(..., description="Rol asignado al usuario en el sistema")
-    mensaje: str = Field(default="Inicio de sesión exitoso", description="Mensaje de confirmacion")
-    usuario: str = Field(..., description="Identificador o correo del usuario autenticado")
-    id: str | None = Field(default=None, description="Identificador unico UUID del usuario")
-    nombre: str | None = Field(default=None, description="Nombre registrado del usuario")
-    email: str | None = Field(default=None, description="Correo electronico verificado del usuario")
-    estado: str | None = Field(default=None, description="Estado operativo de la cuenta")
+    mensaje: str = Field(
+        default="Inicio de sesión exitoso", description="Mensaje de confirmacion"
+    )
+    usuario: str = Field(
+        ..., description="Identificador o correo del usuario autenticado"
+    )
+    id: str | None = Field(
+        default=None, description="Identificador unico UUID del usuario"
+    )
+    nombre: str | None = Field(
+        default=None, description="Nombre registrado del usuario"
+    )
+    email: str | None = Field(
+        default=None, description="Correo electronico verificado del usuario"
+    )
+    estado: str | None = Field(
+        default=None, description="Estado operativo de la cuenta"
+    )

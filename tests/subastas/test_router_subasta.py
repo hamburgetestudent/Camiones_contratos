@@ -24,15 +24,22 @@ class TestRouterSubasta(BaseTestSubastas):
 
         # 2. Postular
         dto = self.crear_dto_postulacion(carga_id=carga.id)
-        postulacion = postular_a_carga(datos=dto, subasta_service=self.subasta_service, onboarding_aprobado=True)
+        postulacion = postular_a_carga(
+            datos=dto, subasta_service=self.subasta_service, onboarding_aprobado=True
+        )
         self.assertEqual(postulacion.carga_id, carga.id)
 
         # 3. Listar postulaciones
-        lista = listar_postulaciones_carga(carga_id=carga.id, subasta_service=self.subasta_service)
+        lista = listar_postulaciones_carga(
+            carga_id=carga.id, subasta_service=self.subasta_service
+        )
         self.assertEqual(len(lista), 1)
 
         # 4. Adjudicar
-        payload = SolicitudAdjudicacion(carga_id=carga.id, postulacion_id=postulacion.id)
-        adjudicada = adjudicar_subasta(payload=payload, subasta_service=self.subasta_service)
+        payload = SolicitudAdjudicacion(
+            carga_id=carga.id, postulacion_id=postulacion.id
+        )
+        adjudicada = adjudicar_subasta(
+            payload=payload, subasta_service=self.subasta_service
+        )
         self.assertEqual(adjudicada.id, postulacion.id)
-

@@ -18,4 +18,3 @@ class TestListarContratos(BaseTestContratos):
         self.assertEqual(len(lista), 2)
         ids = {c.id for c in lista}
         self.assertEqual(ids, {c1.id, c2.id})
-
