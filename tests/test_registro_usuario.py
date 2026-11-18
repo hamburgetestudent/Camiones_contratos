@@ -18,17 +18,13 @@ Trazabilidad técnica:
 
 from __future__ import annotations
 
-import tempfile
 import unittest
-from pathlib import Path
 from uuid import UUID
 
 from fastapi import HTTPException
 from pydantic import ValidationError
 
-import services.usuario_service as usuario_service_modulo
-from dao.onboarding_dao import DadorCargaDAOInMemory, DocumentoDAOInMemory
-from dao.usuario_dao import UsuarioDAOMemoria, UsuarioDAOSQLite
+from database.conexion import obtener_conexion
 from domain.modelos_onboarding import (
     CargarDocumentoDTO,
     CrearPerfilDadorDTO,
@@ -41,40 +37,30 @@ from services.onboarding_service import (
     DOCUMENTOS_REQUERIDOS_TRANSPORTISTA,
     OnboardingService,
 )
-from services.usuario_service import UsuarioService, hash_password
+from services.usuario_service import (
+    UsuarioService,
+    buscar_usuario_por_email,
+    buscar_usuario_por_id,
+    hash_password,
+)
+from tests.base import crear_bd_aislada
 
 
 class BaseTestRegistro(unittest.TestCase):
-    """Configuración base con aislamiento de DAOs en memoria para pruebas rápidas y deterministas."""
+    """Configuración base con una base SQLite temporal aislada por test.
+
+    La ruta por defecto queda redirigida a esa base, por lo que ``UsuarioService``
+    y el singleton de onboarding persisten ahí sin tocar ``camiones.db``.
+    """
 
     def setUp(self) -> None:
-        # Guardar referencias originales de los singletons
-        self._orig_usuario_dao = usuario_service_modulo.usuario_dao
-        self._orig_onboarding_service = (
-            usuario_service_modulo.onboarding_service_instancia
-        )
+        self.db_path = crear_bd_aislada(self)
+        self.onboarding_service = OnboardingService(db_path=self.db_path)
 
-        # Inyectar DAOs en memoria para total aislamiento
-        self.usuario_dao_memoria = UsuarioDAOMemoria()
-        self.doc_dao_memoria = DocumentoDAOInMemory()
-        self.dador_dao_memoria = DadorCargaDAOInMemory()
-
-        self.onboarding_service_memoria = OnboardingService(
-            documento_dao=self.doc_dao_memoria,
-            dador_dao=self.dador_dao_memoria,
-        )
-
-        usuario_service_modulo.usuario_dao = self.usuario_dao_memoria
-        usuario_service_modulo.onboarding_service_instancia = (
-            self.onboarding_service_memoria
-        )
-
-    def tearDown(self) -> None:
-        # Restaurar referencias originales
-        usuario_service_modulo.usuario_dao = self._orig_usuario_dao
-        usuario_service_modulo.onboarding_service_instancia = (
-            self._orig_onboarding_service
-        )
+    def _leer_usuario(self, usuario_id: UUID):
+        """Lee un usuario directamente de SQLite (verifica persistencia real)."""
+        with obtener_conexion(self.db_path) as conn:
+            return buscar_usuario_por_id(conn, usuario_id)
 
     def _crear_documentos_transportista_validos(self) -> list[CargarDocumentoDTO]:
         """Genera la lista con los 5 documentos requeridos en formatos válidos."""
@@ -141,14 +127,16 @@ class TestCA01RegistroExitoso(BaseTestRegistro):
             usuario_creado.password_hash, hash_password("passwordSegura123")
         )
 
-        # Verificación de persistencia en SQLite/DAO
-        guardado = self.usuario_dao_memoria.obtener_por_id(usuario_creado.id)
+        # Verificación de persistencia en SQLite
+        guardado = self._leer_usuario(usuario_creado.id)
         self.assertIsNotNone(guardado)
         assert guardado is not None
         self.assertEqual(guardado.email, "carlos.conductor@example.com")
 
         # Documentos cargados en onboarding asociados al usuario
-        docs_guardados = self.doc_dao_memoria.get_by_user_id(usuario_creado.id)
+        docs_guardados = self.onboarding_service.listar_documentos_transportista(
+            usuario_creado.id
+        )
         self.assertEqual(len(docs_guardados), 5)
         tipos_guardados = {d.tipo for d in docs_guardados}
         self.assertEqual(tipos_guardados, set(DOCUMENTOS_REQUERIDOS_TRANSPORTISTA))
@@ -175,7 +163,9 @@ class TestCA01RegistroExitoso(BaseTestRegistro):
         self.assertEqual(usuario_creado.estado, EstadoUsuario.EN_REVISION)
 
         # Perfil tributario persistido en onboarding
-        perfil_guardado = self.dador_dao_memoria.get_by_user_id(usuario_creado.id)
+        perfil_guardado = self.onboarding_service.obtener_perfil_dador(
+            usuario_creado.id
+        )
         self.assertIsNotNone(perfil_guardado)
         assert perfil_guardado is not None
         self.assertEqual(perfil_guardado.rut_id_empresa, "76123456-0")
@@ -310,7 +300,7 @@ class TestCA02CorreoDuplicado(BaseTestRegistro):
         with self.assertRaises(HTTPException):
             UsuarioService.registrar_usuario(dto2)
 
-        en_bd = self.usuario_dao_memoria.obtener_por_id(creado.id)
+        en_bd = self._leer_usuario(creado.id)
         self.assertIsNotNone(en_bd)
         assert en_bd is not None
         self.assertEqual(en_bd.nombre, "Usuario Original")
@@ -612,7 +602,7 @@ class TestCA07ValidacionPerfilTributario(BaseTestRegistro):
         creado = UsuarioService.registrar_usuario(dto)
         self.assertEqual(creado.email, email_comun)
 
-        perfil_db = self.dador_dao_memoria.get_by_user_id(creado.id)
+        perfil_db = self.onboarding_service.obtener_perfil_dador(creado.id)
         self.assertIsNotNone(perfil_db)
         assert perfil_db is not None
         self.assertEqual(perfil_db.datos_facturacion.correo_facturacion, email_comun)
@@ -631,7 +621,7 @@ class TestCA07ValidacionPerfilTributario(BaseTestRegistro):
         )
 
         creado = UsuarioService.registrar_usuario(dto)
-        perfil_db = self.dador_dao_memoria.get_by_user_id(creado.id)
+        perfil_db = self.onboarding_service.obtener_perfil_dador(creado.id)
         self.assertIsNotNone(perfil_db)
         assert perfil_db is not None
         self.assertEqual(
@@ -646,16 +636,7 @@ class TestPersistenciaSQLiteIntegracion(unittest.TestCase):
     """Prueba de integración end-to-end con una base de datos SQLite real y aislada."""
 
     def setUp(self) -> None:
-        self.temp_dir = tempfile.TemporaryDirectory()
-        self.db_path = Path(self.temp_dir.name) / "test_usuarios.db"
-
-        self.sqlite_dao = UsuarioDAOSQLite(db_path=self.db_path, cargar_semilla=False)
-        self._orig_usuario_dao = usuario_service_modulo.usuario_dao
-        usuario_service_modulo.usuario_dao = self.sqlite_dao
-
-    def tearDown(self) -> None:
-        usuario_service_modulo.usuario_dao = self._orig_usuario_dao
-        self.temp_dir.cleanup()
+        self.db_path = crear_bd_aislada(self)
 
     def test_ciclo_completo_registro_y_persistencia_sqlite(self) -> None:
         """Verifica que el usuario se guarda en SQLite con estado EN_REVISION y password hasheada."""
@@ -668,8 +649,9 @@ class TestPersistenciaSQLiteIntegracion(unittest.TestCase):
 
         creado = UsuarioService.registrar_usuario(dto)
 
-        # Recuperar desde SQLite mediante DAO
-        recuperado = self.sqlite_dao.obtener_por_id(creado.id)
+        # Recuperar directamente desde SQLite
+        with obtener_conexion(self.db_path) as conn:
+            recuperado = buscar_usuario_por_id(conn, creado.id)
         self.assertIsNotNone(recuperado)
         assert recuperado is not None
         self.assertEqual(recuperado.nombre, "Transportista SQLite")
@@ -679,7 +661,8 @@ class TestPersistenciaSQLiteIntegracion(unittest.TestCase):
         self.assertEqual(recuperado.password_hash, hash_password("claveSQLite123"))
 
         # Recuperar por email insensible a mayúsculas
-        recuperado_email = self.sqlite_dao.obtener_por_email("SQLITE.TEST@CORREO.CL")
+        with obtener_conexion(self.db_path) as conn:
+            recuperado_email = buscar_usuario_por_email(conn, "SQLITE.TEST@CORREO.CL")
         self.assertIsNotNone(recuperado_email)
         assert recuperado_email is not None
         self.assertEqual(recuperado_email.id, creado.id)

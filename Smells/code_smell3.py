@@ -14,14 +14,22 @@ def proc(d):
     return res
 
 """
-el codigo tiene varias funciones, pero no estan declaradas, por lo que no se sabe que hace la funcion proc.
-por ejemplo, se podria declarar como calcular_valor_total, y las variables internas deberian tener nombres mas descriptivos.
-tambien se deberia declarar una constante para el valor de 50000 o 4.33 que , y no usar numeros magicos en su lugar declararlos
+Code Smells identificados y corregidos:
+1. Nombres Cripticos y Poco Descriptivos:
+   - Función 'proc' -> renombramos a 'calcular_totales_items' (o procesar_contratos).
+   - Variables 'd' -> lista_items, 'res' -> resultados, 'v' -> valor, 'i' -> item.
+   - Claves de diccionario: 't' (tipo), 'n' (nombre), 'p' (precio), 'q' (cantidad), 'h' (horas).
+     El código ahora soporta tanto nombres semánticos como abreviados por compatibilidad.
 
-4.33 son las semanas promedio de un mes, y 50000 es el valor a partir del cual se aplica un descuento del 10%
+2. Números Mágicos:
+   - 4.33: Semanas promedio por mes -> SEMANAS_POR_MES = 4.33.
+   - 50000: Monto umbral para activar descuento -> UMBRAL_DESCUENTO = 50_000.
+   - 0.9: Factor de descuento del 10% -> FACTOR_DESCUENTO = 0.90 (o 1 - PORCENTAJE_DESCUENTO).
 
-codigo duplicado, se repite la logica de calcular el valor total y aplicar el descuento, se deberia declarar una funcion para esto y llamarla desde proc.
+3. Código Duplicado:
+   - La condición 'if v > 50000: v = v * 0.9' y 'res.append((i["n"], v))' se repetía en ambas ramas.
+   - Se extrajo la función 'aplicar_descuento' para centralizar la regla de descuento.
 
-nombres cripticos como "t", "p", "q", "h" y "n" deberian ser reemplazados por nombres mas descriptivos, como 
-"tipo", "precio", "cantidad", "horas" y "nombre".
+4. Responsabilidad y Modularidad:
+   - Se extrajo 'calcular_subtotal_item' para aislar las fórmulas de compras vs. servicios.
 """

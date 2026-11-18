@@ -32,11 +32,11 @@ class TestAdjudicarSubasta(BaseTestSubastas):
         self.assertEqual(resultado.estado, EstadoPostulacion.SELECCIONADA)
 
         # La otra debe quedar en RECHAZADA
-        perdedora_actualizada = self.postulacion_dao.obtener_por_id(p_perdedora.id)
+        perdedora_actualizada = self.leer_postulacion_bd(carga.id, p_perdedora.id)
         self.assertEqual(perdedora_actualizada.estado, EstadoPostulacion.RECHAZADA)
 
         # La carga debe quedar en ADJUDICADO con transportista asignado
-        carga_actualizada = self.contrato_dao.obtener_por_id(carga.id)
+        carga_actualizada = self.leer_contrato_bd(carga.id)
         self.assertEqual(carga_actualizada.estado, EstadoContrato.ADJUDICADO)
         self.assertEqual(carga_actualizada.id_transportista, self.transportista_id)
 
@@ -56,16 +56,14 @@ class TestAdjudicarSubasta(BaseTestSubastas):
             )
         )
         # El contrato avanza a un estado desde el cual no se puede adjudicar
-        carga_actual = self.contrato_dao.obtener_por_id(carga.id)
-        carga_actual.estado = EstadoContrato.EN_TRANSITO
-        self.contrato_dao.actualizar(carga.id, carga_actual)
+        self.forzar_estado_contrato(carga.id, EstadoContrato.EN_TRANSITO)
 
         with self.assertRaises(ValueError):
             self.subasta_service.adjudicar_subasta(carga.id, p1.id)
 
         for postulacion_id in (p1.id, p2.id):
             self.assertEqual(
-                self.postulacion_dao.obtener_por_id(postulacion_id).estado,
+                self.leer_postulacion_bd(carga.id, postulacion_id).estado,
                 EstadoPostulacion.POSTULADA,
             )
-        self.assertIsNone(self.contrato_dao.obtener_por_id(carga.id).id_transportista)
+        self.assertIsNone(self.leer_contrato_bd(carga.id).id_transportista)
