@@ -32,3 +32,11 @@ Thumbs.db
 *.njsproj
 *.sln
 *.swp
+
+*.db
+
+# Coverage reports
+.coverage
+.coverage.*
+*.cover
+htmlcov/

@@ -42,9 +42,11 @@ python -m venv venv
 # En Linux/macOS:
 source venv/bin/activate
 # En Windows:
-venv\Scripts\activate
+cd Camiones_contratos
 
 pip install -r requirements.txt
+
+python main.py
 uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
 > La documentación interactiva de la API estará disponible en `http://127.0.0.1:8000/docs`.
@@ -96,6 +98,25 @@ python inicio_test.py -t
 pip install -r requirements-dev.txt
 pytest inicio_test.py -v
 ```
+
+---
+
+## Contratos de diseño: precondiciones, postcondiciones e invariantes
+
+Las reglas de uso de las operaciones principales están documentadas en el docstring de cada función, bajo los encabezados **Precondiciones**, **Postcondiciones** e **Invariantes**. Cuando se viola una precondición la operación falla con un error claro (`ValueError`, `PermissionError` o `HTTPException`) y **no modifica el estado**.
+
+| Operación | Dónde está el contrato | Endpoint para probarlo | Qué se puede mostrar |
+|---|---|---|---|
+| Cambio de estado de contrato (máquina de estados) | [`domain/maquina_estados.py`](domain/maquina_estados.py) · `MaquinaEstadosContrato.cambiar_estado` (línea 100) | `PATCH /contratos/{contrato_id}/estado` | Pre: transición permitida y `id_transportista` al adjudicar. Post: `estado` actualizado. Inv: CANCELADO/FINALIZADO son terminales. |
+| Validación de un contrato | [`domain/modelos.py`](domain/modelos.py) · `ContratoBase.validar_reglas_de_negocio` (línea 219) | `POST /contratos` | Invariantes: fechas, capacidad del camión, requisitos por tipo de carga, coherencia neto + IVA = total. |
+| Creación de contrato | [`services/contrato_service.py`](services/contrato_service.py) · `crear_contrato` (línea 25) | `POST /contratos` | Pre: dador de carga con KYC APROBADO. Post: contrato persistido en BORRADOR. |
+| Postulación a una carga | [`services/subasta_service.py`](services/subasta_service.py) · `postular_a_carga` (línea 102) | `POST /subastas/postular` | Pre: onboarding aprobado, carga existente y en estado disponible. Post: postulación POSTULADA y contrato en EN_POSTULACION. |
+| Adjudicación de subasta | [`services/subasta_service.py`](services/subasta_service.py) · `adjudicar_subasta` (línea 167) | `POST /subastas/adjudicar` | Post "todo o nada": una oferta SELECCIONADA, las demás RECHAZADA, contrato ADJUDICADO. Si falla, nada cambia. |
+| Validación de documentos KYC | [`services/onboarding_service.py`](services/onboarding_service.py) · `validar_documento` (línea 174) | `PATCH /onboarding/admin/documentos/{documento_id}/validar` | Pre: documento existente y estado APROBADO o RECHAZADO. Post: estado persistido. |
+| Registro de usuario | [`services/usuario_service.py`](services/usuario_service.py) · `registrar_usuario` (línea 24) | `POST /auth/registro` | Pre: email único, password de al menos 6 caracteres. Post: se guarda el hash, nunca la clave en claro. |
+| Configuración de reglas de negocio | [`domain/reglas.py`](domain/reglas.py) · `ReglasNegocio.actualizar_configuracion` (línea 48) | `PATCH /configuracion` | Pre: IVA entre 0 y 1, tolerancia y anticipación no negativas. Post: configuración vigente retornada. |
+
+Las pruebas que verifican estos contratos están en `tests/contratos/`, `tests/subastas/`, `tests/onboarding/`, `tests/usuarios/` y `tests/configuracion/`. Las pruebas de regresión de la adjudicación son `test_regresion_adjudicar_con_transicion_invalida_no_deja_estado_a_medias` (`tests/subastas/test_adjudicar_subasta.py`) y `test_rechazo_carga_en_borrador` (`tests/subastas/test_postular_a_carga.py`).
 
 ---
 
@@ -273,3 +294,106 @@ flowchart TD
         BDAO -.-> DB[("Futura persistencia<br/>PostgreSQL / SQLAlchemy")]
     end
 ```
+# HITO 1: FUNDAMENTOS DE INGENIERÍA DE SOFTWARE
+## [MansoViaje]
+
+### 1. Descripción del Sistema
+Plataforma digital intermediaria de cobertura nacional orientada a conectar a generadores de carga (empresas, productores, intermediarios o particulares) con transportistas (camioneros independientes y empresas con flotas). 
+
+El modelo opera como un mercado descentralizado con asignación mediante subastas y postulaciones, formalización de acuerdos por viaje y un sistema de pagos en custodia (Escrow) para garantizar liquidez al transportista y seguridad al dador de carga. La plataforma actúa como mediadora y no es propietaria ni responsable directa de la flota vehicular.
+
+---
+
+### 2. Definición de Actores y Arquetipos (Personas)
+
+* **Dador de Carga (Generador/Cliente):**
+  * Empresas consolidadas, PYMEs, brokers o particulares.
+  * Publica necesidades de transporte (origen, destino, tipo de carga, fechas y requerimientos técnicos).
+  * Evalúa postulaciones, selecciona la oferta ganadora y financia el contrato.
+
+* **Transportista (Oferente):**
+  * Conductores independientes o empresas de transporte con múltiples vehículos.
+  * Registra sus unidades y conductores asociados.
+  * Postula con tarifas competitivas a las cargas publicadas.
+
+---
+
+### 3. Historias de Usuario
+
+| ID | Nombre | Issue |
+|---|---|---|
+| HU-IAM-01 | Registro de Usuarios por Rol | #50 |
+| HU-IAM-02 | Inicio de Sesión y Emisión de Credenciales | #51 |
+| HU-IAM-03 | Interfaz de Inicio de Sesión y Autenticación Federada (UI) | #52 |
+| HU-ONB-01 | Carga y Reemplazo de Documentos del Transportista | #53 |
+| HU-UI-01 | Configuración y Empaquetado de la Aplicación Electron | #54 |
+| HU-ONB-02 | Consulta de Estado Global de Habilitación del Transportista | #55 |
+| HU-CFG-02 | Modificación en Caliente de Políticas del Negocio | #56 |
+| HU-ONB-03 | Registro y Actualización del Perfil Tributario del Dador de Carga | #57 |
+| HU-ONB-04 | Panel Backoffice de Revisión y Validación Documental | #58 |
+| HU-CFG-01 | Consulta de Configuración de Negocio Vigente | #59 |
+
+---
+
+### 4. Requisitos Extrafuncionales
+Ver: `ReqExtrafuncionales.md`
+
+---
+
+### 5. Entidades del Dominio
+
+```mermaid
+mindmap
+  root((Plataforma Camiones))
+    EP-01: Autenticación, Identidad y Accesos (IAM)
+      Registro por rol
+      Inicio de sesión y tokens
+      Social Login y recuperación
+    EP-02: Onboarding y Cumplimiento Legal (KYC & Fleet Compliance)
+      Carga documental transportista
+      Verificación tributaria dador
+      Panel backoffice de aprobación
+      Gating de seguridad y bloqueos
+    EP-03: Gestión y Ciclo de Vida del Contrato de Carga
+      Publicación y especificaciones
+      Validación de carga y capacidades
+      Cálculo financiero e IVA
+      Máquina de estados del contrato
+    EP-04: Motor de Postulaciones y Subasta de Fletes
+      Buscador de cargas disponibles
+      Postulación de transportistas
+      Revisión y adjudicación
+    EP-05: Seguimiento Operacional, Entrega y Disputas
+      Confirmación de tránsito
+      Constancia de entrega
+      Gestión y resolución de disputas
+    EP-06: Configuración Global y Reglas de Negocio
+      Parámetros tributarios y tolerancias
+      Tiempos de anticipación
+      Auditoría de configuraciones
+    EP-07: Experiencia de Usuario y Cliente de Escritorio (Desktop Electron)
+      Interfaz Electron modular
+      Dashboards por rol
+      Notificaciones y alertas
+```
+
+---
+
+### 6. Diseño Arquitectónico
+Ver: `Arquitectura.md`
+
+| Mockup | Historia de usuario relacionada |
+|---|---|
+| [Prototipo Figma](https://www.figma.com/design/leoA2Ejoi6cJi13esWBsXQ/Contratos_camioneros_centralizados?node-id=0-1&t=v76XFzFL7hSGl8TY-1) | HU-IAM-01 |
+
+---
+
+### 7. Responsabilidades del Equipo
+
+| Integrante | Rol | Ítems de la rúbrica a cargo |
+|---|---|---|
+| Benjamín Ponce | PM | 1.2 |
+| Cristian Palma | Backend | 1.2, Issue del profesor |
+| Santiago Sanchez | Backend | 1.2, 2.1, 2.2 |
+| Fabian Ahumada | Backend | 1.1, 2.4 |
+| Gabriel Alvares | Frontend | 2.3, 2.4 |

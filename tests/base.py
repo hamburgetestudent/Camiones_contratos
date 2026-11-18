@@ -1,0 +1,121 @@
+"""Base global para la suite de pruebas del proyecto Camiones_contratos.
+
+Provee la clase BaseTestCase con utilidades de aserción, manejo de excepciones
+y aislamiento de recursos para pruebas unitarias e integración.
+"""
+
+from __future__ import annotations
+
+import tempfile
+import unittest
+from pathlib import Path
+from typing import Any
+from unittest import mock
+
+from fastapi import HTTPException
+
+from database import conexion
+from database.conexion import inicializar_bd
+
+
+def crear_bd_aislada(
+    test_case: unittest.TestCase, cargar_semilla: bool = False
+) -> Path:
+    """Crea una base SQLite temporal y redirige ``DEFAULT_DB_PATH`` hacia ella.
+
+    Todo servicio que use la ruta por defecto (incluidos los singletons de los
+    routers) opera sobre esta base durante el test. Al terminar, la ruta original
+    se restaura y el directorio temporal se elimina.
+
+    Args:
+        test_case: Test que gobierna el ciclo de vida de la base (usa ``addCleanup``).
+        cargar_semilla: Si es True, carga los usuarios/perfiles/documentos semilla.
+
+    Returns:
+        Ruta del archivo SQLite temporal ya inicializado.
+    """
+    directorio = tempfile.TemporaryDirectory()
+    test_case.addCleanup(directorio.cleanup)
+    ruta = Path(directorio.name) / "test_camiones.db"
+    inicializar_bd(ruta, cargar_semilla=cargar_semilla)
+
+    parche = mock.patch.object(conexion, "DEFAULT_DB_PATH", ruta)
+    parche.start()
+    # Registrado despues del cleanup del directorio => se ejecuta antes (LIFO).
+    test_case.addCleanup(parche.stop)
+    return ruta
+
+
+class BaseTestCase(unittest.TestCase):
+    """Clase base raíz para todos los tests del proyecto.s,
+    manejo de excepciones HTTP y aislamiento de directorios temporales.
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self._temp_dirs: list[tempfile.TemporaryDirectory[str]] = []
+
+    def tearDown(self) -> None:
+        for temp_dir in self._temp_dirs:
+            try:
+                temp_dir.cleanup()
+            except OSError:
+                pass
+        self._temp_dirs.clear()
+        super().tearDown()
+
+    def preparar_bd_aislada(self, cargar_semilla: bool = False) -> Path:
+        """Crea una base SQLite temporal aislada para este test (ver ``crear_bd_aislada``)."""
+        return crear_bd_aislada(self, cargar_semilla=cargar_semilla)
+
+    def crear_directorio_temporal(self) -> Path:
+        """Crea un directorio temporal que se limpiará automáticamente en tearDown."""
+        td = tempfile.TemporaryDirectory()
+        self._temp_dirs.append(td)
+        return Path(td.name)
+
+    def assertHttpException(  # noqa: N802
+        self,
+        status_code: int,
+        detalle_esperado: str | None = None,
+    ):
+        """Context manager para verificar que una llamada lance HTTPException con código y detalle esperados."""
+        return _AssertHttpExceptionContext(self, status_code, detalle_esperado)
+
+
+class _AssertHttpExceptionContext:
+    def __init__(
+        self,
+        test_case: unittest.TestCase,
+        expected_status: int,
+        expected_detail: str | None = None,
+    ) -> None:
+        self.test_case = test_case
+        self.expected_status = expected_status
+        self.expected_detail = expected_detail
+        self.exception: HTTPException | None = None
+
+    def __enter__(self) -> _AssertHttpExceptionContext:
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> bool:
+        if exc_type is None:
+            self.test_case.fail(
+                f"Se esperaba HTTPException con status {self.expected_status}, pero no se lanzó ninguna excepción."
+            )
+        if not issubclass(exc_type, HTTPException):
+            return False  # Propagar otra excepción
+
+        self.exception = exc_val
+        self.test_case.assertEqual(
+            exc_val.status_code,
+            self.expected_status,
+            f"Status esperado {self.expected_status}, pero se obtuvo {exc_val.status_code}",
+        )
+        if self.expected_detail:
+            self.test_case.assertIn(
+                self.expected_detail.lower(),
+                str(exc_val.detail).lower(),
+                f"Detalle esperado '{self.expected_detail}' no encontrado en '{exc_val.detail}'",
+            )
+        return True
