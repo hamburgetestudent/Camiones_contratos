@@ -1,3 +1,4 @@
+
 """Orquestación del inicio de sesión, sin implementar la validación."""
 
 from __future__ import annotations
@@ -6,7 +7,10 @@ from typing import Protocol
 
 from domain.modelos_login import CredencialesLogin, RespuestaLogin
 from domain.modelos_usuario import UsuarioModelo
-from services.security import crear_token_acceso
+
+# TD-01: Componente reutilizable para construir respuestas de autenticación.
+# Se comparte con UsuarioService sin duplicar la generación del token.
+from services.respuesta_login import construir_respuesta_login
 
 
 class ValidadorCredenciales(Protocol):
@@ -50,39 +54,21 @@ class LoginService:
         if hasattr(self._validador, "obtener_datos_usuario"):
             datos_usuario = self._validador.obtener_datos_usuario(credenciales.usuario)
 
-        rol_valor = "USUARIO"
-        user_id: str | None = None
-        nombre: str | None = None
-        email: str = credenciales.usuario
-        estado: str | None = None
-
-        if datos_usuario is not None:
-            user_id = str(datos_usuario.id)
-            nombre = datos_usuario.nombre
-            email = datos_usuario.email
-            rol_obj = datos_usuario.rol
-            rol_valor = rol_obj.value if hasattr(rol_obj, "value") else str(rol_obj)
-            estado_obj = datos_usuario.estado
-            estado = (
-                estado_obj.value if hasattr(estado_obj, "value") else str(estado_obj)
-            )
-
-        access_token = crear_token_acceso(
-            {
-                "sub": user_id or email,
-                "email": email,
-                "rol": rol_valor,
-            }
-        )
-
-        return RespuestaLogin(
-            access_token=access_token,
-            token_type="bearer",
-            rol=rol_valor,
-            mensaje="Inicio de sesión exitoso",
-            usuario=credenciales.usuario,
-            id=user_id,
-            nombre=nombre,
-            email=email,
-            estado=estado,
+        # ============================================================
+        # TD-01: REFACTORIZACIÓN DE AUTENTICACIÓN
+        #
+        # Se conserva la validación y la excepción originales.
+        # También se permite autenticar sin datos de perfil.
+        #
+        # La construcción de la respuesta y del token se delega
+        # al componente compartido services/respuesta_login.py.
+        #
+        # El identificador solicitado se conserva para no modificar
+        # el comportamiento original de LoginService.
+        #
+        # Clases aplicadas: 3.1, 3.2 y 3.3.
+        # ============================================================
+        return construir_respuesta_login(
+            datos_usuario=datos_usuario,
+            usuario_solicitado=credenciales.usuario,
         )

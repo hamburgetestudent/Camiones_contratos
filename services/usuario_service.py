@@ -1,3 +1,4 @@
+
 import hashlib
 from uuid import UUID
 
@@ -8,7 +9,12 @@ from domain.modelos_login import CredencialesLogin, RespuestaLogin
 from domain.modelos_onboarding import CrearPerfilDadorDTO
 from domain.modelos_usuario import UsuarioCrear, UsuarioModelo
 from services.onboarding_service import onboarding_service_instancia
-from services.security import crear_token_acceso
+
+# TD-01: Se importa el componente reutilizable de autenticación.
+# Antes, este servicio construía directamente el token y la respuesta.
+# Ahora delega esa responsabilidad para evitar lógica duplicada.
+from services.respuesta_login import construir_respuesta_login
+
 
 # Instancia global respaldada por SQLite para acceder a los datos de los usuarios
 usuario_dao = UsuarioDAOSQLite()
@@ -56,6 +62,7 @@ class UsuarioService:
         usuario_guardado = usuario_dao.guardar(nuevo_usuario)
 
         # Si adjuntó documentos de transportista en el registro, persistirlos en SQLite
+        # persistirlos en SQLite.
         if usuario_data.documentos:
             for doc in usuario_data.documentos:
                 onboarding_service_instancia.cargar_documento(
@@ -65,6 +72,7 @@ class UsuarioService:
                 )
 
         # Si adjuntó perfil tributario de dador de carga en el registro, persistirlo en SQLite
+        # persistirlo en SQLite.
         if isinstance(usuario_data.perfil_tributario, CrearPerfilDadorDTO):
             onboarding_service_instancia.registrar_o_actualizar_perfil_dador(
                 user_id=usuario_guardado.id,
@@ -115,10 +123,17 @@ class UsuarioService:
 
     @staticmethod
     def iniciar_sesion(credenciales: CredencialesLogin) -> RespuestaLogin:
-        """Autentica las credenciales del usuario y emite credencial de acceso OAuth2 Bearer."""
+        """Autentica las credenciales y devuelve una respuesta OAuth2 Bearer.
+
+        TD-01:
+        Se conserva la validación original de credenciales.
+        La construcción del token y de la respuesta se delega
+        al componente compartido services/respuesta_login.py.
+        """
         email = credenciales.usuario.strip() if credenciales.usuario else ""
         password = credenciales.obtener_password_texto()
 
+        # Validaciones originales: no modificar códigos ni mensajes.
         if not email and not password:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -135,34 +150,32 @@ class UsuarioService:
                 detail="La contraseña es un campo obligatorio.",
             )
 
+        # Se conserva el mecanismo original de autenticación.
         usuario = UsuarioService.autenticar_usuario(email, password)
-        rol_valor = (
-            usuario.rol.value if hasattr(usuario.rol, "value") else str(usuario.rol)
-        )
-        estado_valor = (
-            usuario.estado.value
-            if hasattr(usuario.estado, "value")
-            else str(usuario.estado)
-        )
 
-        access_token = crear_token_acceso(
-            {
-                "sub": str(usuario.id),
-                "email": usuario.email,
-                "rol": rol_valor,
-            }
-        )
-
-        return RespuestaLogin(
-            access_token=access_token,
-            token_type="bearer",
-            rol=rol_valor,
-            mensaje="Inicio de sesión exitoso",
-            usuario=usuario.email,
-            id=str(usuario.id),
-            nombre=usuario.nombre,
-            email=usuario.email,
-            estado=estado_valor,
+        # ============================================================
+        # TD-01: REFACTORIZACIÓN DE AUTENTICACIÓN
+        #
+        # ANTES:
+        # Este servicio convertía el rol y el estado del usuario,
+        # preparaba los datos del token y construía RespuestaLogin.
+        #
+        # AHORA:
+        # Se utiliza un componente compartido que concentra
+        # esas operaciones para evitar su duplicación.
+        #
+        # IMPORTANTE:
+        # Se mantiene usuario.email como identificador de respuesta
+        # para conservar el comportamiento del endpoint /auth/login.
+        #
+        # Clases aplicadas:
+        # 3.1 - Refactorización sistemática.
+        # 3.2 - Eliminación de duplicación y deuda técnica.
+        # 3.3 - Reutilización de componentes.
+        # ============================================================
+        return construir_respuesta_login(
+            datos_usuario=usuario,
+            usuario_solicitado=usuario.email,
         )
 
 
