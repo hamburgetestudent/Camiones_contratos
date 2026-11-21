@@ -1,12 +1,9 @@
-// =================================
-// CONFIGURACIÓN DE API BACKEND
-// =================================
+// =============================================
+// LOGIN - versión 1.1
+// Redirige al panel según el rol entregado por el backend.
+// =============================================
 
 const API_BASE_URL = window.API_BASE_URL || "http://127.0.0.1:8000";
-
-// =================================
-// BOTÓN DE INICIO DE SESIÓN
-// =================================
 
 const btnLogin = document.getElementById("btnLogin");
 const emailInput = document.getElementById("email");
@@ -15,21 +12,20 @@ const mensajeLogin = document.getElementById("mensajeLogin");
 
 function mostrarMensajeLogin(texto, tipo = "") {
     if (!mensajeLogin) return;
+
     mensajeLogin.textContent = texto;
     mensajeLogin.className = "mensaje-login";
-    if (tipo) {
-        mensajeLogin.classList.add(tipo);
-    }
+    if (tipo) mensajeLogin.classList.add(tipo);
 }
 
 async function ejecutarLogin() {
+    if (!emailInput || !passwordInput || !btnLogin) return;
+
     const email = emailInput.value.trim();
     const password = passwordInput.value;
-
     mostrarMensajeLogin("");
 
-    // Comprobamos que los campos no estén vacíos
-    if (email === "" || password === "") {
+    if (!email || !password) {
         mostrarMensajeLogin("Debes ingresar tu email y contraseña.", "error");
         return;
     }
@@ -40,38 +36,32 @@ async function ejecutarLogin() {
     try {
         const respuesta = await fetch(`${API_BASE_URL}/auth/login`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                usuario: email,
-                password: password,
-            }),
+            headers: { "Content-Type": "application/json" },
+            // Se conserva la estructura que utiliza el backend actual.
+            body: JSON.stringify({ usuario: email, password })
         });
 
         const datos = await respuesta.json().catch(() => ({}));
 
         if (!respuesta.ok) {
-            const detalle =
-                typeof datos.detail === "string"
-                    ? datos.detail
-                    : "Usuario o contraseña incorrectos.";
+            const detalle = typeof datos.detail === "string"
+                ? datos.detail
+                : "Usuario o contraseña incorrectos.";
             mostrarMensajeLogin(detalle, "error");
             return;
         }
 
-        // Guardamos la sesión del usuario autenticado
+        if (!datos || typeof datos !== "object" || Array.isArray(datos)) {
+            mostrarMensajeLogin("El servidor devolvió una respuesta no válida.", "error");
+            return;
+        }
+
+        // Se conserva la respuesta para que el panel pueda mostrar los datos.
+        // La autorización real debe validarse siempre en el backend.
         localStorage.setItem("usuario_actual", JSON.stringify(datos));
 
-        const nombreMostrar = datos.nombre || datos.usuario || email;
-        const rolMostrar = datos.rol ? ` (${datos.rol})` : "";
-        mostrarMensajeLogin(
-            `${datos.mensaje || "Inicio de sesión exitoso"}: ${nombreMostrar}${rolMostrar}`,
-            "success"
-        );
-
-        window.location.href = "../Principal/principal.html";
-
+        mostrarMensajeLogin("Inicio de sesión exitoso. Abriendo tu panel...", "success");
+        window.location.replace("../panel_funciones/panel_funciones.html");
     } catch (error) {
         console.error("Error al conectar con el backend:", error);
         mostrarMensajeLogin(
@@ -83,84 +73,39 @@ async function ejecutarLogin() {
     }
 }
 
-btnLogin.addEventListener("click", ejecutarLogin);
+if (btnLogin) btnLogin.addEventListener("click", ejecutarLogin);
 
-[emailInput, passwordInput].forEach((input) => {
-    if (input) {
-        input.addEventListener("keydown", (event) => {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                ejecutarLogin();
-            }
-        });
-    }
+[emailInput, passwordInput].filter(Boolean).forEach((campo) => {
+    campo.addEventListener("keydown", (evento) => {
+        if (evento.key === "Enter") {
+            evento.preventDefault();
+            ejecutarLogin();
+        }
+    });
 });
 
-
-
-// INICIO GOOGLE
-// =================================
-
+// Los proveedores sociales siguen siendo informativos: aún no existe OAuth.
 const btnGoogle = document.getElementById("btnGoogle");
-
-btnGoogle.addEventListener("click", () => {
-
-    alert("Inicio de sesión con Google");
-
-});
-
-
-// INICIO MICROSOFT
-// =================================
+if (btnGoogle) btnGoogle.addEventListener("click", () => alert("El inicio con Google todavía no está conectado."));
 
 const btnMicrosoft = document.getElementById("btnMicrosoft");
-
-btnMicrosoft.addEventListener("click", () => {
-
-    alert("Inicio de sesión con Microsoft");
-
-});
-
-
-
-// INICIO APPLE
-// =================================
+if (btnMicrosoft) btnMicrosoft.addEventListener("click", () => alert("El inicio con Microsoft todavía no está conectado."));
 
 const btnApple = document.getElementById("btnApple");
+if (btnApple) btnApple.addEventListener("click", () => alert("El inicio con Apple todavía no está conectado."));
 
-btnApple.addEventListener("click", () => {
-
-    alert("Inicio de sesión con Apple");
-
-});
-
-
-
-// RECUPERAR CONTRASEÑA
-// ================================
-
-const recuperarContraseña =
-    document.getElementById("recuperarContraseña");
-
-recuperarContraseña.addEventListener("click", (event) => {
-
-    event.preventDefault();
-
-    alert("Aquí irá el sistema para recuperar la contraseña.");
-
-});
-
-
-
-// REGISTRO NUEVO USUARIO
-// =================================
+const recuperarContraseña = document.getElementById("recuperarContraseña");
+if (recuperarContraseña) {
+    recuperarContraseña.addEventListener("click", (evento) => {
+        evento.preventDefault();
+        alert("El sistema para recuperar la contraseña todavía no está conectado.");
+    });
+}
 
 const btnRegistro = document.getElementById("btnRegistro");
-
-btnRegistro.addEventListener("click", (event) => {
-
-    event.preventDefault();
-
-    window.location.href = "../Registrar_nuevoUsuario/registro.html";
-
-});
+if (btnRegistro) {
+    btnRegistro.addEventListener("click", (evento) => {
+        evento.preventDefault();
+        window.location.href = "../Registrar_nuevoUsuario/registro.html";
+    });
+}
