@@ -1,5 +1,7 @@
 # Taller-Programacion
 
+[Panel de administración: navegación, bajas lógicas, auditoría y pruebas](docs/panel-administracion.md)
+
 Este proyecto consiste en una plataforma integral multiplataforma (escritorio y web) orientada a la centralización y digitalización de contratos de transporte terrestre de carga. La solución funciona como un punto de encuentro entre empresas generadoras de carga (dadores de carga) y transportistas independientes o flotas de camioneros, optimizando el ciclo completo de publicación, postulación, adjudicación, verificación de cumplimiento (KYC) y seguimiento de servicios de flete.
 
 La arquitectura del sistema está estructurada mediante una separación clara de responsabilidades por capas:
