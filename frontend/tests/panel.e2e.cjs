@@ -64,6 +64,10 @@ async function probar() {
   await pagina.locator(".indicador").first().waitFor();
   assert.deepEqual(await pagina.locator(".indicador").allTextContents(), ["0", "5", "0"]);
   await pagina.getByRole("link", { name: /Cuentas activas/ }).click();
+  await pagina.getByRole("row").filter({ hasText: "Administrador Backoffice" }).getByRole("link").click();
+  await pagina.getByText(/Las cuentas administrativas están protegidas/).waitFor();
+  assert.equal(await pagina.getByRole("button", { name: "Eliminar cuenta", exact: true }).count(), 0);
+  await pagina.goBack();
   await pagina.getByRole("row").filter({ hasText: "Carlos Soto" }).getByRole("link").click();
   const eliminar = pagina.getByRole("button", { name: "Eliminar cuenta", exact: true });
   await eliminar.click();

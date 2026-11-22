@@ -33,3 +33,13 @@ def manejar_excepcion_http(error: Exception) -> HTTPException:
         return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=mensaje)
 
     return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=mensaje)
+
+
+def confirmar_operacion(operar, *argumentos):
+    try:
+        operacion, causa = operar(*argumentos)
+    except PermissionError as error:
+        raise HTTPException(403, str(error)) from error
+    if causa:
+        raise HTTPException(409, causa)
+    return {"operacion_id": operacion}
