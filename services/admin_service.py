@@ -55,17 +55,23 @@ def eliminar(
     with transaccion_exclusiva() as conn:
         # Si la baja del actor ganó la carrera, su sesión ya no autoriza cambios.
         vigente = conn.execute(
-            "SELECT nombre FROM usuarios WHERE id = ? AND rol = 'ADMIN_BACKOFFICE' AND eliminado = 0",
+            "SELECT nombre, rol FROM usuarios WHERE id = ? AND eliminado = 0",
             (str(actor.id),),
         ).fetchone()
         if not vigente:
             raise PermissionError("La cuenta administradora ya no tiene acceso.")
         identificador = str(elemento_id)
-        fila = conn.execute(
-            _CONSULTAS[tipo] + " WHERE id = ?", (identificador,)
-        ).fetchone()
         motivo = motivo.strip()
-        causa = _causa_rechazo(tipo, fila, motivo, confirmado)
+        autorizado = vigente["rol"] == "ADMIN_BACKOFFICE"
+        fila = None
+        if autorizado:
+            fila = conn.execute(
+                _CONSULTAS[tipo] + " WHERE id = ?", (identificador,)
+            ).fetchone()
+            causa = _causa_rechazo(tipo, fila, motivo, confirmado)
+        else:
+            # Se audita el intento sin consultar ni revelar el recurso solicitado.
+            causa = "Se requiere una cuenta administradora."
         anterior = (
             {"estado": fila["estado"], "eliminado": bool(fila["eliminado"])}
             if fila
@@ -99,6 +105,8 @@ def eliminar(
             ),
         )
     # El router comunica el rechazo después del commit para conservar su historial.
+    if not autorizado:
+        raise PermissionError(causa)
     return operacion, causa
 
 

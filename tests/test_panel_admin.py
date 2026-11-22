@@ -170,6 +170,16 @@ class TestPanelAdmin(BaseTestSubastas):
                 self.assertEqual(solicitar("/admin/historial", token)[0], 403)
                 ruta = "/admin/elementos/cuenta/" + usuario["id"] + "/eliminar"
                 self.assertEqual(
+                    solicitar(ruta, token, {"motivo": "Prueba", "confirmado": True})[0],
+                    403,
+                )
+                (intento,) = solicitar("/admin/historial", admin)[1]
+                self.assertEqual(
+                    (intento["resultado"], intento["administrador_id"]),
+                    ("Rechazado", usuario["id"]),
+                )
+                self.assertIsNone(intento["anterior"])
+                self.assertEqual(
                     solicitar(
                         ruta, admin, {"motivo": "Baja solicitada", "confirmado": True}
                     )[0],
