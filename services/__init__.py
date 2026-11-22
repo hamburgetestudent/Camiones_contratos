@@ -2,13 +2,11 @@
 
 from services.contrato_service import ContratoService, ServicioContrato
 from services.dependencies import (
-    contrato_dao,
     contrato_service,
     get_contrato_service,
     get_subasta_service,
     obt_servicio_contrato,
     obt_servicio_subasta,
-    postulacion_dao,
     servicio_contrato,
     servicio_subasta,
     subasta_service,
@@ -20,8 +18,6 @@ __all__ = [
     "ContratoService",
     "ServicioSubasta",
     "SubastaService",
-    "contrato_dao",
-    "postulacion_dao",
     "servicio_contrato",
     "servicio_subasta",
     "contrato_service",

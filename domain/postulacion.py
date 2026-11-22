@@ -52,8 +52,14 @@ class PostulacionBase(BaseModel):
         ge=TARIFA_MINIMA_POSTULACION_CLP,
         description=f"Tarifa ofrecida por el viaje (Minimo: {int(TARIFA_MINIMA_POSTULACION_CLP)} CLP)",
     )
-    tiempo_entrega_horas: float = Field(..., gt=0, description="Tiempo estimado de entrega en horas")
-    comentario: str | None = Field(None, max_length=500, description="Nota o comentario adicional del transportista")
+    tiempo_entrega_horas: float = Field(
+        ..., gt=0, description="Tiempo estimado de entrega en horas"
+    )
+    comentario: str | None = Field(
+        None,
+        max_length=500,
+        description="Nota o comentario adicional del transportista",
+    )
 
     model_config = ConfigDict(str_strip_whitespace=True)
 
@@ -69,7 +75,8 @@ class PostulacionModelo(PostulacionBase):
 
     id: UUID = Field(default_factory=uuid4, description="ID unico de la postulacion")
     estado: EstadoPostulacion = Field(
-        default=EstadoPostulacion.POSTULADA, description="Estado actual de la postulacion"
+        default=EstadoPostulacion.POSTULADA,
+        description="Estado actual de la postulacion",
     )
     creado_en: AwareDatetime = Field(
         default_factory=lambda: datetime.now(UTC),
