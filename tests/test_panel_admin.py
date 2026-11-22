@@ -1,8 +1,11 @@
 """Pruebas de integración del panel usando SQLite temporal y HTTP real."""
 
 import json
+import os
 import socket
 import sqlite3
+import subprocess
+import sys
 import threading
 import time
 from contextlib import closing
@@ -84,6 +87,33 @@ class TestPanelAdmin(BaseTestSubastas):
             )
         self.assertIsNotNone(self.leer_contrato_bd(contrato.id))
         self.assertFalse(admin_service.historial())
+
+    def test_baja_de_cuenta_conserva_contrato_e_historial_en_otro_proceso(self):
+        self.empresa_id = UUID(int=2)
+        contrato = self.crear_carga_publicada()
+        operacion, causa = admin_service.eliminar(
+            "cuenta", self.empresa_id, self.actor, "Baja solicitada", True
+        )
+        self.assertIsNone(causa)
+        # El nuevo intérprete vuelve a abrir la base y ejecuta la inicialización de arranque.
+        consulta = (
+            "import json; from database.conexion import inicializar_bd; "
+            "from services.admin_service import historial, listar_elementos; inicializar_bd(); "
+            "print(json.dumps([historial(), listar_elementos('contrato'), listar_elementos('cuenta', True)]))"
+        )
+        salida = subprocess.check_output(
+            [sys.executable, "-c", consulta],
+            env={**os.environ, "SQLITE_DB_PATH": str(self.db_path)},
+        )
+        eventos, contratos, cuentas = json.loads(salida)
+        self.assertEqual(eventos[0]["id"], operacion)
+        self.assertEqual(
+            (contratos[0]["id"], contratos[0]["estado"]),
+            (str(contrato.id), "PUBLICADO"),
+        )
+        self.assertEqual(contratos[0]["id_empresa_generadora"], str(self.empresa_id))
+        cuenta = next(c for c in cuentas if c["id"] == str(self.empresa_id))
+        self.assertEqual(cuenta["eliminado"], 1)
 
     def test_filtros_actividad_y_reintento(self):
         contrato = self.crear_carga_publicada()
