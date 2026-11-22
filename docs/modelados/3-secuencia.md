@@ -1,5 +1,7 @@
 # Diagrama de secuencia · Crear contrato en borrador
 
+[Abrir la fuente editable para draw.io](3-secuencia.drawio)
+
 El dador de carga solicita la creación mediante la API. El recorrido comienza con una solicitud que cumple el esquema `ContratoCrear`.
 
 ```mermaid

@@ -1,6 +1,4 @@
-#Servicio de negocio para la gestion del ciclo de vida de los Contratos.
-
-#Orquesta los modelos de dominio, la maquina de estados y la capa de persistencia.
+"""Servicio de negocio para la gestion del ciclo de vida de los contratos.
 
 Orquesta los modelos de dominio y la maquina de estados, y persiste directamente
 en SQLite (tabla ``contratos``) mediante ``database.conexion``.
