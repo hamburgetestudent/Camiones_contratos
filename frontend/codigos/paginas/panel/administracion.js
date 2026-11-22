@@ -1,5 +1,6 @@
 /* Las fechas y los filtros usan UTC, igual que los indicadores calculados por FastAPI. */
 const etiquetasAccion = {
+  cancelar_contrato: "Cancelar contrato",
   eliminar_contrato: "Eliminar contrato",
   eliminar_cuenta: "Eliminar cuenta",
 };
@@ -138,10 +139,20 @@ const estadosContrato = [
 function opciones(valores) {
   return [["", "Todos"], ...valores.map((v) => [v, v])];
 }
-let bajaPendiente;
-function confirmarBaja(tipo, fila) {
-  bajaPendiente = { tipo, id: fila.id };
-  $("titulo-confirmacion").textContent = "Eliminar " + tipo;
+let operacionPendiente;
+function confirmarOperacion(accion, tipo, fila) {
+  operacionPendiente = { accion, tipo, id: fila.id };
+  const cancelar = accion === "cancelar";
+  $("titulo-confirmacion").textContent = cancelar ? "Cancelar contrato" : "Eliminar " + tipo;
+  $("etiqueta-motivo").textContent = cancelar
+    ? "Motivo de la cancelación"
+    : "Motivo de la eliminación";
+  $("confirmar-operacion").textContent = cancelar
+    ? "Confirmar cancelación"
+    : "Confirmar eliminación";
+  $("efecto-operacion").textContent = cancelar
+    ? "La convocatoria terminará. El contrato y sus ofertas seguirán disponibles para consulta."
+    : "El elemento dejará de aparecer en los listados habituales.";
   $("objetivo").textContent =
     (tipo === "cuenta" ? fila.nombre : fila.origen + " → " + fila.destino) + " · " + fila.id;
   $("motivo").value = "";
@@ -166,12 +177,13 @@ $("form-baja").onsubmit = async (e) => {
   const botones = $("form-baja").querySelectorAll("button");
   botones.forEach((b) => (b.disabled = true));
   try {
-    const { tipo, id } = bajaPendiente;
-    await api("/admin/elementos/" + tipo + "/" + id + "/eliminar", { motivo, confirmado: true });
+    const { accion, tipo, id } = operacionPendiente;
+    await api("/admin/elementos/" + tipo + "/" + id + "/" + accion, { motivo, confirmado: true });
     $("confirmacion").close();
     // Retener el acceso al detalle y al historial tras retirar el elemento del listado habitual.
     const modulo = tipo === "cuenta" ? "cuentas" : "contratos";
-    const destino = modulo + "?incluir_eliminados=1&detalle=" + id;
+    const destino =
+      modulo + (accion === "eliminar" ? "?incluir_eliminados=1&detalle=" : "?detalle=") + id;
     if (location.hash.slice(1) === destino) await navegar();
     else {
       location.hash = destino;
@@ -179,7 +191,10 @@ $("form-baja").onsubmit = async (e) => {
         window.addEventListener("hashchange", resolve, { once: true })
       );
     }
-    $("aviso").textContent = "Eliminación registrada correctamente.";
+    $("aviso").textContent =
+      accion === "cancelar"
+        ? "Cancelación registrada correctamente."
+        : "Eliminación registrada correctamente.";
   } catch (error) {
     $("error-baja").textContent = error.message;
   } finally {
@@ -216,15 +231,19 @@ function detalleElemento(tipo, fila, ruta, params) {
     ficha(campos),
     enlace("Consultar historial del elemento", "historial", { tipo, elemento_id: fila.id })
   );
+  if (tipo === "contrato" && fila.cancelable) {
+    f.append(boton("Cancelar contrato", () => confirmarOperacion("cancelar", tipo, fila)));
+  }
   let razon = "";
   if (fila.eliminado) razon = "Este elemento ya fue eliminado.";
   else if (tipo === "contrato" && fila.estado !== "PUBLICADO")
     razon = "Solo se pueden eliminar contratos actualmente en PUBLICADO.";
   else if (tipo === "cuenta" && fila.rol === "ADMIN_BACKOFFICE")
-    razon = "La eliminación de cuentas administrativas está pendiente de definición.";
+    razon =
+      "Las cuentas administrativas están protegidas. El panel solo permite eliminar cuentas de transportistas y dadores de carga.";
   if (razon) f.append(nodo("p", razon));
   else {
-    const b = boton("Eliminar " + tipo, () => confirmarBaja(tipo, fila));
+    const b = boton("Eliminar " + tipo, () => confirmarOperacion("eliminar", tipo, fila));
     b.classList.add("peligro");
     f.append(b);
   }

@@ -4,7 +4,7 @@ El rol `ADMIN_BACKOFFICE` entra a **Inicio**, **Gestión de contratos**, **Gesti
 
 ## Recorrido del administrador
 
-1. Iniciar sesión. El resumen muestra contratos actualmente publicados y visibles, cuentas que pueden iniciar sesión y bajas completadas hoy. Cada indicador abre la consulta correspondiente. El día y las horas del historial se muestran en UTC.
+1. Iniciar sesión. El resumen muestra contratos actualmente publicados y visibles, cuentas que pueden iniciar sesión y acciones administrativas completadas hoy. Cada indicador abre la consulta correspondiente. El día y las horas del historial se muestran en UTC.
 2. Abrir **Gestión de contratos**, seleccionar **Ver detalle** y comprobar la ruta, el identificador y el estado. **Eliminar contrato** se ofrece únicamente en `PUBLICADO`. La confirmación identifica el contrato y exige un motivo.
 3. Tras la baja, el detalle permite consultar su historial. **Incluir eliminados** recupera el contrato en el listado administrativo. La carga deja de admitir postulaciones, adjudicaciones y cambios de estado. Conserva su estado operativo y sus relaciones.
 4. En **Gestión de cuentas**, la baja de un dador o transportista impide iniciar sesión y usar una sesión anterior. **Incluir eliminadas** permite recuperar su ficha. Sus contratos siguen con sus estados y participantes originales.
@@ -64,6 +64,18 @@ npm run test:panel
 
 Puede indicarse otro ejecutable de Python con la variable `PYTHON`. El recorrido comprueba el login de los tres roles, los indicadores, volver desde la confirmación, eliminar una cuenta, consultar su historial, abrir el menú estrecho con teclado y cerrar sesión.
 
-## Alcance de esta versión
+## Cancelación administrativa de un contrato
 
-La eliminación lógica conserva el estado operativo del contrato. El cierre administrativo mediante cancelación corresponde a una entrega posterior. Las cuentas con rol `ADMIN_BACKOFFICE` están protegidas frente a la baja desde el panel. Un intento sobre una de esas cuentas queda registrado como rechazado.
+Se permite pasar a `CANCELADO` únicamente desde `PUBLICADO`, `EN_SUBASTA` o `EN_POSTULACION`, con motivo y confirmación. Los borradores siguen bajo gestión del dador. La adjudicación marca el límite porque ya hay un transportista seleccionado y otras ofertas descartadas. En tránsito o tras la entrega, una incidencia sigue el flujo de disputa; su resolución es independiente de este permiso. Un elemento eliminado o un contrato en estado terminal queda disponible para consulta.
+
+Cancelar interrumpe una convocatoria válida. El contrato sigue visible como cancelado y conserva las ofertas. Eliminar lógicamente retira una publicación (por ejemplo, un duplicado) y exige el estado actual `PUBLICADO`. El cierre del plazo para ofertas es una tercera situación que todavía puede permitir una adjudicación.
+
+`POST /admin/elementos/contrato/{id}/cancelar` recibe `motivo` y `confirmado`. Si un administrador solicita `CANCELADO` por `PATCH /contratos/{id}/estado`, se aplica la misma política. Ambas rutas releen el estado dentro de la transacción y registran el evento `cancelar_contrato` con su resultado. Los indicadores y filtros de auditoría incluyen estas operaciones.
+
+En **Gestión de contratos → Ver detalle**, **Cancelar contrato** y **Eliminar contrato** tienen confirmaciones distintas. Tras cancelar se abre la ficha visible con estado `CANCELADO`. En **Historial de acciones**, el filtro **Cancelar contrato** permite revisar el motivo y el estado anterior.
+
+## Protección de cuentas internas
+
+El administrador puede dar de baja cuentas de transportistas y dadores de carga. Su propia cuenta, la de otro administrador y la última cuenta administrativa están protegidas, independientemente de cuántas sigan activas. El backend rechaza cada intento y conserva su motivo en el historial.
+
+El rol administrativo es interno y no se obtiene por autorregistro. Protegerlo evita que un par retire el acceso de otro o deje la plataforma sin responsable. Si un administrador deja el equipo, el responsable de las cuentas internas debe gestionar el relevo fuera del panel.

@@ -6,6 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict
 
+from routers.comun import confirmar_operacion
 from routers.sesion import UsuarioActual, administrador_actual
 from services import admin_service
 from services.admin_service import TipoElemento
@@ -16,7 +17,7 @@ router = APIRouter(
 )
 
 
-class Baja(BaseModel):
+class OperacionAdministrativa(BaseModel):
     """El responsable proviene de la sesión, nunca del cuerpo de la solicitud."""
 
     model_config = ConfigDict(extra="forbid")
@@ -37,16 +38,28 @@ def elementos(
 
 
 @router.post("/elementos/{tipo}/{elemento_id}/eliminar")
-def eliminar(tipo: TipoElemento, elemento_id: UUID, baja: Baja, actor: UsuarioActual):
-    try:
-        operacion, causa = admin_service.eliminar(
-            tipo, elemento_id, actor, baja.motivo, baja.confirmado
-        )
-    except PermissionError as error:
-        raise HTTPException(403, str(error)) from error
-    if causa:
-        raise HTTPException(409, causa)
-    return {"operacion_id": operacion}
+def eliminar(
+    tipo: TipoElemento,
+    elemento_id: UUID,
+    baja: OperacionAdministrativa,
+    actor: UsuarioActual,
+):
+    return confirmar_operacion(
+        admin_service.eliminar, tipo, elemento_id, actor, baja.motivo, baja.confirmado
+    )
+
+
+@router.post("/elementos/contrato/{contrato_id}/cancelar")
+def cancelar(
+    contrato_id: UUID, solicitud: OperacionAdministrativa, actor: UsuarioActual
+):
+    return confirmar_operacion(
+        admin_service.cancelar_contrato,
+        contrato_id,
+        actor,
+        solicitud.motivo,
+        solicitud.confirmado,
+    )
 
 
 @router.get("/historial", dependencies=[Depends(administrador_actual)])

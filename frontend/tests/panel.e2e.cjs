@@ -64,6 +64,10 @@ async function probar() {
   await pagina.locator(".indicador").first().waitFor();
   assert.deepEqual(await pagina.locator(".indicador").allTextContents(), ["0", "5", "0"]);
   await pagina.getByRole("link", { name: /Cuentas activas/ }).click();
+  await pagina.getByRole("row").filter({ hasText: "Administrador Backoffice" }).getByRole("link").click();
+  await pagina.getByText(/Las cuentas administrativas están protegidas/).waitFor();
+  assert.equal(await pagina.getByRole("button", { name: "Eliminar cuenta", exact: true }).count(), 0);
+  await pagina.goBack();
   await pagina.getByRole("row").filter({ hasText: "Carlos Soto" }).getByRole("link").click();
   const eliminar = pagina.getByRole("button", { name: "Eliminar cuenta", exact: true });
   await eliminar.click();
@@ -75,6 +79,59 @@ async function probar() {
   await pagina.getByRole("link", { name: "Consultar historial del elemento" }).click();
   await pagina.getByRole("row").filter({ hasText: "Completado" }).getByRole("link").click();
   await pagina.getByText("Baja solicitada de prueba", { exact: true }).waitFor();
+  // Usar la API real para preparar una convocatoria en la base temporal.
+  const identidad = await pagina.request.post(api + "/auth/login", {
+    data: { email: "contacto@logisticasur.cl", password: "dador123" },
+  });
+  const dador = await identidad.json();
+  const headers = { Authorization: "Bearer " + dador.access_token };
+  const fecha = (horas) => new Date(Date.now() + horas * 3600000).toISOString();
+  const creada = await pagina.request.post(api + "/contratos", {
+    headers,
+    data: {
+      id_empresa_generadora: dador.id,
+      origen: "Santiago",
+      destino: "Talca",
+      f_cierre_postulaciones: fecha(3),
+      f_estimada_salida: fecha(6),
+      f_estimada_llegada: fecha(14),
+      input_camionKG: 10000,
+      tipo_carga: "GENERAL",
+      peso_total: 5000,
+      moneda: "CLP",
+      monto_neto: 100000,
+      monto_iva: 19000,
+      monto_total: 119000,
+    },
+  });
+  assert.equal(creada.status(), 201, await creada.text());
+  const contrato = await creada.json();
+  const publicada = await pagina.request.patch(api + "/contratos/" + contrato.id + "/estado", {
+    headers,
+    data: { nuevo_estado: "PUBLICADO" },
+  });
+  assert.equal(publicada.status(), 200, await publicada.text());
+  await pagina
+    .locator("nav")
+    .getByRole("link", { name: /Gestión de contratos/ })
+    .click();
+  await pagina.getByRole("row").filter({ hasText: contrato.id }).getByRole("link").click();
+  // Volver desde la confirmación de baja conserva la publicación y sus dos acciones.
+  await pagina.getByRole("button", { name: "Eliminar contrato", exact: true }).click();
+  await pagina.getByLabel("Motivo de la eliminación").waitFor();
+  await pagina.getByRole("button", { name: "Volver", exact: true }).click();
+  await pagina.getByRole("button", { name: "Cancelar contrato", exact: true }).click();
+  await pagina.getByLabel("Motivo de la cancelación").fill("Retiro del flete");
+  await pagina.getByRole("button", { name: "Confirmar cancelación" }).click();
+  await pagina.getByText("Cancelación registrada correctamente.").waitFor();
+  await pagina.getByText("CANCELADO", { exact: true }).waitFor();
+  assert.equal(
+    await pagina.getByRole("button", { name: "Cancelar contrato", exact: true }).count(),
+    0
+  );
+  await pagina.getByRole("link", { name: "Consultar historial del elemento" }).click();
+  await pagina.getByRole("row").filter({ hasText: "Cancelar contrato" }).getByRole("link").click();
+  await pagina.getByText("Retiro del flete", { exact: true }).waitFor();
   await pagina.setViewportSize({ width: 520, height: 680 });
   const menu = pagina.getByRole("button", { name: /Menú/ });
   await menu.focus();
