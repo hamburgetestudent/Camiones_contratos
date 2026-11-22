@@ -51,7 +51,9 @@ app.include_router(admin_router)
 for modulo in (config_router, contratos_router, onboarding_router, subasta_router):
     app.include_router(modulo, dependencies=[Depends(usuario_actual)])
 
-FRONTEND_PAGINAS_DIR = Path(__file__).resolve().parent / "frontend" / "paginas"
+FRONTEND_DIR = Path(__file__).resolve().parent / "frontend" / "codigos"
+FRONTEND_PAGINAS_DIR = FRONTEND_DIR / "paginas"
+FRONTEND_IMAGENES_DIR = FRONTEND_DIR / "imagenes"
 
 
 @app.get("/", include_in_schema=False)
@@ -59,6 +61,13 @@ def raiz() -> RedirectResponse:
     """Redirige la raíz del sitio web hacia la vista de inicio de sesión."""
     return RedirectResponse(url="/Login/index.html")
 
+
+if FRONTEND_IMAGENES_DIR.is_dir():
+    app.mount(
+        "/imagenes",
+        StaticFiles(directory=str(FRONTEND_IMAGENES_DIR)),
+        name="imagenes",
+    )
 
 if FRONTEND_PAGINAS_DIR.is_dir():
     app.mount(

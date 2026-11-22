@@ -1,4 +1,8 @@
-const API_BASE_URL = window.API_BASE_URL || "http://127.0.0.1:8000";
+const API_BASE_URL =
+    window.API_BASE_URL ||
+    (window.location.protocol.startsWith("http")
+        ? window.location.origin
+        : "http://127.0.0.1:8000");
 
 const registroForm = document.getElementById("registroForm");
 const empresaSection = document.getElementById("empresaSection");
@@ -130,7 +134,7 @@ registroForm.addEventListener("submit", async (event) => {
     } catch (error) {
         console.error("Error al conectar con el backend:", error);
         mensaje.textContent =
-            "No se pudo conectar con el servidor (http://127.0.0.1:8000). Verifica que el backend esté en ejecución.";
+            `No se pudo conectar con el servidor (${API_BASE_URL}). Verifica que el backend esté en ejecución.`;
         mensaje.classList.add("error");
     } finally {
         if (btnSubmitRegistro) {
