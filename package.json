@@ -7,6 +7,8 @@
     "dev": "node dev.mjs",
     "start": "node dev.mjs",
     "build": "npm --prefix frontend run build",
+    "build:electron": "npm --prefix frontend run build",
+    "build:web": "node -e \"console.log('Static web assets ready in frontend/paginas')\"",
     "test": "node scripts/run-py.mjs run_tests.py",
     "test:html": "node scripts/run-py.mjs run_tests.py --html",
     "test:clean": "node scripts/run-py.mjs run_tests.py --clean",
