@@ -1,11 +1,12 @@
 """Pruebas unitarias para el cierre automatico por expiracion de subastas."""
 
-from datetime import UTC, datetime, timedelta
 import unittest
+from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 from dao.contrato_dao import ContratoDAOMemoria
 from dao.postulacion_dao import PostulacionDAOMemoria
+
 from domain.maquina_estados import EstadoContrato
 from domain.modelos import ContratoModelo, Moneda, TipoCarga
 from domain.postulacion import PostulacionCrear

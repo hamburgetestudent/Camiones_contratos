@@ -4,14 +4,9 @@
 
 import re
 from datetime import UTC, datetime, timedelta
-from enum import Enum
+from enum import StrEnum
 from typing import Annotated
 from uuid import UUID, uuid4
-
-
-from enum import StrEnum
-
-from enum import StrEnum
 
 from pydantic import (
     AwareDatetime,

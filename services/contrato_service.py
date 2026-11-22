@@ -278,9 +278,10 @@ ContratoService = ServicioContrato
 
 if __name__ == "__main__":
     import unittest
+    from datetime import UTC, datetime, timedelta
     from unittest.mock import MagicMock
     from uuid import uuid4
-    from datetime import datetime, timedelta, UTC
+
     from domain.modelos import Moneda, TipoCarga
 
     class TestServicioContrato(unittest.TestCase):
@@ -288,13 +289,13 @@ if __name__ == "__main__":
             # Mocks
             self.mock_dao = MagicMock()
             self.mock_onboarding_service = MagicMock()
-            
+
             # SUT (System Under Test)
             self.servicio = ServicioContrato(
                 dao=self.mock_dao,
                 onboarding_service=self.mock_onboarding_service
             )
-            
+
             # Datos base válidos para pruebas
             self.id_empresa = uuid4()
             ahora = datetime.now(UTC)
@@ -318,22 +319,22 @@ if __name__ == "__main__":
         def test_crear_contrato_exito_y_guardado(self):
             """Prueba que el contrato se crea y guarda exitosamente cuando la empresa está aprobada."""
             self.mock_onboarding_service.es_dador_aprobado.return_value = True
-            
+
             self.servicio.crear_contrato(self.datos_validos)
-            
+
             self.mock_onboarding_service.es_dador_aprobado.assert_called_once_with(self.id_empresa)
             self.mock_dao.guardar.assert_called_once()
             argumento_guardado = self.mock_dao.guardar.call_args[0][0]
             self.assertEqual(argumento_guardado.id_empresa_generadora, self.id_empresa)
             self.assertEqual(argumento_guardado.estado, "BORRADOR")
-            
+
         def test_crear_contrato_falla_empresa_no_aprobada(self):
             """Prueba que la función lanza PermissionError cuando la validación KYC no está aprobada."""
             self.mock_onboarding_service.es_dador_aprobado.return_value = False
-            
+
             with self.assertRaises(PermissionError) as context:
                 self.servicio.crear_contrato(self.datos_validos)
-                
+
             self.assertIn("no cuenta con su verificacion KYC/Onboarding en estado APROBADO", str(context.exception))
             self.mock_onboarding_service.es_dador_aprobado.assert_called_once_with(self.id_empresa)
             self.mock_dao.guardar.assert_not_called()
@@ -343,7 +344,7 @@ if __name__ == "__main__":
             arroja un ValidationError de Pydantic (ValueError).
             """
             from pydantic import ValidationError
-            
+
             # Replicamos los datos, pero con un IVA que no corresponde al 19%
             datos_invalidos_dict = {
                 "id_empresa_generadora": self.id_empresa,
@@ -360,10 +361,10 @@ if __name__ == "__main__":
                 "monto_iva": 0, # Error intencional: en CLP debería ser 19000
                 "monto_total": 100000 # Error intencional
             }
-            
+
             with self.assertRaises(ValidationError) as context:
                 ContratoCrear(**datos_invalidos_dict)
-                
+
             self.assertIn("no corresponde al", str(context.exception))
 
     unittest.main()
