@@ -6,6 +6,16 @@ REM CAMIONES_CONTRATOS - NPM PORTATIL
 REM =========================================================
 
 set "PROJECT_DIR=%~dp0"
+set "SELF_PATH=%~f0"
+
+REM Si Node.js ya está instalado en el sistema, usar el npm del sistema directamente
+for /f "delims=" %%I in ('where npm.cmd 2^>nul') do (
+    if /I not "%%~fI"=="%SELF_PATH%" (
+        call "%%~fI" %*
+        exit /b %errorlevel%
+    )
+)
+
 set "NODE_DIR=%PROJECT_DIR%herramientas\node"
 set "NODE_EXE=%NODE_DIR%\node.exe"
 set "NPM_CLI=%NODE_DIR%\node_modules\npm\bin\npm-cli.js"

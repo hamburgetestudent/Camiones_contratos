@@ -7,13 +7,12 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc && cpx \"codigos/paginas/**/*\" \"dist/paginas\" && cpx \"codigos/imagenes/**/*\" \"dist/imagenes\"",
-    "start": "npm run build && electron .",
+    "start": "tsc && cpx \"codigos/paginas/**/*\" \"dist/paginas\" && cpx \"codigos/imagenes/**/*\" \"dist/imagenes\" && electron .",
     "dev": "tsc --watch",
     "test:panel": "node tests/panel.e2e.cjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "setup": "npm install --include=dev",
-    "prestart": "npm run setup"
+    "setup": "npm install --include=dev"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
