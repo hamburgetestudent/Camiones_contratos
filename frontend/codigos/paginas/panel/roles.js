@@ -58,7 +58,7 @@ const FUNCIONALIDADES_POR_ROL = {
       icono: "▤",
       titulo: "Gestión de contratos",
       descripcion:
-        "Consulta los contratos de la plataforma y gestiona su eliminación cuando corresponda.",
+        "Consulta los contratos y gestiona su cancelación o eliminación según su estado.",
       accionTexto: "Administrar contratos",
       modulo: "contratos",
     },

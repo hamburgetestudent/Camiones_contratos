@@ -33,11 +33,17 @@
       <form id="form-baja">
         <h2 id="titulo-confirmacion"></h2>
         <p id="objetivo"></p>
-        <label>Motivo de la eliminación<textarea id="motivo" required rows="3"></textarea></label>
+        <p id="efecto-operacion"></p>
+        <label
+          ><span id="etiqueta-motivo">Motivo de la eliminación</span
+          ><textarea id="motivo" required rows="3"></textarea>
+        </label>
         <p id="error-baja" role="alert"></p>
         <div class="botonera">
           <button type="button" id="volver">Volver</button
-          ><button class="peligro" type="submit">Confirmar eliminación</button>
+          ><button id="confirmar-operacion" class="peligro" type="submit">
+            Confirmar eliminación
+          </button>
         </div>
       </form>
     </dialog>
