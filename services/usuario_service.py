@@ -40,7 +40,7 @@ def buscar_usuario_por_id(
 ) -> UsuarioModelo | None:
     """Obtiene un usuario por su UUID, o None si no existe."""
     fila = conn.execute(
-        f"{_SELECT_USUARIO} WHERE id = ?", (str(usuario_id),)
+        f"{_SELECT_USUARIO} WHERE id = ? AND eliminado = 0", (str(usuario_id),)
     ).fetchone()
     return _fila_a_usuario(fila) if fila else None
 
@@ -50,7 +50,7 @@ def buscar_usuario_por_email(
 ) -> UsuarioModelo | None:
     """Busca un usuario por correo (insensible a mayusculas y espacios extremos)."""
     fila = conn.execute(
-        f"{_SELECT_USUARIO} WHERE lower(trim(email)) = ?", (email.strip().lower(),)
+        f"{_SELECT_USUARIO} WHERE lower(trim(email)) = ? AND eliminado = 0", (email.strip().lower(),)
     ).fetchone()
     return _fila_a_usuario(fila) if fila else None
 
@@ -58,7 +58,7 @@ def buscar_usuario_por_email(
 def buscar_todos_los_usuarios(conn: sqlite3.Connection) -> list[UsuarioModelo]:
     """Retorna todos los usuarios en orden de creacion."""
     filas = conn.execute(
-        f"{_SELECT_USUARIO} ORDER BY created_at ASC, rowid ASC"
+        f"{_SELECT_USUARIO} WHERE eliminado = 0 ORDER BY created_at ASC, rowid ASC"
     ).fetchall()
     return [_fila_a_usuario(fila) for fila in filas]
 
@@ -113,7 +113,8 @@ class UsuarioService:
         # Comprobar unicidad del email y guardar en una sola transaccion (evita
         # que dos registros simultaneos con el mismo email pasen la comprobacion).
         with transaccion_exclusiva() as conn:
-            if buscar_usuario_por_email(conn, usuario_data.email):
+            # El correo sigue vinculado a su titular tras una baja lógica.
+            if conn.execute("SELECT 1 FROM usuarios WHERE email = ?", (usuario_data.email.strip(),)).fetchone():
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="El email ya está registrado",

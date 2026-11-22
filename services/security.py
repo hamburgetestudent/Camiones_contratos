@@ -12,13 +12,12 @@ import hashlib
 import hmac
 import json
 import os
+import secrets
 import time
 from typing import Any
 
 # Clave secreta configurable por variable de entorno o clave por defecto para desarrollo
-SECRET_KEY = os.getenv(
-    "JWT_SECRET_KEY", "secreto_super_seguro_plataforma_camiones_2026"
-)
+SECRET_KEY = os.getenv("JWT_SECRET_KEY") or secrets.token_hex(32)
 ALGORITMO = "HS256"
 EXPIRACION_DEFAULT_MINUTOS = 60 * 8  # 8 horas de sesion
 
@@ -52,6 +51,7 @@ def crear_token_acceso(
     ahora = int(time.time())
     payload = dict(claims)
     payload.setdefault("iat", ahora)
+    payload.setdefault("jti", secrets.token_hex(16))
     payload.setdefault("exp", ahora + (expiracion_minutos * 60))
     payload.setdefault("iss", "camiones_contratos_iam")
 

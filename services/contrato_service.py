@@ -153,14 +153,14 @@ def buscar_contrato(
 ) -> ContratoModelo | None:
     """Obtiene un contrato por su ID, o None si no existe."""
     fila = conn.execute(
-        f"{_SQL_SELECT_CONTRATO} WHERE id = ?", (str(contrato_id),)
+        f"{_SQL_SELECT_CONTRATO} WHERE id = ? AND eliminado = 0", (str(contrato_id),)
     ).fetchone()
     return _fila_a_contrato(fila) if fila else None
 
 
 def buscar_todos_los_contratos(conn: sqlite3.Connection) -> list[ContratoModelo]:
     """Retorna todos los contratos en orden de insercion."""
-    filas = conn.execute(f"{_SQL_SELECT_CONTRATO} ORDER BY rowid").fetchall()
+    filas = conn.execute(f"{_SQL_SELECT_CONTRATO} WHERE eliminado = 0 ORDER BY rowid").fetchall()
     return [_fila_a_contrato(fila) for fila in filas]
 
 

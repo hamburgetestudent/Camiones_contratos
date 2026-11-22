@@ -372,6 +372,8 @@ class ServicioSubasta:
             List[PostulacionModelo]: Listado cronologico de postulaciones recibidas.
         """
         with obtener_conexion(self._db_path) as conn:
+            if not buscar_contrato(conn, carga_id):
+                return []
             return _buscar_postulaciones_por_contrato(conn, carga_id)
 
 
