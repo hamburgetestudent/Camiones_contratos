@@ -213,9 +213,11 @@ class ServicioSubasta:
     ) -> PostulacionModelo:
         """Registra la postulacion de un transportista para una carga activa tras validar las reglas de negocio.
 
-        Valida que el transportista cuente con onboarding aprobado, que la carga exista y que se
-        encuentre en un estado que admita nuevas ofertas. Si la carga estaba en PUBLICADO o EN_SUBASTA,
-        se transiciona automaticamente a EN_POSTULACION.
+        Valida que el transportista cuente con onboarding aprobado, que la carga exista, que se
+        encuentre en un estado que admita nuevas ofertas y que no haya expirado la fecha límite de
+        postulación (f_cierre_postulaciones). Si expiró, la subasta se declara desierta (si no hubo
+        postulaciones previas) o cerrada (si ya contaba con ofertas). Si la carga estaba en
+        PUBLICADO o EN_SUBASTA y es válida, se transiciona automáticamente a EN_POSTULACION.
 
         Args:
             datos_postulacion (PostulacionCrear): Esquema con ID de carga, transportista, camion y tarifa ofertada.
@@ -225,7 +227,8 @@ class ServicioSubasta:
             PostulacionModelo: Entidad de postulacion persistida con estado POSTULADA.
 
         Raises:
-            ValueError: Si el onboarding no esta aprobado, si el contrato no existe o si no admite ofertas.
+            ValueError: Si el onboarding no esta aprobado, si el contrato no existe, si no admite ofertas
+                o si el plazo para postular ha expirado (cerrada o desierta).
         """
         if not onboarding_aprobado:
             raise ValueError(
