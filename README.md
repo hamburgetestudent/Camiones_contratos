@@ -10,6 +10,7 @@ La arquitectura separa claramente las responsabilidades entre cliente y servidor
 ### Enlaces Rápidos
 
 * **Modelado UML (Entrega 3):** [`docs/modelado/`](docs/modelado/) *(y carpeta de trabajo del equipo [`docs/modelados/`](docs/modelados/))*
+* **Panel de administración:** [Panel de administración: navegación, bajas lógicas, auditoría y pruebas](docs/panel-administracion.md)
 * **Reglas de Negocio:** [`REGLAS_DE_NEGOCIO.md`](REGLAS_DE_NEGOCIO.md)
 * **Documento de Arquitectura:** [`docs_clases/Arquitectura.md`](docs_clases/Arquitectura.md)
 * **Guía de Pruebas y Cobertura:** [`tests/README.md`](tests/README.md)
