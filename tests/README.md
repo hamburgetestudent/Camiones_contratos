@@ -15,7 +15,6 @@ tests/
 ├── test_registro_usuario.py  # Flujos integrales de registro y validaciones
 ├── configuracion/            # Pruebas de configuración de negocio y parámetros
 ├── contratos/                # Ciclo de vida de contratos, máquina de estados y transiciones
-├── dao/                      # Pruebas de acceso a datos (SQLite y Memoria)
 ├── onboarding/               # Validación de transportistas, dadores y documentos
 ├── seguridad/                # Codificación base64url, tokens JWT y criptografía
 ├── subastas/                 # Publicación de cargas, ofertas y adjudicaciones
@@ -151,3 +150,7 @@ El reporte generado por `coverage.py` evalúa dos criterios clave:
 4. **Validación de errores:**
    - Emplea `with self.assertHttpException(400, "detalle"):` para probar los fallos esperados en routers y servicios.
 
+
+## Expiración de subastas
+
+Las cinco pruebas de `tests/test_subasta_expiracion.py` utilizan una base SQLite temporal por caso. Para simular el vencimiento, actualizan el plazo del contrato y conservan las ofertas existentes. Una oferta tardía se rechaza. Si era una subasta sin ofertas, el servicio confirma su cancelación antes de comunicar el rechazo. Si tenía ofertas, el dador aún puede adjudicarla.
