@@ -38,7 +38,7 @@ async function ejecutarLogin() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             // Se conserva la estructura que utiliza el backend actual.
-            body: JSON.stringify({ usuario: email, password })
+            body: JSON.stringify({ email, password })
         });
 
         const datos = await respuesta.json().catch(() => ({}));
@@ -59,9 +59,11 @@ async function ejecutarLogin() {
         // Se conserva la respuesta para que el panel pueda mostrar los datos.
         // La autorización real debe validarse siempre en el backend.
         localStorage.setItem("usuario_actual", JSON.stringify(datos));
+        localStorage.setItem("access_token", datos.access_token);
+        localStorage.setItem("usuario_rol", datos.rol);
 
         mostrarMensajeLogin("Inicio de sesión exitoso. Abriendo tu panel...", "success");
-        window.location.replace("../panel_funciones/panel_funciones.html");
+        window.location.replace("../panel/index.html");
     } catch (error) {
         console.error("Error al conectar con el backend:", error);
         mostrarMensajeLogin(
@@ -108,4 +110,8 @@ if (btnRegistro) {
         evento.preventDefault();
         window.location.href = "../Registrar_nuevoUsuario/registro.html";
     });
+}
+
+if (localStorage.getItem("access_token")) {
+    window.location.replace("../panel/index.html");
 }

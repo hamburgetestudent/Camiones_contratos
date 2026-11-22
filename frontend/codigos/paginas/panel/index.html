@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Camiones Contratos | Inicio</title>
+    <link rel="stylesheet" href="panel.css" />
+    <script src="roles.js" defer></script>
+    <script src="panel.js" defer></script>
+    <script src="administracion.js" defer></script>
+  </head>
+  <body>
+    <button id="menu" aria-controls="lateral" aria-expanded="false">☰ Menú</button>
+    <aside id="lateral">
+      <strong class="marca">Camiones Contratos</strong>
+      <nav id="navegacion" aria-label="Navegación principal"></nav>
+      <footer>
+        <strong id="nombre"></strong><span id="rol"></span><button id="salir">Cerrar sesión</button>
+      </footer>
+    </aside>
+    <main>
+      <header>
+        <div>
+          <h1 id="titulo" tabindex="-1">Inicio</h1>
+          <p id="saludo"></p>
+        </div>
+        <span id="etiqueta"></span>
+      </header>
+      <div id="aviso" role="status"></div>
+      <section id="contenido" aria-label="Contenido del panel"></section>
+    </main>
+    <dialog id="confirmacion" aria-labelledby="titulo-confirmacion">
+      <form id="form-baja">
+        <h2 id="titulo-confirmacion"></h2>
+        <p id="objetivo"></p>
+        <label>Motivo de la eliminación<textarea id="motivo" required rows="3"></textarea></label>
+        <p id="error-baja" role="alert"></p>
+        <div class="botonera">
+          <button type="button" id="volver">Volver</button
+          ><button class="peligro" type="submit">Confirmar eliminación</button>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>

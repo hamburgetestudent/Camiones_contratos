@@ -382,7 +382,7 @@ function alternarMenuPerfil() {
     botonPerfil.setAttribute("aria-expanded", String(!estaOculto));
 }
 
-function gestionarAccionPerfil(evento) {
+async function gestionarAccionPerfil(evento) {
     const boton = evento.target.closest("[data-accion-perfil]");
     if (!boton) return;
 
@@ -397,7 +397,20 @@ function gestionarAccionPerfil(evento) {
         alert("conectar la pantalla de configuración de la aplicación.");
     } else if (accion === "cerrar") {
 
-        localStorage.removeItem("sesion_usuario");
+        try {
+            const api = window.API_BASE_URL || "http://127.0.0.1:8000";
+            const respuesta = await fetch(api + "/auth/logout", {
+                method: "POST",
+                headers: { Authorization: "Bearer " + localStorage.getItem("access_token") }
+            });
+            if (!respuesta.ok && respuesta.status !== 401) throw Error();
+        } catch {
+            alert("No se pudo cerrar la sesión. Vuelve a intentarlo.");
+            return;
+        }
+        for (const clave of ["usuario_actual", "access_token", "usuario_rol", "sesion_usuario"]) {
+            localStorage.removeItem(clave);
+        }
 
         window.location.replace("../Login/index.html");
     }
