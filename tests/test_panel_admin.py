@@ -74,6 +74,74 @@ class TestPanelAdmin(BaseTestSubastas):
                 )
                 self.assertEqual(evento["administrador_id"], str(self.actor.id))
 
+    def test_cancelacion_por_estado_y_diferencia_con_la_baja(self):
+        for estado in EstadoContrato:
+            with self.subTest(estado=estado):
+                carga = self.crear_carga_publicada()
+                self.forzar_estado_contrato(carga.id, estado)
+                _, causa = admin_service.cancelar_contrato(
+                    carga.id, self.actor, "Retiro de la carga", True
+                )
+                permitido = estado in {"PUBLICADO", "EN_SUBASTA", "EN_POSTULACION"}
+                self.assertEqual(causa is None, permitido)
+                actual = self.leer_contrato_bd(carga.id)
+                self.assertEqual(
+                    actual.estado, EstadoContrato.CANCELADO if permitido else estado
+                )
+                (evento,) = admin_service.historial(elemento_id=carga.id)
+                self.assertEqual(evento["accion"], "cancelar_contrato")
+                self.assertEqual(
+                    evento["resultado"], "Completado" if permitido else "Rechazado"
+                )
+                self.assertEqual(evento["anterior"]["estado"], estado.value)
+                self.assertEqual(
+                    evento["posterior"],
+                    {"estado": actual.estado.value, "eliminado": False},
+                )
+
+    def test_cancelar_con_ofertas_conserva_su_historial(self):
+        carga = self.crear_carga_publicada()
+        oferta = self.subasta_service.postular_a_carga(
+            self.crear_dto_postulacion(carga.id)
+        )
+        for motivo, confirmado in [("  ", True), ("Retiro", False)]:
+            _, causa = admin_service.cancelar_contrato(
+                carga.id, self.actor, motivo, confirmado
+            )
+            self.assertIsNotNone(causa)
+            self.assertEqual(
+                self.leer_contrato_bd(carga.id).estado, EstadoContrato.EN_POSTULACION
+            )
+        admin_service.cancelar_contrato(carga.id, self.actor, "Retiro", True)
+        self.assertIsNotNone(self.leer_postulacion_bd(carga.id, oferta.id))
+        with self.assertRaises(ValueError):
+            self.subasta_service.adjudicar_subasta(carga.id, oferta.id)
+        self.assertFalse(self.subasta_service.explorar_cargas())
+        repetida = admin_service.cancelar_contrato(
+            carga.id, self.actor, "Reintento", True
+        )
+        self.assertIsNotNone(repetida[1])
+        self.assertEqual(
+            len(admin_service.historial(elemento_id=carga.id, resultado="Completado")),
+            1,
+        )
+
+    def test_cancelar_eliminado_o_con_fallo_de_historial(self):
+        carga = self.crear_carga_publicada()
+        otra = self.crear_carga_publicada()
+        admin_service.eliminar("contrato", carga.id, self.actor, "Duplicado", True)
+        _, causa = admin_service.cancelar_contrato(carga.id, self.actor, "Retiro", True)
+        self.assertIsNotNone(causa)
+        with obtener_conexion() as conn:
+            conn.execute("""CREATE TRIGGER impedir_historial BEFORE INSERT ON acciones_admin
+                            BEGIN SELECT RAISE(ABORT, 'prueba'); END""")
+        with self.assertRaises(sqlite3.IntegrityError):
+            admin_service.cancelar_contrato(otra.id, self.actor, "Retiro", True)
+        self.assertEqual(
+            self.leer_contrato_bd(otra.id).estado, EstadoContrato.PUBLICADO
+        )
+        self.assertFalse(admin_service.historial(elemento_id=otra.id))
+
     def test_carga_eliminada_sale_de_subastas_pero_conserva_ofertas(self):
         carga = self.crear_carga_publicada()
         oferta = self.subasta_service.postular_a_carga(
@@ -195,12 +263,13 @@ class TestPanelAdmin(BaseTestSubastas):
                     time.sleep(0.02)
                 self.assertTrue(servidor.started)
 
-                def solicitar(ruta, token=None, datos=None):
+                def solicitar(ruta, token=None, datos=None, metodo=None):
                     cabeceras = {"Content-Type": "application/json"}
                     if token:
                         cabeceras["Authorization"] = "Bearer " + token
                     req = Request(
                         base + ruta,
+                        method=metodo,
                         headers=cabeceras,
                         data=json.dumps(datos).encode() if datos is not None else None,
                     )
@@ -241,6 +310,38 @@ class TestPanelAdmin(BaseTestSubastas):
                 self.assertEqual(solicitar("/contratos", token)[0], 401)
                 self.assertEqual(login("juan.perez@rutanorte.cl", "camion123")[0], 401)
                 self.assertEqual(solicitar("/admin/resumen", admin)[1]["activas"], 4)
+                carga = self.crear_carga_publicada()
+                ruta_admin = f"/admin/elementos/contrato/{carga.id}/cancelar"
+                ruta_general = f"/contratos/{carga.id}/estado"
+                causa = {"motivo": "Retiro", "confirmado": True}
+                solicitud = {**causa, "nuevo_estado": "CANCELADO"}
+                dador = login("contacto@logisticasur.cl", "dador123")[1]["access_token"]
+                self.assertEqual(solicitar(ruta_admin, dador, causa)[0], 403)
+                self.assertEqual(
+                    solicitar(
+                        ruta_general, admin, {"nuevo_estado": "CANCELADO"}, "PATCH"
+                    )[0],
+                    409,
+                )
+                self.forzar_estado_contrato(carga.id, EstadoContrato.ADJUDICADO)
+                self.assertEqual(
+                    solicitar(ruta_general, admin, solicitud, "PATCH")[0], 409
+                )
+                self.assertEqual(solicitar(ruta_admin, admin, causa)[0], 409)
+                segunda = self.crear_carga_publicada()
+                self.assertEqual(
+                    solicitar(
+                        f"/contratos/{segunda.id}/estado", admin, solicitud, "PATCH"
+                    )[1]["estado"],
+                    "CANCELADO",
+                )
+                tercera = self.crear_carga_publicada()
+                self.assertEqual(
+                    solicitar(
+                        f"/admin/elementos/contrato/{tercera.id}/cancelar", admin, causa
+                    )[0],
+                    200,
+                )
                 self.assertEqual(solicitar("/auth/logout", admin, {})[0], 204)
                 self.assertEqual(solicitar("/admin/resumen", admin)[0], 401)
             finally:

@@ -4,7 +4,7 @@ El rol `ADMIN_BACKOFFICE` entra a **Inicio**, **Gestión de contratos**, **Gesti
 
 ## Recorrido del administrador
 
-1. Iniciar sesión. El resumen muestra contratos actualmente publicados y visibles, cuentas que pueden iniciar sesión y bajas completadas hoy. Cada indicador abre la consulta correspondiente. El día y las horas del historial se muestran en UTC.
+1. Iniciar sesión. El resumen muestra contratos actualmente publicados y visibles, cuentas que pueden iniciar sesión y acciones administrativas completadas hoy. Cada indicador abre la consulta correspondiente. El día y las horas del historial se muestran en UTC.
 2. Abrir **Gestión de contratos**, seleccionar **Ver detalle** y comprobar la ruta, el identificador y el estado. **Eliminar contrato** se ofrece únicamente en `PUBLICADO`. La confirmación identifica el contrato y exige un motivo.
 3. Tras la baja, el detalle permite consultar su historial. **Incluir eliminados** recupera el contrato en el listado administrativo. La carga deja de admitir postulaciones, adjudicaciones y cambios de estado. Conserva su estado operativo y sus relaciones.
 4. En **Gestión de cuentas**, la baja de un dador o transportista impide iniciar sesión y usar una sesión anterior. **Incluir eliminadas** permite recuperar su ficha. Sus contratos siguen con sus estados y participantes originales.
@@ -64,9 +64,13 @@ npm run test:panel
 
 Puede indicarse otro ejecutable de Python con la variable `PYTHON`. El recorrido comprueba el login de los tres roles, los indicadores, volver desde la confirmación, eliminar una cuenta, consultar su historial, abrir el menú estrecho con teclado y cerrar sesión.
 
-## Alcance de esta versión
+## Cancelación administrativa de un contrato
 
-La eliminación lógica conserva el estado operativo del contrato. El cierre administrativo mediante cancelación corresponde a una entrega posterior.
+Se permite pasar a `CANCELADO` únicamente desde `PUBLICADO`, `EN_SUBASTA` o `EN_POSTULACION`, con motivo y confirmación. Los borradores siguen bajo gestión del dador. La adjudicación marca el límite porque ya hay un transportista seleccionado y otras ofertas descartadas. En tránsito o tras la entrega, una incidencia sigue el flujo de disputa; su resolución es independiente de este permiso. Un elemento eliminado o un contrato en estado terminal queda disponible para consulta.
+
+Cancelar interrumpe una convocatoria válida. El contrato sigue visible como cancelado y conserva las ofertas. Eliminar lógicamente retira una publicación (por ejemplo, un duplicado) y exige el estado actual `PUBLICADO`. El cierre del plazo para ofertas es una tercera situación que todavía puede permitir una adjudicación.
+
+`POST /admin/elementos/contrato/{id}/cancelar` recibe `motivo` y `confirmado`. Si un administrador solicita `CANCELADO` por `PATCH /contratos/{id}/estado`, se aplica la misma política. Ambas rutas releen el estado dentro de la transacción y registran el evento `cancelar_contrato` con su resultado. Los indicadores y filtros de auditoría incluyen estas operaciones.
 
 ## Protección de cuentas internas
 
