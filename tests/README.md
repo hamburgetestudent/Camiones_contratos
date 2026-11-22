@@ -15,8 +15,8 @@ tests/
 ├── test_registro_usuario.py  # Flujos integrales de registro y validaciones
 ├── configuracion/            # Pruebas de configuración de negocio y parámetros
 ├── contratos/                # Ciclo de vida de contratos, máquina de estados y transiciones
-├── dao/                      # Pruebas de acceso a datos (SQLite y Memoria)
 ├── onboarding/               # Validación de transportistas, dadores y documentos
+├── persistencia/             # Pruebas de acceso a datos y esquema SQLite
 ├── seguridad/                # Codificación base64url, tokens JWT y criptografía
 ├── subastas/                 # Publicación de cargas, ofertas y adjudicaciones
 └── usuarios/                 # CRUD de usuarios, hashing de contraseñas y validaciones
@@ -37,13 +37,11 @@ Todos los tests heredan de `BaseTestCase` (o de sus subclases de módulo), la cu
 
 ### A. Ejecución Unificada con Medición de Cobertura (Recomendado)
 
-Ejecuta los 181 tests y muestra en consola la tabla detallada de líneas y ramas cubiertas:
+Ejecuta los tests y muestra en consola la tabla detallada de líneas y ramas cubiertas:
 ```powershell
-# Opción 1: Python
 python run_tests.py
-
-# Opción 2: Script directo PowerShell
-.\run_tests.ps1
+# o bien
+npm run test
 ```
 
 ### B. Reporte Interactivo HTML
@@ -51,7 +49,7 @@ Genera una interfaz web interactiva en la carpeta `htmlcov/` para auditar visual
 ```powershell
 python run_tests.py --html
 # o bien
-.\run_tests.ps1 -Html
+npm run test:html
 ```
 Ruta del reporte generado:
 `htmlcov/index.html`
@@ -61,15 +59,15 @@ Elimina de forma segura la base de datos `.coverage`, la carpeta `htmlcov/` y cu
 ```powershell
 python run_tests.py --clean
 # o bien
-.\run_tests.ps1 -Clean
+npm run test:clean
 ```
 
 ---
 
 ## 3. Ejecución Directa con `unittest` (Filtros Específicos)
 
-> [!WARNING]
-> Debido a que existe tanto una carpeta `dao/` en la raíz como una carpeta `tests/dao/`, al usar `unittest` nativo **siempre** debes indicar `-t .` (top-level directory) para evitar conflictos de importación de módulos (`ModuleNotFoundError`).
+> [!TIP]
+> Al usar `unittest` nativo, indica `-t .` (top-level directory) para asegurar la resolución correcta de importaciones desde la raíz del proyecto.
 
 ### Ejecutar todos los tests:
 ```powershell
@@ -122,7 +120,7 @@ El reporte generado por `coverage.py` evalúa dos criterios clave:
 - **`Missing`:** **Números exactos de línea** que no fueron alcanzados por las pruebas.
 
 ### Priorización para nuevos tests:
-1. **Prioridad 1:** Archivos con bajo porcentaje en líneas y ramas (ej. `routers/login_router.py`).
+1. **Prioridad 1:** Archivos con bajo porcentaje en líneas y ramas (ej. `routers/auth_router.py`).
 2. **Prioridad 2:** Archivos con alto porcentaje de líneas pero ramas faltantes (`BrPart` > 0). El 90% de líneas puede dar falsa seguridad si las ramas de error no se recorren.
 3. **Prioridad 3:** Casos borde de validadores y transiciones de estado.
 
