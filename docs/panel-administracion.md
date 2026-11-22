@@ -72,6 +72,8 @@ Cancelar interrumpe una convocatoria válida. El contrato sigue visible como can
 
 `POST /admin/elementos/contrato/{id}/cancelar` recibe `motivo` y `confirmado`. Si un administrador solicita `CANCELADO` por `PATCH /contratos/{id}/estado`, se aplica la misma política. Ambas rutas releen el estado dentro de la transacción y registran el evento `cancelar_contrato` con su resultado. Los indicadores y filtros de auditoría incluyen estas operaciones.
 
+En **Gestión de contratos → Ver detalle**, **Cancelar contrato** y **Eliminar contrato** tienen confirmaciones distintas. Tras cancelar se abre la ficha visible con estado `CANCELADO`. En **Historial de acciones**, el filtro **Cancelar contrato** permite revisar el motivo y el estado anterior.
+
 ## Protección de cuentas internas
 
 El administrador puede dar de baja cuentas de transportistas y dadores de carga. Su propia cuenta, la de otro administrador y la última cuenta administrativa están protegidas, independientemente de cuántas sigan activas. El backend rechaza cada intento y conserva su motivo en el historial.
