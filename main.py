@@ -5,9 +5,12 @@ Configura las rutas modulares y el servidor ASGI.
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from database.conexion import inicializar_bd
 from routers.auth_router import router as auth_router
@@ -45,6 +48,22 @@ app.include_router(config_router)
 app.include_router(contratos_router)
 app.include_router(onboarding_router)
 app.include_router(subasta_router)
+
+FRONTEND_PAGINAS_DIR = Path(__file__).resolve().parent / "frontend" / "paginas"
+
+
+@app.get("/", include_in_schema=False)
+def raiz() -> RedirectResponse:
+    """Redirige la raíz del sitio web hacia la vista de inicio de sesión."""
+    return RedirectResponse(url="/Login/index.html")
+
+
+if FRONTEND_PAGINAS_DIR.is_dir():
+    app.mount(
+        "/",
+        StaticFiles(directory=str(FRONTEND_PAGINAS_DIR), html=True),
+        name="frontend",
+    )
 
 
 if __name__ == "__main__":
