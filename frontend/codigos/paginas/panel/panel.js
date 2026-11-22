@@ -126,6 +126,11 @@ async function navegar() {
   }
 }
 function moduloOperativo(item) {
+  if (item.destino) {
+    const acceso = nodo("a", item.accionTexto, "boton");
+    acceso.href = item.destino;
+    return acceso;
+  }
   const bloque = nodo("article", null, "tarjeta");
   bloque.append(
     nodo("p", item.descripcion),

@@ -6,18 +6,21 @@
   "author": "",
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cpx \"codigos/paginas/**/*\" \"dist/paginas\" && cpx \"codigos/imagenes/**/*\" \"dist/imagenes\"",
     "start": "npm run build && electron .",
     "dev": "tsc --watch",
     "test:panel": "node tests/panel.e2e.cjs",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "setup": "npm install --include=dev",
+    "prestart": "npm run setup"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "cpx": "^1.5.0",
     "electron": "^44.0.0",
+    "typescript": "^7.0.2",
     "playwright": "^1.65.1",
-    "prettier": "^3.9.10",
-    "typescript": "^7.0.2"
+    "prettier": "^3.9.10"
   }
 }

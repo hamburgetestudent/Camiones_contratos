@@ -6,6 +6,7 @@ const FUNCIONALIDADES_POR_ROL = {
       descripcion:
         "Explora las cargas publicadas en la plataforma y envía tus postulaciones con ofertas de flete.",
       accionTexto: "Ver Subastas",
+      destino: "../Principal/principal.html",
       modulo: "subastas",
     },
     {
@@ -32,6 +33,7 @@ const FUNCIONALIDADES_POR_ROL = {
       descripcion:
         "Crea borradores de contratos especificando origen, destino, tipo de carga y tarifas máximas.",
       accionTexto: "Nuevo Contrato",
+      destino: "../Principal/principal.html",
       modulo: "contratos",
     },
     {

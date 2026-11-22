@@ -51,7 +51,7 @@ async function probar() {
   await pagina.addInitScript((url) => {
     window.API_BASE_URL = url;
   }, api);
-  await pagina.goto(pathToFileURL(path.join(raiz, "frontend/paginas/Login/index.html")).href);
+  await pagina.goto(pathToFileURL(path.join(raiz, "frontend/codigos/paginas/Login/index.html")).href);
   async function login(correo, clave) {
     await pagina.locator("#email").fill(correo);
     await pagina.locator("#password").fill(clave);
@@ -90,7 +90,11 @@ async function probar() {
     const nav = pagina.locator("nav");
     assert.ok((await nav.innerText()).includes(acceso));
     assert.equal(await nav.getByRole("link", { name: "Historial de acciones" }).count(), 0);
-    await pagina.getByRole("button", { name: "Cerrar sesión" }).click();
+    await nav.getByRole("link", { name: new RegExp(acceso) }).click();
+    await pagina.locator('main a[href="../Principal/principal.html"]').click();
+    await pagina.locator("#boton-perfil").click();
+    await pagina.locator('[data-accion-perfil="cerrar"]').click();
+    await pagina.locator("#btnLogin").waitFor();
   }
   console.log("OK: tres roles, resumen, baja, historial, menú con teclado y cierre de sesión.");
 }
