@@ -11,6 +11,7 @@
         "skipLibCheck": true, 
         "types": [ "node", "electron" ] 
         }, 
+    "files": [ "codigos/main.ts" ],
     "include": [ "codigos/**/*.ts" ], 
     "exclude": [ "node_modules", "dist" ] 
 }
