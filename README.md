@@ -65,9 +65,17 @@ npm run dev
 
 ### 4. Ejecución Integral del Sistema
 
-Dispones de dos formas automatizadas para operar la plataforma:
+Para iniciar simultáneamente el backend FastAPI y la aplicación de escritorio Electron desde la raíz del proyecto:
 
-#### Opción A: Lanzador Completo (Backend FastAPI + Frontend Electron)
+```bash
+npm run dev
+```
+
+> `dev.mjs` detecta automáticamente el entorno virtual de Python (`.venv` / `venv`), instala dependencias del frontend si faltan, levanta el servidor FastAPI en `http://127.0.0.1:8000` y, cuando está listo, compila e inicia Electron. Al cerrar la ventana o presionar `Ctrl+C`, detiene ambos procesos de forma ordenada.
+
+También dispones de las siguientes opciones:
+
+#### Opción A: Lanzador Completo (`run.py`)
 Ejecuta simultáneamente el backend y la ventana de escritorio en un solo comando:
 ```bash
 python run.py
@@ -88,8 +96,28 @@ Opciones directas por línea de comandos:
 * `python inicio_test.py -t`: Ejecuta la suite de pruebas unitarias automatizadas.
 * `python inicio_test.py --clean`: Limpia archivos temporales y carpetas `__pycache__`.
 
-### 5. Pruebas Automatizadas
-Para ejecutar la suite de pruebas unitarias e integración de la plataforma:
+### 5. Pruebas Automatizadas, Linter y Formato
+Para ejecutar la suite de pruebas, lint y formateo desde la raíz usando `npm` (detectando automáticamente `.venv` / `venv` mediante `scripts/run-py.mjs`):
+```bash
+# Pruebas unitarias y cobertura
+npm test
+npm run test:html     # Genera reporte HTML en htmlcov/
+npm run test:clean    # Limpia archivos temporales de cobertura
+
+# Linter y formato Python (Ruff)
+npm run lint
+npm run lint:fix
+npm run format:py
+npm run format:py:check
+
+# Formato Frontend (Prettier) y combinado (Python + Frontend)
+npm run format:front
+npm run format:front:check
+npm run format
+npm run format:check
+```
+
+Alternativamente, de forma directa en Python:
 ```bash
 # Opción 1: Mediante el runner integrado
 python inicio_test.py -t
@@ -192,7 +220,11 @@ COdigo/
 │   │   │   └── registro.js
 │   │   └── imagenes/
 │   └── package.json
+├── scripts/
+│   └── run-py.mjs
+├── dev.mjs
 ├── main.py
+├── package.json
 ├── run.py
 ├── inicio_test.py
 ├── requirements.txt
@@ -241,6 +273,9 @@ COdigo/
   * `package.json`: Configuración de scripts (`npm start`, `npm run dev`) y dependencias de Electron.
 
 * **Puntos de Entrada y Herramientas Raíz**:
+  * `package.json`: Scripts raíz del proyecto (`dev`, `start`, `build`, `test`, `test:html`, `test:clean`, `lint`, `lint:fix`, `format`, `format:check`, `format:py`, `format:front`).
+  * `dev.mjs`: Orquestador de desarrollo que inicia el backend FastAPI, espera su disponibilidad en el puerto 8000 y lanza Electron.
+  * `scripts/run-py.mjs`: Helper multiplataforma que resuelve el entorno virtual de Python (`.venv` / `venv`) para los scripts de `npm`.
   * `main.py`: Inicializador de FastAPI y montaje de routers modulares.
   * `run.py`: Script de orquestación simultánea (Backend FastAPI + Frontend Electron).
   * `inicio_test.py`: Compilador, suite de verificación, runner de tests y consola interactiva CLI.

@@ -5,9 +5,12 @@ Configura las rutas modulares y el servidor ASGI.
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from database.conexion import inicializar_bd
 from routers.admin_router import router as admin_router
@@ -47,6 +50,22 @@ app.include_router(admin_router)
 # Toda ruta de negocio comprueba la vigencia de la cuenta en cada solicitud.
 for modulo in (config_router, contratos_router, onboarding_router, subasta_router):
     app.include_router(modulo, dependencies=[Depends(usuario_actual)])
+
+FRONTEND_PAGINAS_DIR = Path(__file__).resolve().parent / "frontend" / "paginas"
+
+
+@app.get("/", include_in_schema=False)
+def raiz() -> RedirectResponse:
+    """Redirige la raíz del sitio web hacia la vista de inicio de sesión."""
+    return RedirectResponse(url="/Login/index.html")
+
+
+if FRONTEND_PAGINAS_DIR.is_dir():
+    app.mount(
+        "/",
+        StaticFiles(directory=str(FRONTEND_PAGINAS_DIR), html=True),
+        name="frontend",
+    )
 
 
 if __name__ == "__main__":
