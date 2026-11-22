@@ -40,7 +40,7 @@ def _causa_rechazo(tipo, fila, motivo, confirmado):
     if tipo == "contrato" and fila["estado"] != "PUBLICADO":
         return "Solo se pueden eliminar contratos actualmente en PUBLICADO."
     if tipo == "cuenta" and fila["rol"] == "ADMIN_BACKOFFICE":
-        return "La eliminación de cuentas administrativas está pendiente de definición."
+        return "Las cuentas administrativas están protegidas. El panel solo permite eliminar cuentas de transportistas y dadores de carga."
     return None
 
 

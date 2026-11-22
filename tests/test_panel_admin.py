@@ -30,6 +30,29 @@ class TestPanelAdmin(BaseTestSubastas):
         inicializar_bd(self.db_path)
         self.actor = UsuarioService.obtener_usuario(UUID(int=1))
 
+    def test_protege_ultimo_administrador_cuenta_propia_y_otro_administrador(self):
+        def verificar(objetivo):
+            _, causa = admin_service.eliminar(
+                "cuenta", objetivo, self.actor, "Relevo", True
+            )
+            self.assertIn("protegidas", causa)
+            evento = admin_service.historial(elemento_id=objetivo)[0]
+            self.assertEqual(evento["resultado"], "Rechazado")
+            self.assertEqual(evento["anterior"], evento["posterior"])
+            self.assertEqual(UsuarioService.obtener_usuario(objetivo).id, objetivo)
+
+        verificar(self.actor.id)
+        segundo = uuid4()
+        with obtener_conexion() as conn:
+            conn.execute(
+                """INSERT INTO usuarios (id,nombre,email,rol,password_hash,estado)
+                   SELECT ?, 'Segundo administrador', 'segundo@example.cl', rol,password_hash,estado
+                   FROM usuarios WHERE id=?""",
+                (str(segundo), str(self.actor.id)),
+            )
+        verificar(self.actor.id)
+        verificar(segundo)
+
     def test_baja_solo_si_sigue_publicado_y_conserva_relaciones(self):
         for estado in EstadoContrato:
             contrato = self.crear_carga_publicada()

@@ -66,4 +66,10 @@ Puede indicarse otro ejecutable de Python con la variable `PYTHON`. El recorrido
 
 ## Alcance de esta versión
 
-La eliminación lógica conserva el estado operativo del contrato. El cierre administrativo mediante cancelación corresponde a una entrega posterior. Las cuentas con rol `ADMIN_BACKOFFICE` están protegidas frente a la baja desde el panel. Un intento sobre una de esas cuentas queda registrado como rechazado.
+La eliminación lógica conserva el estado operativo del contrato. El cierre administrativo mediante cancelación corresponde a una entrega posterior.
+
+## Protección de cuentas internas
+
+El administrador puede dar de baja cuentas de transportistas y dadores de carga. Su propia cuenta, la de otro administrador y la última cuenta administrativa están protegidas, independientemente de cuántas sigan activas. El backend rechaza cada intento y conserva su motivo en el historial.
+
+El rol administrativo es interno y no se obtiene por autorregistro. Protegerlo evita que un par retire el acceso de otro o deje la plataforma sin responsable. Si un administrador deja el equipo, el responsable de las cuentas internas debe gestionar el relevo fuera del panel.

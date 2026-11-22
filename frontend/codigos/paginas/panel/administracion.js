@@ -221,7 +221,8 @@ function detalleElemento(tipo, fila, ruta, params) {
   else if (tipo === "contrato" && fila.estado !== "PUBLICADO")
     razon = "Solo se pueden eliminar contratos actualmente en PUBLICADO.";
   else if (tipo === "cuenta" && fila.rol === "ADMIN_BACKOFFICE")
-    razon = "La eliminación de cuentas administrativas está pendiente de definición.";
+    razon =
+      "Las cuentas administrativas están protegidas. El panel solo permite eliminar cuentas de transportistas y dadores de carga.";
   if (razon) f.append(nodo("p", razon));
   else {
     const b = boton("Eliminar " + tipo, () => confirmarBaja(tipo, fila));
