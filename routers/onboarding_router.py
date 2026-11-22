@@ -4,7 +4,7 @@ Router HTTP para el flujo de Onboarding y Verificacion de Documentacion (KYC / F
 
 from uuid import UUID
 
-from fastapi import APIRouter, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 
 from domain.modelos_onboarding import (
     CargarDocumentoDTO,
@@ -15,6 +15,7 @@ from domain.modelos_onboarding import (
     ValidarDocumentoDTO,
     ValidarPerfilDadorDTO,
 )
+from routers.sesion import administrador_actual
 from services.onboarding_service import onboarding_service_instancia
 
 router = APIRouter(prefix="/onboarding", tags=["Onboarding & KYC"])
@@ -127,6 +128,7 @@ def obtener_perfil_dador(
 
 @router.get(
     "/admin/documentos",
+    dependencies=[Depends(administrador_actual)],
     response_model=list[DocumentoTransportista],
     summary="Listar documentos de transportistas pendientes de revisión",
 )
@@ -137,6 +139,7 @@ def listar_documentos_pendientes_admin():
 
 @router.patch(
     "/admin/documentos/{documento_id}/validar",
+    dependencies=[Depends(administrador_actual)],
     response_model=DocumentoTransportista,
     summary="Aprobar o rechazar un documento de transportista",
 )
@@ -156,6 +159,7 @@ def validar_documento_admin(documento_id: UUID, payload: ValidarDocumentoDTO):
 
 @router.get(
     "/admin/dadores",
+    dependencies=[Depends(administrador_actual)],
     response_model=list[DadorCarga],
     summary="Listar dadores de carga pendientes de validación tributaria",
 )
@@ -166,6 +170,7 @@ def listar_dadores_pendientes_admin():
 
 @router.patch(
     "/admin/dadores/{dador_id}/validar",
+    dependencies=[Depends(administrador_actual)],
     response_model=DadorCarga,
     summary="Aprobar o rechazar perfil de dador de carga",
 )

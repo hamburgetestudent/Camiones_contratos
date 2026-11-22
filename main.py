@@ -7,16 +7,18 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from database.conexion import inicializar_bd
+from routers.admin_router import router as admin_router
 from routers.auth_router import router as auth_router
 from routers.config_router import router as config_router
 from routers.contratos_router import router as contratos_router
 from routers.onboarding_router import router as onboarding_router
+from routers.sesion import usuario_actual
 from routers.subasta_router import router as subasta_router
 
 
@@ -44,10 +46,10 @@ app.add_middleware(
 
 # Inclusion de routers modulares
 app.include_router(auth_router)
-app.include_router(config_router)
-app.include_router(contratos_router)
-app.include_router(onboarding_router)
-app.include_router(subasta_router)
+app.include_router(admin_router)
+# Toda ruta de negocio comprueba la vigencia de la cuenta en cada solicitud.
+for modulo in (config_router, contratos_router, onboarding_router, subasta_router):
+    app.include_router(modulo, dependencies=[Depends(usuario_actual)])
 
 FRONTEND_PAGINAS_DIR = Path(__file__).resolve().parent / "frontend" / "paginas"
 

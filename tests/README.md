@@ -149,3 +149,13 @@ El reporte generado por `coverage.py` evalúa dos criterios clave:
 4. **Validación de errores:**
    - Emplea `with self.assertHttpException(400, "detalle"):` para probar los fallos esperados en routers y servicios.
 
+
+## Expiración de subastas
+
+Las cinco pruebas de `tests/test_subasta_expiracion.py` utilizan una base SQLite temporal por caso. Para simular el vencimiento, actualizan el plazo del contrato y conservan las ofertas existentes. Una oferta tardía se rechaza. Si era una subasta sin ofertas, el servicio confirma su cancelación antes de comunicar el rechazo. Si tenía ofertas, el dador aún puede adjudicarla.
+
+## Bajas administrativas
+
+Las pruebas de `tests/test_panel_admin.py` comprueban la baja lógica de contratos publicados, la conservación de ofertas y la revocación de acceso al eliminar cuentas. También simulan un fallo al escribir el historial para verificar que la baja se revierta. Para ejecutar únicamente estos casos, usa `python -m pytest tests/test_panel_admin.py -q`.
+
+Los intentos de baja de un usuario autenticado sin rol administrativo reciben HTTP 403. El historial identifica al usuario de la sesión y registra el rechazo sin exponer datos del contrato o de la cuenta solicitada.

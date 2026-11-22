@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Principal | Camiones Contratos</title>
+    <link rel="stylesheet" href="principal.css">
+</head>
+<body>
+    <div class="aplicacion">
+        <header class="barra-superior">
+            <div class="marca">
+                <span class="marca-icono" aria-hidden="true">CC</span>
+                <div>
+                    <h1>Camiones Contratos</h1>
+                    <p>Panel principal</p>
+                </div>
+            </div>
+
+            <section class="filtros" aria-label="Filtros de contratos">
+                <label>
+                    <span>Precio mínimo</span>
+                    <input id="precio-minimo" type="number" min="0" placeholder="$0">
+                </label>
+                <label>
+                    <span>Precio máximo</span>
+                    <input id="precio-maximo" type="number" min="0" placeholder="Sin límite">
+                </label>
+                <label>
+                    <span>Empresa o cliente</span>
+                    <select id="filtro-empresa">
+                        <option value="">Todas las empresas</option>
+                    </select>
+                </label>
+                <button id="limpiar-filtros" class="boton-secundario" type="button">Limpiar</button>
+            </section>
+
+            <div class="perfil-contenedor">
+                <button id="boton-perfil" class="foto-perfil" type="button"
+                    aria-label="Abrir menú de usuario" aria-expanded="false">
+                    <span id="iniciales-perfil">US</span>
+                </button>
+                <div id="menu-perfil" class="menu-perfil oculto">
+                    <p class="menu-titulo">Mi cuenta</p>
+                    <button type="button" data-accion-perfil="editar">Editar usuario</button>
+                    <button type="button" data-accion-perfil="configuracion">Configuración de la aplicación</button>
+                    <hr>
+                    <button type="button" data-accion-perfil="cerrar">Cerrar sesión</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="contenido-principal">
+            <div class="encabezado-contenido">
+                <div>
+                    <h2>Contratos disponibles</h2>
+                    <p>Encuentra el próximo trabajo para tu camión.</p>
+                </div>
+
+                <div class="acciones-contratos">
+                    <span id="contador-contratos" class="contador">0 contratos</span>
+                    <button id="boton-crear-contrato" class="boton-principal" type="button">+ Crear contrato</button>
+                    <button id="boton-mis-contratos" class="boton-secundario" type="button">Mis contratos</button>
+                </div>
+
+            </div>
+
+            <div id="lista-contratos" class="rejilla-contratos" aria-live="polite"></div>
+            
+            <p id="mensaje-sin-resultados" class="sin-resultados oculto">
+                No se encontraron contratos con esos filtros.
+            </p>
+        </main>
+
+        <footer class="pie-pagina">
+            <span>Camiones Contratos</span>
+            <span>Panel principal</span>
+        </footer>
+    </div>
+
+    <script src="principal.js"></script>
+</body>
+</html>
