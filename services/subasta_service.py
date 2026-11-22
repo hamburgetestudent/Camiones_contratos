@@ -8,7 +8,7 @@ mediante ``database.conexion``. Las operaciones que leen, validan y escriben
 from __future__ import annotations
 
 import sqlite3
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import UUID
 
@@ -206,6 +206,30 @@ class ServicioSubasta:
 
         return cargas
 
+    @staticmethod
+    def _evaluar_plazo(conn: sqlite3.Connection, contrato: ContratoModelo) -> str:
+        if datetime.now(UTC) <= contrato.f_cierre_postulaciones:
+            return "VIGENTE"
+        oferta = conn.execute(
+            "SELECT 1 FROM postulaciones WHERE carga_id = ? LIMIT 1", (str(contrato.id),)
+        ).fetchone()
+        if oferta is not None:
+            return "CERRADA"
+        if contrato.estado in ESTADOS_CARGA_DISPONIBLES:
+            cancelado = MaquinaEstadosContrato.cambiar_estado(
+                contrato_data=contrato, nuevo_estado=EstadoContrato.CANCELADO
+            )
+            actualizar_contrato(conn, contrato.id, cancelado)
+        return "DESIERTA"
+
+    def verificar_expiracion_subasta(self, carga_id: UUID) -> str:
+        """Evalua el plazo y persiste el cierre de una subasta desierta."""
+        with transaccion_exclusiva(self._db_path) as conn:
+            contrato = buscar_contrato(conn, carga_id)
+            if contrato is None:
+                raise ValueError(f"La carga/contrato con ID {carga_id} no existe")
+            return self._evaluar_plazo(conn, contrato)
+
     def postular_a_carga(
         self,
         datos_postulacion: PostulacionCrear,
@@ -251,18 +275,23 @@ class ServicioSubasta:
                     f"La carga se encuentra en estado '{contrato.estado.value}' y no acepta nuevas postulaciones"
                 )
 
-            nueva_postulacion = PostulacionModelo(**datos_postulacion.model_dump())
-            _insertar_postulacion(conn, nueva_postulacion)
+            plazo = self._evaluar_plazo(conn, contrato)
+            if plazo == "VIGENTE":
+                nueva_postulacion = PostulacionModelo(**datos_postulacion.model_dump())
+                _insertar_postulacion(conn, nueva_postulacion)
 
-            # Transicion automatica a EN_POSTULACION si la carga estaba en PUBLICADO o EN_SUBASTA
-            if contrato.estado in (EstadoContrato.PUBLICADO, EstadoContrato.EN_SUBASTA):
-                contrato_actualizado = MaquinaEstadosContrato.cambiar_estado(
-                    contrato_data=contrato,
-                    nuevo_estado=EstadoContrato.EN_POSTULACION,
-                )
-                actualizar_contrato(conn, contrato.id, contrato_actualizado)
+                # Transicion automatica a EN_POSTULACION si la carga estaba en PUBLICADO o EN_SUBASTA
+                if contrato.estado in (EstadoContrato.PUBLICADO, EstadoContrato.EN_SUBASTA):
+                    contrato_actualizado = MaquinaEstadosContrato.cambiar_estado(
+                        contrato_data=contrato,
+                        nuevo_estado=EstadoContrato.EN_POSTULACION,
+                    )
+                    actualizar_contrato(conn, contrato.id, contrato_actualizado)
 
-        return nueva_postulacion
+                return nueva_postulacion
+
+        # El rechazo se comunica despues del commit para conservar el cierre sin ofertas.
+        raise ValueError(f"La subasta esta {plazo.lower()} y no admite nuevas postulaciones")
 
     def adjudicar_subasta(
         self,
@@ -343,6 +372,8 @@ class ServicioSubasta:
             List[PostulacionModelo]: Listado cronologico de postulaciones recibidas.
         """
         with obtener_conexion(self._db_path) as conn:
+            if not buscar_contrato(conn, carga_id):
+                return []
             return _buscar_postulaciones_por_contrato(conn, carga_id)
 
 

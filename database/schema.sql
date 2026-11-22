@@ -100,3 +100,26 @@ CREATE TABLE IF NOT EXISTS postulaciones (
 
 CREATE INDEX IF NOT EXISTS idx_postulaciones_carga ON postulaciones(carga_id);
 CREATE INDEX IF NOT EXISTS idx_postulaciones_transportista ON postulaciones(transportista_id);
+
+-- El indicador de baja se añade también a instalaciones anteriores en conexion.py.
+CREATE TABLE IF NOT EXISTS acciones_admin (
+    id TEXT PRIMARY KEY,
+    fecha TEXT NOT NULL,
+    administrador_id TEXT NOT NULL,
+    administrador TEXT NOT NULL,
+    accion TEXT NOT NULL,
+    tipo TEXT NOT NULL,
+    elemento_id TEXT NOT NULL,
+    motivo TEXT NOT NULL,
+    anterior TEXT,
+    posterior TEXT,
+    resultado TEXT NOT NULL,
+    causa TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_acciones_fecha ON acciones_admin(fecha DESC);
+CREATE INDEX IF NOT EXISTS idx_acciones_elemento ON acciones_admin(tipo, elemento_id);
+
+CREATE TABLE IF NOT EXISTS sesiones_cerradas (
+    huella TEXT PRIMARY KEY,
+    expira INTEGER NOT NULL
+);
