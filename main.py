@@ -51,7 +51,11 @@ app.include_router(admin_router)
 for modulo in (config_router, contratos_router, onboarding_router, subasta_router):
     app.include_router(modulo, dependencies=[Depends(usuario_actual)])
 
-FRONTEND_PAGINAS_DIR = Path(__file__).resolve().parent / "frontend" / "paginas"
+FRONTEND_PAGINAS_DIR = (
+    Path(__file__).resolve().parent / "frontend" / "codigos" / "paginas"
+)
+if not FRONTEND_PAGINAS_DIR.is_dir():
+    FRONTEND_PAGINAS_DIR = Path(__file__).resolve().parent / "frontend" / "paginas"
 
 
 @app.get("/", include_in_schema=False)

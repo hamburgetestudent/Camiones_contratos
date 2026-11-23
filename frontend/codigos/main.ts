@@ -4,9 +4,11 @@ import path from "path";
 // Función que crea la ventana principal
 function createWindow(): void {
   const ventana = new BrowserWindow({
-    width: 900,
-    height: 550,
-    resizable: false,
+    width: 1180,
+    height: 760,
+    minWidth: 800,
+    minHeight: 550,
+    resizable: true,
   });
 
   // Carga el archivo HTML de la interfaz
