@@ -1,418 +1,337 @@
-
-/* ================================= */
-/* CONFIGURACIÓN GENERAL              
-/* ================================= */
-
-* {
-    box-sizing: border-box;
-}
-
+/* Inicio de sesión — MansoViaje (SaaS Minimalista Neutro) */
 body {
-    margin: 0;
-    padding: 0;
-
-    font-family: Arial, sans-serif;
-
-    background-color: white;
-
-    color: #292929;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(29, 78, 216, 0.05), transparent 36%),
+    radial-gradient(circle at 88% 90%, rgba(15, 23, 42, 0.04), transparent 40%), var(--fondo);
 }
 
-
-/* ================================= */
-/* CONTENEDOR PRINCIPAL              */
-/* ================================= */
-
-.contenedor {
-    width: 100%;
-    height: 550px;
-
-    position: relative;
+.auth-shell {
+  width: min(940px, 100%);
 }
 
-
-/* ================================= */
-/* TÍTULO                             */
-/* ================================= */
-
-.titulo {
-    position: absolute;
-
-    top: 35px;
-    left: 50%;
-
-    transform: translateX(-50%);
-
-    width: 462px;
-    height: 65px;
-
-    border: 1px solid #444;
-
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
-
-    font-size: 18px;
-    font-weight: bold;
+.login-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  background: var(--superficie);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-md);
+  overflow: hidden;
 }
 
+.panel-formulario {
+  padding: clamp(28px, 4vw, 44px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
 
-/* ================================= */
-/* FORMULARIO                         */
-/* ================================= */
+.marca-auth {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.marca-auth h1 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--texto);
+}
+
+.marca-auth p {
+  margin: 1px 0 0;
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+}
+
+.encabezado-form {
+  margin-bottom: 22px;
+}
+
+.encabezado-form h2 {
+  margin: 0 0 6px;
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--texto);
+}
+
+.encabezado-form p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--texto-suave);
+}
 
 .formulario {
-    position: absolute;
-
-    left: 167px;
-    top: 188px;
-
-    width: 235px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
-
-
-/* ================================= */
-/* CAMPOS                             */
-/* ================================= */
 
 .campo {
-    margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-
-/* Etiquetas */
-
-label {
-    display: block;
-
-    font-size: 12px;
-
-    margin-bottom: 5px;
+.campo-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-
-/* Inputs */
-
-input {
-    width: 235px;
-    height: 30px;
-
-    border: 1px solid #ddd;
-
-    border-radius: 6px;
-
-    padding: 0 12px;
-
-    font-size: 12px;
-
-    outline: none;
+.campo label {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--texto);
 }
 
-input:focus {
-    border-color: #777;
+.campo input {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--radio-sm);
+  padding: 0 12px;
+  font: inherit;
+  font-size: 0.9rem;
+  background: var(--superficie);
+  color: var(--texto);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
-
-/* ================================= */
-/* BOTÓN LOGIN                       */
-/* ================================= */
-
-.boton-login {
-    width: 235px;
-    height: 29px;
-
-    border: none;
-
-    border-radius: 5px;
-
-    background-color: #2d2d2d;
-
-    color: white;
-
-    font-size: 12px;
-
-    cursor: pointer;
-
-    transition: background-color 0.2s;
+.campo input::placeholder {
+  color: #94a3b8;
 }
 
-.boton-login:hover {
-    background-color: #444;
+.campo input:focus {
+  border-color: var(--acento);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.14);
 }
 
-
-/* Icono de usuario */
-
-.icono-usuario {
-    margin-left: 5px;
-
-    font-size: 14px;
+.recuperar {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--texto-suave);
+  text-decoration: none;
 }
 
-.boton-login:disabled {
-    opacity: 0.65;
-    cursor: not-allowed;
+.recuperar:hover {
+  color: var(--acento);
+  text-decoration: underline;
 }
 
 .mensaje-login {
-    min-height: 18px;
-    margin-bottom: 8px;
-    font-size: 13px;
-    line-height: 1.4;
+  padding: 10px 12px;
+  border-radius: var(--radio-sm);
+  font-size: 0.84rem;
+  line-height: 1.4;
+  border: 1px solid var(--linea);
+  background: var(--superficie-sutil);
+  color: var(--texto-secundario);
 }
 
 .mensaje-login.error {
-    color: #a40000;
+  background: var(--peligro-fondo);
+  border-color: var(--peligro-borde);
+  color: var(--peligro);
 }
 
 .mensaje-login.success {
-    color: #176b35;
+  background: var(--exito-fondo);
+  border-color: var(--exito-borde);
+  color: var(--exito);
 }
 
-
-/* ================================= */
-/* RECUPERAR CONTRASEÑA              */
-/* ================================= */
-
-.recuperar {
-    display: block;
-
-    margin-top: 18px;
-
-    color: #292929;
-
-    font-size: 12px;
-
-    text-decoration: underline;
-
-    cursor: pointer;
+.mensaje-login.info {
+  background: var(--acento-suave);
+  border-color: var(--acento-borde);
+  color: var(--acento);
 }
 
-
-/* ================================= */
-/* SEPARADOR                         */
-/* ================================= */
-
-.separador {
-    width: 235px;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    gap: 12px;
-
-    margin-top: 35px;
+.boton-login {
+  width: 100%;
+  min-height: 42px;
+  margin-top: 4px;
+  font-size: 0.92rem;
 }
-
-
-/* Líneas */
-
-.separador span {
-    height: 1px;
-
-    flex: 1;
-
-    background-color: #cfcfcf;
-}
-
-
-/* Texto */
-
-.separador p {
-    margin: 0;
-
-    white-space: nowrap;
-
-    font-size: 12px;
-
-    color: #292929;
-}
-
-
-/* ================================= */
-/* BOTONES SOCIALES                  */
-/* ================================= */
-
-.botones-sociales {
-    display: flex;
-
-    justify-content: space-between;
-
-    width: 235px;
-
-    margin-top: 20px;
-}
-
-
-/* Botón individual */
-
-.boton-social {
-    width: 70px;
-    height: 78px;
-
-    background-color: white;
-
-    border: 1px solid #ddd;
-
-    border-radius: 12px;
-
-    display: flex;
-
-    flex-direction: column;
-
-    align-items: center;
-
-    justify-content: center;
-
-    gap: 7px;
-
-    cursor: pointer;
-
-    transition:
-        background-color 0.2s,
-        border-color 0.2s;
-}
-
-.boton-social:hover {
-    background-color: #f7f7f7;
-
-    border-color: #aaa;
-}
-
-
-/* Texto del botón */
-
-.boton-social > span {
-    font-size: 11px;
-}
-
-
-/* ================================= */
-/* LOGO GOOGLE                       */
-/* ================================= */
-
-.logo-google {
-    font-size: 28px;
-
-    font-weight: bold;
-
-    font-family: Arial, sans-serif;
-}
-
-
-/* ================================= */
-/* LOGO MICROSOFT                    */
-/* ================================= */
-
-.logo-microsoft {
-    width: 23px;
-    height: 23px;
-
-    display: grid;
-
-    grid-template-columns: 1fr 1fr;
-
-    grid-template-rows: 1fr 1fr;
-
-    gap: 2px;
-}
-
-
-/* Cuadrados de Microsoft */
-
-.logo-microsoft span {
-    display: block;
-}
-
-
-/* ================================= */
-/* LOGO APPLE                        */
-/* ================================= */
-
-.logo-apple {
-    width: 25px;
-    height: 25px;
-
-    font-size: 26px;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-}
-
-
-/* ================================= */
-/* REGISTRO                          */
-/* ================================= */
 
 .registro {
-    width: 235px;
-
-    display: flex;
-
-    justify-content: center;
-
-    gap: 8px;
-
-    margin-top: 48px;
-
-    font-size: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--linea);
+  font-size: 0.86rem;
+  color: var(--texto-suave);
 }
-
 
 .registro a {
-    color: #292929;
-
-    text-decoration: underline;
-
-    cursor: pointer;
+  color: var(--acento);
+  font-weight: 600;
+  text-decoration: none;
 }
 
-
-/* ================================= */
-/* IMAGENES                          */
-/* ================================= */
-
-.imagen-container {
-    position: absolute;
-
-    left: 459px;
-    top: 182px;
-
-    width: 245px;
-    height: 262px;
+.registro a:hover {
+  text-decoration: underline;
 }
 
-
-/* Imagen */
-
-.imagen-login {
-    width: 100%;
-    height: 100%;
-
-    object-fit: contain;
+/* Panel visual derecho (100% HTML/SVG/CSS offline) */
+.panel-visual {
+  padding: clamp(28px, 4vw, 40px);
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border-left: 1px solid var(--linea);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 24px;
 }
 
-/*Logo microsoft*/
-
-.logo-microsoft span:nth-child(1) {
-    background-color: #f25022;
+.visual-etiqueta {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: var(--radio-pill);
+  border: 1px solid var(--linea);
+  background: var(--superficie);
+  color: var(--texto-secundario);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
 }
 
-.logo-microsoft span:nth-child(2) {
-    background-color: #7fba00;
+.visual-cabecera h3 {
+  margin: 0 0 8px;
+  font-size: 1.18rem;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+  color: var(--texto);
 }
 
-.logo-microsoft span:nth-child(3) {
-    background-color: #00a4ef;
+.visual-cabecera p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--texto-secundario);
+  line-height: 1.5;
 }
 
-.logo-microsoft span:nth-child(4) {
-    background-color: #ffb900;
+.preview-tarjeta {
+  background: var(--superficie);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-md);
+  padding: 16px;
+  box-shadow: var(--sombra-sm);
+  display: grid;
+  gap: 14px;
+}
+
+.preview-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.preview-monto {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.preview-ruta {
+  display: grid;
+  gap: 4px;
+}
+
+.preview-nodo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.punto-origen,
+.punto-destino {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.punto-origen {
+  background: var(--acento);
+}
+
+.punto-destino {
+  background: var(--exito);
+}
+
+.preview-linea {
+  width: 1px;
+  height: 12px;
+  margin-left: 3.5px;
+  background: var(--linea-fuerte);
+}
+
+.preview-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--linea);
+  font-size: 0.76rem;
+  color: var(--texto-suave);
+}
+
+.visual-pilares {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.visual-pilares li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: var(--texto-secundario);
+}
+
+.pilar-icono {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: var(--superficie);
+  border: 1px solid var(--linea);
+  color: var(--acento);
+  flex-shrink: 0;
+}
+
+@media (max-width: 780px) {
+  .login-card {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-visual {
+    display: none;
+  }
 }

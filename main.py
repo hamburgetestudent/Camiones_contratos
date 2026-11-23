@@ -3,6 +3,7 @@
 Configura las rutas modulares y el servidor ASGI.
 """
 
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -53,6 +54,8 @@ for modulo in (config_router, contratos_router, onboarding_router, subasta_route
 
 FRONTEND_DIR = Path(__file__).resolve().parent / "frontend" / "codigos"
 FRONTEND_PAGINAS_DIR = FRONTEND_DIR / "paginas"
+if not FRONTEND_PAGINAS_DIR.is_dir():
+    FRONTEND_PAGINAS_DIR = Path(__file__).resolve().parent / "frontend" / "paginas"
 FRONTEND_IMAGENES_DIR = FRONTEND_DIR / "imagenes"
 
 
@@ -80,4 +83,7 @@ if FRONTEND_PAGINAS_DIR.is_dir():
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    port_env = os.environ.get("PORT")
+    host = os.environ.get("HOST", "0.0.0.0" if port_env else "127.0.0.1")
+    port = int(port_env) if port_env else 8000
+    uvicorn.run("main:app", host=host, port=port, reload=port_env is None)

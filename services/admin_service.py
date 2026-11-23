@@ -6,7 +6,17 @@ from typing import Literal
 from uuid import UUID, uuid4
 
 from database.conexion import obtener_conexion, transaccion_exclusiva
+from domain.maquina_estados import EstadoContrato, MaquinaEstadosContrato
 from domain.modelos_usuario import UsuarioModelo
+from services.contrato_service import actualizar_contrato, buscar_contrato
+
+ESTADOS_CANCELACION_ADMIN = frozenset(
+    {
+        EstadoContrato.PUBLICADO,
+        EstadoContrato.EN_SUBASTA,
+        EstadoContrato.EN_POSTULACION,
+    }
+)
 
 TipoElemento = Literal["contrato", "cuenta"]
 # Solo consultas conocidas pueden elegir tablas y columnas. Nunca se lee el hash.
@@ -23,24 +33,35 @@ def listar_elementos(tipo: TipoElemento, incluir_eliminados=False, estado=None):
         sql += " AND estado = ?"
         valores.append(estado)
     with obtener_conexion() as conn:
-        return [
+        elementos = [
             dict(fila) for fila in conn.execute(sql + " ORDER BY rowid DESC", valores)
         ]
+        if tipo == "contrato":
+            for elemento in elementos:
+                elemento["cancelable"] = (
+                    not elemento["eliminado"]
+                    and elemento["estado"] in ESTADOS_CANCELACION_ADMIN
+                )
+        return elementos
 
 
-def _causa_rechazo(tipo, fila, motivo, confirmado):
+def _causa_rechazo(tipo, fila, motivo, confirmado, accion):
     if not fila:
         return "El elemento no existe."
     if not motivo:
-        return "Ingresa el motivo de la eliminación."
+        return "Ingresa el motivo de la operación."
     if not confirmado:
-        return "Confirma la eliminación del elemento."
+        return "Confirma la operación."
     if fila["eliminado"]:
         return "El elemento ya fue eliminado."
+    if accion == "cancelar_contrato":
+        if fila["estado"] not in ESTADOS_CANCELACION_ADMIN:
+            return "Solo se pueden cancelar contratos publicados, en subasta o en postulación."
+        return None
     if tipo == "contrato" and fila["estado"] != "PUBLICADO":
         return "Solo se pueden eliminar contratos actualmente en PUBLICADO."
     if tipo == "cuenta" and fila["rol"] == "ADMIN_BACKOFFICE":
-        return "La eliminación de cuentas administrativas está pendiente de definición."
+        return "Las cuentas administrativas están protegidas. El panel solo permite eliminar cuentas de transportistas y dadores de carga."
     return None
 
 
@@ -51,6 +72,18 @@ def eliminar(
     motivo: str,
     confirmado: bool,
 ):
+    return _operar(tipo, elemento_id, actor, motivo, confirmado, "eliminar_" + tipo)
+
+
+def cancelar_contrato(
+    contrato_id: UUID, actor: UsuarioModelo, motivo: str, confirmado: bool
+):
+    return _operar(
+        "contrato", contrato_id, actor, motivo, confirmado, "cancelar_contrato"
+    )
+
+
+def _operar(tipo, elemento_id, actor, motivo, confirmado, accion):
     """Reserva la escritura antes de releer el estado y registrar el resultado."""
     with transaccion_exclusiva() as conn:
         # Si la baja del actor ganó la carrera, su sesión ya no autoriza cambios.
@@ -68,7 +101,7 @@ def eliminar(
             fila = conn.execute(
                 _CONSULTAS[tipo] + " WHERE id = ?", (identificador,)
             ).fetchone()
-            causa = _causa_rechazo(tipo, fila, motivo, confirmado)
+            causa = _causa_rechazo(tipo, fila, motivo, confirmado, accion)
         else:
             # Se audita el intento sin consultar ni revelar el recurso solicitado.
             causa = "Se requiere una cuenta administradora."
@@ -78,7 +111,16 @@ def eliminar(
             else None
         )
         posterior = anterior
-        if not causa:
+        if not causa and accion == "cancelar_contrato":
+            # El permiso es más estrecho que la máquina de estados. Se comprueban ambos
+            # bajo el mismo bloqueo que usa la adjudicación, conservando todas las ofertas.
+            contrato = buscar_contrato(conn, elemento_id)
+            actualizado = MaquinaEstadosContrato.cambiar_estado(
+                contrato, EstadoContrato.CANCELADO
+            )
+            actualizar_contrato(conn, elemento_id, actualizado)
+            posterior = dict(anterior, estado=actualizado.estado.value)
+        elif not causa:
             tabla = "contratos" if tipo == "contrato" else "usuarios"
             conn.execute(
                 f"UPDATE {tabla} SET eliminado = 1 WHERE id = ?", (identificador,)
@@ -94,7 +136,7 @@ def eliminar(
                 datetime.now(UTC).isoformat(),
                 str(actor.id),
                 vigente["nombre"],
-                "eliminar_" + tipo,
+                accion,
                 tipo,
                 identificador,
                 motivo,

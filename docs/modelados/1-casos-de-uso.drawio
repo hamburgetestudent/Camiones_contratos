@@ -1,0 +1,246 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net">
+  <diagram name="Casos de uso" id="manso">
+    <mxGraphModel grid="0" page="1" pageWidth="1660" pageHeight="1060">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="boundary" value="" parent="1" vertex="1" style="rounded=0;fillColor=#FFFFFF;strokeColor=#50697B;strokeWidth=2;">
+          <mxGeometry x="193" y="64" width="1274" height="876" as="geometry" />
+        </mxCell>
+        <mxCell id="title" value="MansoViaje · Casos de uso" parent="1" vertex="1" style="text;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=31;fontStyle=1;fontColor=#19334A;">
+          <mxGeometry x="455.0" y="7.0" width="750" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="subject" value="Aplicación MansoViaje" parent="1" vertex="1" style="text;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=18;fontStyle=1;fontColor=#19334A;">
+          <mxGeometry x="204.0" y="70.0" width="260" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="new" value="" parent="1" vertex="1" style="shape=umlActor;strokeColor=#19334A;fillColor=#FFFFFF;strokeWidth=2;">
+          <mxGeometry x="80" y="120" width="30" height="57" as="geometry" />
+        </mxCell>
+        <mxCell id="new-name" value="Persona que se registra&#10;(dador o transportista)" parent="1" vertex="1" style="text;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=15;fontStyle=1;fontColor=#19334A;">
+          <mxGeometry x="-1.0" y="178.0" width="192" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="user" value="" parent="1" vertex="1" style="shape=umlActor;strokeColor=#19334A;fillColor=#FFFFFF;strokeWidth=2;">
+          <mxGeometry x="80" y="372" width="30" height="57" as="geometry" />
+        </mxCell>
+        <mxCell id="user-name" value="Usuario de la plataforma&#10;(los tres roles)" parent="1" vertex="1" style="text;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=15;fontStyle=1;fontColor=#19334A;">
+          <mxGeometry x="-1.0" y="430.0" width="192" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="manager" value="" parent="1" vertex="1" style="shape=umlActor;strokeColor=#19334A;fillColor=#FFFFFF;strokeWidth=2;">
+          <mxGeometry x="80" y="720" width="30" height="57" as="geometry" />
+        </mxCell>
+        <mxCell id="manager-name" value="Gestor de cargas&#10;(dador o administrador)" parent="1" vertex="1" style="text;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=15;fontStyle=1;fontColor=#19334A;">
+          <mxGeometry x="-1.0" y="778.0" width="192" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="dador" value="" parent="1" vertex="1" style="shape=umlActor;strokeColor=#19334A;fillColor=#FFFFFF;strokeWidth=2;">
+          <mxGeometry x="1547" y="120" width="30" height="57" as="geometry" />
+        </mxCell>
+        <mxCell id="dador-name" value="Dador de carga" parent="1" vertex="1" style="text;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=15;fontStyle=1;fontColor=#19334A;">
+          <mxGeometry x="1466.0" y="178.0" width="192" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="trans" value="" parent="1" vertex="1" style="shape=umlActor;strokeColor=#19334A;fillColor=#FFFFFF;strokeWidth=2;">
+          <mxGeometry x="1547" y="367" width="30" height="57" as="geometry" />
+        </mxCell>
+        <mxCell id="trans-name" value="Transportista" parent="1" vertex="1" style="text;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=15;fontStyle=1;fontColor=#19334A;">
+          <mxGeometry x="1466.0" y="425.0" width="192" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="admin" value="" parent="1" vertex="1" style="shape=umlActor;strokeColor=#19334A;fillColor=#FFFFFF;strokeWidth=2;">
+          <mxGeometry x="1547" y="701" width="30" height="57" as="geometry" />
+        </mxCell>
+        <mxCell id="admin-name" value="Administrador&#10;Backoffice" parent="1" vertex="1" style="text;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=15;fontStyle=1;fontColor=#19334A;">
+          <mxGeometry x="1466.0" y="759.0" width="192" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="sqlite" value="" parent="1" vertex="1" style="shape=umlActor;strokeColor=#19334A;fillColor=#FFFFFF;strokeWidth=2;">
+          <mxGeometry x="815" y="949" width="30" height="57" as="geometry" />
+        </mxCell>
+        <mxCell id="sqlite-name" value="«sistema externo»&#10;Motor SQLite" parent="1" vertex="1" style="text;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=15;fontStyle=1;fontColor=#19334A;">
+          <mxGeometry x="734.0" y="1007.0" width="192" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="reg" value="Registrarse en la plataforma" parent="1" vertex="1" style="ellipse;whiteSpace=wrap;align=center;verticalAlign=middle;fillColor=#F2F6FA;strokeColor=#50697B;strokeWidth=1.6;fontSize=17;fontColor=#19334A;fontStyle=0;">
+          <mxGeometry x="263.0" y="123.0" width="288" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="ses" value="Gestionar sesión" parent="1" vertex="1" style="ellipse;whiteSpace=wrap;align=center;verticalAlign=middle;fillColor=#F2F6FA;strokeColor=#50697B;strokeWidth=1.6;fontSize=17;fontColor=#19334A;fontStyle=0;">
+          <mxGeometry x="263.0" y="243.0" width="288" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="read" value="Consultar contratos y viajes" parent="1" vertex="1" style="ellipse;whiteSpace=wrap;align=center;verticalAlign=middle;fillColor=#F2F6FA;strokeColor=#50697B;strokeWidth=1.6;fontSize=17;fontColor=#19334A;fontStyle=0;">
+          <mxGeometry x="263.0" y="313.0" width="288" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="state" value="Cambiar estado de contrato" parent="1" vertex="1" style="ellipse;whiteSpace=wrap;align=center;verticalAlign=middle;fillColor=#F2F6FA;strokeColor=#50697B;strokeWidth=1.6;fontSize=17;fontColor=#19334A;fontStyle=0;">
+          <mxGeometry x="263.0" y="383.0" width="288" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="explore" value="Explorar cargas disponibles" parent="1" vertex="1" style="ellipse;whiteSpace=wrap;align=center;verticalAlign=middle;fillColor=#F2F6FA;strokeColor=#50697B;strokeWidth=1.6;fontSize=17;fontColor=#19334A;fontStyle=0;">
+          <mxGeometry x="263.0" y="453.0" width="288" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="config" value="Consultar o modificar&#10;reglas de negocio" parent="1" vertex="1" style="ellipse;whiteSpace=wrap;align=center;verticalAlign=middle;fillColor=#F2F6FA;strokeColor=#50697B;strokeWidth=1.6;fontSize=17;fontColor=#19334A;fontStyle=0;">
+          <mxGeometry x="263.0" y="523.0" width="288" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="create" value="Crear contrato en borrador" parent="1" vertex="1" style="ellipse;whiteSpace=wrap;align=center;verticalAlign=middle;fillColor=#E8F5F1;strokeColor=#096457;strokeWidth=1.6;fontSize=17;fontColor=#19334A;fontStyle=1;">
+          <mxGeometry x="263.0" y="653.0" width="288" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="offers" value="Revisar ofertas recibidas" parent="1" vertex="1" style="ellipse;whiteSpace=wrap;align=center;verticalAlign=middle;fillColor=#F2F6FA;strokeColor=#50697B;strokeWidth=1.6;fontSize=17;fontColor=#19334A;fontStyle=0;">
+          <mxGeometry x="263.0" y="723.0" width="288" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="award" value="Adjudicar subasta" parent="1" vertex="1" style="ellipse;whiteSpace=wrap;align=center;verticalAlign=middle;fillColor=#F2F6FA;strokeColor=#50697B;strokeWidth=1.6;fontSize=17;fontColor=#19334A;fontStyle=0;">
+          <mxGeometry x="263.0" y="793.0" width="288" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="profile" value="Gestionar perfil tributario" parent="1" vertex="1" style="ellipse;whiteSpace=wrap;align=center;verticalAlign=middle;fillColor=#F2F6FA;strokeColor=#50697B;strokeWidth=1.6;fontSize=17;fontColor=#19334A;fontStyle=0;">
+          <mxGeometry x="1106.0" y="123.0" width="288" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="docs" value="Cargar y consultar&#10;documentación KYC" parent="1" vertex="1" style="ellipse;whiteSpace=wrap;align=center;verticalAlign=middle;fillColor=#F2F6FA;strokeColor=#50697B;strokeWidth=1.6;fontSize=17;fontColor=#19334A;fontStyle=0;">
+          <mxGeometry x="1106.0" y="295.0" width="288" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="apply" value="Postular a carga" parent="1" vertex="1" style="ellipse;whiteSpace=wrap;align=center;verticalAlign=middle;fillColor=#F2F6FA;strokeColor=#50697B;strokeWidth=1.6;fontSize=17;fontColor=#19334A;fontStyle=0;">
+          <mxGeometry x="1106.0" y="370.0" width="288" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="mine" value="Consultar mis postulaciones" parent="1" vertex="1" style="ellipse;whiteSpace=wrap;align=center;verticalAlign=middle;fillColor=#F2F6FA;strokeColor=#50697B;strokeWidth=1.6;fontSize=17;fontColor=#19334A;fontStyle=0;">
+          <mxGeometry x="1106.0" y="445.0" width="288" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="verify" value="Revisar y validar perfiles&#10;y documentos KYC" parent="1" vertex="1" style="ellipse;whiteSpace=wrap;align=center;verticalAlign=middle;fillColor=#F2F6FA;strokeColor=#50697B;strokeWidth=1.6;fontSize=17;fontColor=#19334A;fontStyle=0;">
+          <mxGeometry x="1106.0" y="558.0" width="288" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="panel" value="Consultar panel, cuentas&#10;y contratos" parent="1" vertex="1" style="ellipse;whiteSpace=wrap;align=center;verticalAlign=middle;fillColor=#F2F6FA;strokeColor=#50697B;strokeWidth=1.6;fontSize=17;fontColor=#19334A;fontStyle=0;">
+          <mxGeometry x="1106.0" y="631.0" width="288" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="delete" value="Dar de baja una cuenta&#10;o un contrato" parent="1" vertex="1" style="ellipse;whiteSpace=wrap;align=center;verticalAlign=middle;fillColor=#F2F6FA;strokeColor=#50697B;strokeWidth=1.6;fontSize=17;fontColor=#19334A;fontStyle=0;">
+          <mxGeometry x="1106.0" y="704.0" width="288" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="cancel" value="Cancelar contrato&#10;administrativamente" parent="1" vertex="1" style="ellipse;whiteSpace=wrap;align=center;verticalAlign=middle;fillColor=#F2F6FA;strokeColor=#50697B;strokeWidth=1.6;fontSize=17;fontColor=#19334A;fontStyle=0;">
+          <mxGeometry x="1106.0" y="777.0" width="288" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="audit" value="Consultar historial de auditoría" parent="1" vertex="1" style="ellipse;whiteSpace=wrap;align=center;verticalAlign=middle;fillColor=#F2F6FA;strokeColor=#50697B;strokeWidth=1.6;fontSize=17;fontColor=#19334A;fontStyle=0;">
+          <mxGeometry x="1106.0" y="850.0" width="288" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="kyc" value="Verificar KYC de&#10;dador aprobado" parent="1" vertex="1" style="ellipse;whiteSpace=wrap;align=center;verticalAlign=middle;fillColor=#E8F5F1;strokeColor=#096457;strokeWidth=1.6;fontSize=17;fontColor=#19334A;fontStyle=1;">
+          <mxGeometry x="709.0" y="648.0" width="242" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="new-reg" parent="1" edge="1" source="new" target="reg" style="exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#50697B;strokeWidth=1.6;endArrow=none;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="user-ses" parent="1" edge="1" source="user" target="ses" style="exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#50697B;strokeWidth=1.6;endArrow=none;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="195" y="402" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="user-read" parent="1" edge="1" source="user" target="read" style="exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#50697B;strokeWidth=1.6;endArrow=none;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="195" y="402" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="user-state" parent="1" edge="1" source="user" target="state" style="exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#50697B;strokeWidth=1.6;endArrow=none;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="195" y="402" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="user-explore" parent="1" edge="1" source="user" target="explore" style="exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#50697B;strokeWidth=1.6;endArrow=none;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="195" y="402" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="user-config" parent="1" edge="1" source="user" target="config" style="exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#50697B;strokeWidth=1.6;endArrow=none;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="195" y="402" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="manager-create" parent="1" edge="1" source="manager" target="create" style="exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#50697B;strokeWidth=1.6;endArrow=none;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="195" y="750" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="manager-offers" parent="1" edge="1" source="manager" target="offers" style="exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#50697B;strokeWidth=1.6;endArrow=none;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="195" y="750" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="manager-award" parent="1" edge="1" source="manager" target="award" style="exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#50697B;strokeWidth=1.6;endArrow=none;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="195" y="750" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dador-profile" parent="1" edge="1" source="dador" target="profile" style="exitX=0;exitY=0.5;entryX=1;entryY=0.5;strokeColor=#50697B;strokeWidth=1.6;endArrow=none;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="trans-docs" parent="1" edge="1" source="trans" target="docs" style="exitX=0;exitY=0.5;entryX=1;entryY=0.5;strokeColor=#50697B;strokeWidth=1.6;endArrow=none;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1462" y="397" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="trans-apply" parent="1" edge="1" source="trans" target="apply" style="exitX=0;exitY=0.5;entryX=1;entryY=0.5;strokeColor=#50697B;strokeWidth=1.6;endArrow=none;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1462" y="397" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="trans-mine" parent="1" edge="1" source="trans" target="mine" style="exitX=0;exitY=0.5;entryX=1;entryY=0.5;strokeColor=#50697B;strokeWidth=1.6;endArrow=none;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1462" y="397" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="admin-verify" parent="1" edge="1" source="admin" target="verify" style="exitX=0;exitY=0.5;entryX=1;entryY=0.5;strokeColor=#50697B;strokeWidth=1.6;endArrow=none;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1462" y="731" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="admin-panel" parent="1" edge="1" source="admin" target="panel" style="exitX=0;exitY=0.5;entryX=1;entryY=0.5;strokeColor=#50697B;strokeWidth=1.6;endArrow=none;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1462" y="731" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="admin-delete" parent="1" edge="1" source="admin" target="delete" style="exitX=0;exitY=0.5;entryX=1;entryY=0.5;strokeColor=#50697B;strokeWidth=1.6;endArrow=none;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1462" y="731" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="admin-cancel" parent="1" edge="1" source="admin" target="cancel" style="exitX=0;exitY=0.5;entryX=1;entryY=0.5;strokeColor=#50697B;strokeWidth=1.6;endArrow=none;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1462" y="731" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="admin-audit" parent="1" edge="1" source="admin" target="audit" style="exitX=0;exitY=0.5;entryX=1;entryY=0.5;strokeColor=#50697B;strokeWidth=1.6;endArrow=none;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1462" y="731" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="create-kyc" parent="1" edge="1" source="create" target="kyc" style="exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#50697B;strokeWidth=1.6;endArrow=open;dashed=1;endFill=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc" value="«include»" parent="1" vertex="1" style="text;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=17;fontStyle=1;fontColor=#096457;">
+          <mxGeometry x="566.0" y="645.0" width="128" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="sqlite-kyc" parent="1" edge="1" source="sqlite" target="kyc" style="exitX=0.5;exitY=0;entryX=0.5;entryY=1;strokeColor=#50697B;strokeWidth=1.6;endArrow=none;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

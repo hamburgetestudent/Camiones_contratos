@@ -8,6 +8,20 @@ import { resolvePythonExecutable } from "./scripts/run-py.mjs";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isWindows = process.platform === "win32";
 
+function buildNpmInvocation(args) {
+  const npmCli = path.join(
+    path.dirname(process.execPath),
+    "node_modules",
+    "npm",
+    "bin",
+    "npm-cli.js"
+  );
+  if (fs.existsSync(npmCli)) {
+    return { command: process.execPath, args: [npmCli, ...args], shell: false };
+  }
+  return { command: "npm", args, shell: isWindows };
+}
+
 const BACKEND_HOST = "127.0.0.1";
 const BACKEND_PORT = 8000;
 const HEALTH_URL = `http://${BACKEND_HOST}:${BACKEND_PORT}/openapi.json`;
@@ -80,13 +94,18 @@ function waitForBackend(url, backendProcess, timeoutMs = 30000) {
 async function main() {
   const frontendDir = path.join(__dirname, "frontend");
   const frontendModules = path.join(frontendDir, "node_modules");
+  const requiredBins = [
+    path.join(frontendModules, ".bin", isWindows ? "cpx.cmd" : "cpx"),
+    path.join(frontendModules, ".bin", isWindows ? "electron.cmd" : "electron"),
+  ];
 
-  if (!fs.existsSync(frontendModules)) {
+  if (requiredBins.some((binPath) => !fs.existsSync(binPath))) {
     console.log("Instalando dependencias del frontend...");
-    const installResult = spawnSync("npm", ["--prefix", "frontend", "install"], {
+    const installCmd = buildNpmInvocation(["--prefix", "frontend", "install"]);
+    const installResult = spawnSync(installCmd.command, installCmd.args, {
       cwd: __dirname,
       stdio: "inherit",
-      shell: isWindows,
+      shell: installCmd.shell,
     });
     if (installResult.status !== 0) {
       process.exit(installResult.status ?? 1);
@@ -150,10 +169,11 @@ async function main() {
   }
 
   console.log("Backend listo. Compilando e iniciando frontend (Electron)...");
-  frontend = spawn("npm", ["--prefix", "frontend", "start"], {
+  const startCmd = buildNpmInvocation(["--prefix", "frontend", "start"]);
+  frontend = spawn(startCmd.command, startCmd.args, {
     cwd: __dirname,
     stdio: "inherit",
-    shell: isWindows,
+    shell: startCmd.shell,
   });
 
   frontend.on("exit", (code) => {
