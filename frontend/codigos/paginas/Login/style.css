@@ -1,144 +1,114 @@
-/* ================================= */
-/* CONFIGURACIÓN GENERAL              
-/* ================================= */
-
-* {
-  box-sizing: border-box;
-}
-
+/* Estilos unificados de Inicio de Sesión */
 body {
-  margin: 0;
-  padding: 0;
-
-  font-family: Arial, sans-serif;
-
-  background-color: white;
-
-  color: #292929;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background: var(--fondo);
 }
-
-/* ================================= */
-/* CONTENEDOR PRINCIPAL              */
-/* ================================= */
 
 .contenedor {
-  width: 100%;
-  height: 550px;
-
-  position: relative;
+  width: min(820px, 100%);
 }
 
-/* ================================= */
-/* TÍTULO                             */
-/* ================================= */
+.login-card {
+  background: var(--superficie);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-lg);
+  padding: clamp(22px, 4vw, 36px);
+  box-shadow: var(--sombra-md);
+}
 
 .titulo {
-  position: absolute;
-
-  top: 35px;
-  left: 50%;
-
-  transform: translateX(-50%);
-
-  width: 462px;
-  height: 65px;
-
-  border: 1px solid #444;
-
   display: flex;
-
   align-items: center;
-  justify-content: center;
-
-  font-size: 18px;
-  font-weight: bold;
+  gap: 14px;
+  padding-bottom: 18px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--linea);
 }
 
-/* ================================= */
-/* FORMULARIO                         */
-/* ================================= */
+.marca-badge {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--azul);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.titulo h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  color: var(--azul);
+}
+
+.titulo p {
+  margin: 2px 0 0;
+  font-size: 0.9rem;
+  color: var(--texto-suave);
+}
+
+.contenido-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+  gap: 32px;
+  align-items: center;
+}
 
 .formulario {
-  position: absolute;
-
-  left: 167px;
-  top: 188px;
-
-  width: 235px;
+  display: flex;
+  flex-direction: column;
 }
-
-/* ================================= */
-/* CAMPOS                             */
-/* ================================= */
 
 .campo {
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
-
-/* Etiquetas */
 
 label {
   display: block;
-
-  font-size: 12px;
-
-  margin-bottom: 5px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--texto);
 }
 
-/* Inputs */
-
 input {
-  width: 235px;
-  height: 30px;
-
-  border: 1px solid #ddd;
-
-  border-radius: 6px;
-
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--borde-control);
+  border-radius: var(--radio-sm);
   padding: 0 12px;
-
-  font-size: 12px;
-
-  outline: none;
+  font-size: 0.94rem;
+  background: var(--superficie);
+  color: var(--texto);
 }
 
 input:focus {
-  border-color: #777;
+  border-color: var(--azul);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--azul-suave);
 }
 
-/* ================================= */
-/* BOTÓN LOGIN                       */
-/* ================================= */
-
 .boton-login {
-  width: 235px;
-  height: 29px;
-
-  border: none;
-
-  border-radius: 5px;
-
-  background-color: #2d2d2d;
-
-  color: white;
-
-  font-size: 12px;
-
+  width: 100%;
+  height: 42px;
+  border: 1px solid var(--azul);
+  border-radius: var(--radio-sm);
+  background: var(--azul);
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 700;
   cursor: pointer;
-
   transition: background-color 0.2s;
 }
 
-.boton-login:hover {
-  background-color: #444;
-}
-
-/* Icono de usuario */
-
-.icono-usuario {
-  margin-left: 5px;
-
-  font-size: 14px;
+.boton-login:hover:not(:disabled) {
+  background: var(--azul-oscuro);
 }
 
 .boton-login:disabled {
@@ -146,249 +116,155 @@ input:focus {
   cursor: not-allowed;
 }
 
+.icono-usuario {
+  margin-left: 6px;
+}
+
 .mensaje-login {
-  min-height: 18px;
-  margin-bottom: 8px;
-  font-size: 13px;
+  min-height: 20px;
+  margin-bottom: 10px;
+  font-size: 0.88rem;
   line-height: 1.4;
 }
 
 .mensaje-login.error {
-  color: #a40000;
+  color: var(--peligro);
 }
 
 .mensaje-login.success {
-  color: #176b35;
+  color: var(--exito);
 }
-
-/* ================================= */
-/* RECUPERAR CONTRASEÑA              */
-/* ================================= */
 
 .recuperar {
-  display: block;
-
-  margin-top: 18px;
-
-  color: #292929;
-
-  font-size: 12px;
-
+  display: inline-block;
+  margin-top: 14px;
+  color: var(--azul);
+  font-size: 0.85rem;
   text-decoration: underline;
-
-  cursor: pointer;
 }
-
-/* ================================= */
-/* SEPARADOR                         */
-/* ================================= */
 
 .separador {
-  width: 235px;
-
   display: flex;
-
   align-items: center;
-
-  justify-content: center;
-
   gap: 12px;
-
-  margin-top: 35px;
+  margin: 22px 0 14px;
 }
-
-/* Líneas */
 
 .separador span {
   height: 1px;
-
   flex: 1;
-
-  background-color: #cfcfcf;
+  background: var(--linea);
 }
-
-/* Texto */
 
 .separador p {
   margin: 0;
-
   white-space: nowrap;
-
-  font-size: 12px;
-
-  color: #292929;
+  font-size: 0.82rem;
+  color: var(--texto-suave);
 }
-
-/* ================================= */
-/* BOTONES SOCIALES                  */
-/* ================================= */
 
 .botones-sociales {
-  display: flex;
-
-  justify-content: space-between;
-
-  width: 235px;
-
-  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
 }
 
-/* Botón individual */
-
 .boton-social {
-  width: 70px;
-  height: 78px;
-
-  background-color: white;
-
-  border: 1px solid #ddd;
-
-  border-radius: 12px;
-
+  height: 68px;
+  background: var(--superficie);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-md);
   display: flex;
-
   flex-direction: column;
-
   align-items: center;
-
   justify-content: center;
-
-  gap: 7px;
-
+  gap: 5px;
   cursor: pointer;
-
+  color: var(--texto);
   transition:
     background-color 0.2s,
     border-color 0.2s;
 }
 
 .boton-social:hover {
-  background-color: #f7f7f7;
-
-  border-color: #aaa;
+  background: var(--azul-suave);
+  border-color: var(--borde-control);
 }
-
-/* Texto del botón */
 
 .boton-social > span {
-  font-size: 11px;
+  font-size: 0.78rem;
 }
-
-/* ================================= */
-/* LOGO GOOGLE                       */
-/* ================================= */
 
 .logo-google {
-  font-size: 28px;
-
-  font-weight: bold;
-
-  font-family: Arial, sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--azul);
 }
 
-/* ================================= */
-/* LOGO MICROSOFT                    */
-/* ================================= */
-
 .logo-microsoft {
-  width: 23px;
-  height: 23px;
-
+  width: 20px;
+  height: 20px;
   display: grid;
-
   grid-template-columns: 1fr 1fr;
-
   grid-template-rows: 1fr 1fr;
-
   gap: 2px;
 }
 
-/* Cuadrados de Microsoft */
-
-.logo-microsoft span {
-  display: block;
+.logo-microsoft span:nth-child(1) {
+  background: #f25022;
 }
-
-/* ================================= */
-/* LOGO APPLE                        */
-/* ================================= */
+.logo-microsoft span:nth-child(2) {
+  background: #7fba00;
+}
+.logo-microsoft span:nth-child(3) {
+  background: #00a4ef;
+}
+.logo-microsoft span:nth-child(4) {
+  background: #ffb900;
+}
 
 .logo-apple {
-  width: 25px;
-  height: 25px;
-
-  font-size: 26px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
+  font-size: 22px;
+  line-height: 1;
 }
 
-/* ================================= */
-/* REGISTRO                          */
-/* ================================= */
-
 .registro {
-  width: 235px;
-
   display: flex;
-
   justify-content: center;
-
-  gap: 8px;
-
-  margin-top: 48px;
-
-  font-size: 12px;
+  gap: 6px;
+  margin-top: 22px;
+  font-size: 0.88rem;
+  color: var(--texto-suave);
 }
 
 .registro a {
-  color: #292929;
-
-  text-decoration: underline;
-
-  cursor: pointer;
+  color: var(--azul);
+  font-weight: 700;
 }
-
-/* ================================= */
-/* IMAGENES                          */
-/* ================================= */
 
 .imagen-container {
-  position: absolute;
-
-  left: 459px;
-  top: 182px;
-
-  width: 245px;
-  height: 262px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--fondo);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-md);
+  padding: 16px;
+  min-height: 260px;
 }
-
-/* Imagen */
 
 .imagen-login {
   width: 100%;
-  height: 100%;
-
+  max-height: 280px;
   object-fit: contain;
 }
 
-/*Logo microsoft*/
+@media (max-width: 700px) {
+  .contenido-grid {
+    grid-template-columns: 1fr;
+  }
 
-.logo-microsoft span:nth-child(1) {
-  background-color: #f25022;
-}
-
-.logo-microsoft span:nth-child(2) {
-  background-color: #7fba00;
-}
-
-.logo-microsoft span:nth-child(3) {
-  background-color: #00a4ef;
-}
-
-.logo-microsoft span:nth-child(4) {
-  background-color: #ffb900;
+  .imagen-container {
+    display: none;
+  }
 }

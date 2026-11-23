@@ -62,9 +62,27 @@ async function probar() {
   }
   await login("admin@camiones.cl", "admin123");
   await pagina.getByRole("heading", { name: "Panel de administración" }).waitFor();
-  assert.equal(await pagina.locator("nav a").count(), 4);
+  assert.equal(await pagina.locator("nav a").count(), 6);
   await pagina.locator(".indicador").first().waitFor();
   assert.deepEqual(await pagina.locator(".indicador").allTextContents(), ["0", "5", "0"]);
+
+  // Verificar nuevas vistas administrativas: Validaciones KYC y Configuración global.
+  await pagina
+    .locator("nav")
+    .getByRole("link", { name: /Validaciones KYC/ })
+    .click();
+  await pagina.getByRole("heading", { name: /Documentos de transportistas pendientes/ }).waitFor();
+  await pagina
+    .locator("nav")
+    .getByRole("link", { name: /Configuración/ })
+    .click();
+  await pagina.getByRole("button", { name: "Guardar configuración" }).click();
+  await pagina.getByText("Configuración global actualizada correctamente.").waitFor();
+  await pagina
+    .locator("nav")
+    .getByRole("link", { name: /Inicio/ })
+    .click();
+  await pagina.locator(".indicador").first().waitFor();
   await pagina.getByRole("link", { name: /Cuentas activas/ }).click();
   await pagina
     .getByRole("row")
@@ -148,21 +166,70 @@ async function probar() {
   assert.equal(await menu.getAttribute("aria-expanded"), "true");
   await pagina.getByRole("button", { name: "Cerrar sesión" }).click();
   await pagina.setViewportSize({ width: 980, height: 680 });
-  for (const [correo, clave, acceso] of [
-    ["contacto@logisticasur.cl", "dador123", "Registrar Contrato"],
-    ["juan.perez@rutanorte.cl", "camion123", "Subastas y Cargas"],
+  // Crear un segundo contrato publicado para probar el flujo de Dador y Transportista.
+  const creada2 = await pagina.request.post(api + "/contratos", {
+    headers,
+    data: {
+      id_empresa_generadora: dador.id,
+      origen: "Valparaíso",
+      destino: "Concepción",
+      f_cierre_postulaciones: fecha(3),
+      f_estimada_salida: fecha(6),
+      f_estimada_llegada: fecha(16),
+      input_camionKG: 12000,
+      tipo_carga: "GENERAL",
+      peso_total: 6000,
+      moneda: "CLP",
+      monto_neto: 200000,
+      monto_iva: 38000,
+      monto_total: 238000,
+    },
+  });
+  assert.equal(creada2.status(), 201, await creada2.text());
+  const contratoSubasta = await creada2.json();
+  const pub2 = await pagina.request.patch(api + "/contratos/" + contratoSubasta.id + "/estado", {
+    headers,
+    data: { nuevo_estado: "PUBLICADO" },
+  });
+  assert.equal(pub2.status(), 200, await pub2.text());
+
+  for (const [correo, clave, acceso, extraRuta, extraTexto] of [
+    [
+      "contacto@logisticasur.cl",
+      "dador123",
+      "Registrar Contrato",
+      /Perfil Tributario/,
+      /perfil tributario/i,
+    ],
+    [
+      "juan.perez@rutanorte.cl",
+      "camion123",
+      "Subastas y Cargas",
+      /Documentación y Compliance/,
+      /Progreso de validación/,
+    ],
   ]) {
     await login(correo, clave);
     const nav = pagina.locator("nav");
     assert.ok((await nav.innerText()).includes(acceso));
     assert.equal(await nav.getByRole("link", { name: "Historial de acciones" }).count(), 0);
+    await nav.getByRole("link", { name: extraRuta }).click();
+    await pagina.getByText(extraTexto).first().waitFor();
     await nav.getByRole("link", { name: new RegExp(acceso) }).click();
+    if (correo === "juan.perez@rutanorte.cl") {
+      await pagina.getByRole("link", { name: "Ver detalle y postular" }).first().click();
+      await pagina.getByRole("button", { name: "Enviar postulación" }).click();
+      await pagina.getByText("¡Postulación enviada correctamente!").waitFor();
+      await pagina.getByRole("link", { name: "← Volver a cargas disponibles" }).click();
+    }
     await pagina.locator('main a[href="../Principal/principal.html"]').click();
     await pagina.locator("#boton-perfil").click();
     await pagina.locator('[data-accion-perfil="cerrar"]').click();
     await pagina.locator("#btnLogin").waitFor();
   }
-  console.log("OK: tres roles, resumen, baja, historial, menú con teclado y cierre de sesión.");
+  console.log(
+    "OK: tres roles, resumen, KYC, configuración, subastas, baja, historial, menú con teclado y cierre de sesión."
+  );
 }
 (async () => {
   try {

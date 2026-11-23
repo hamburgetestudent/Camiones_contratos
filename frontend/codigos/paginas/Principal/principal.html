@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Principal | Camiones Contratos</title>
+    <title>Catálogo de Contratos | Camiones Contratos</title>
+    <link rel="stylesheet" href="../comun/tema.css" />
     <link rel="stylesheet" href="principal.css" />
   </head>
   <body>
@@ -13,11 +14,15 @@
           <span class="marca-icono" aria-hidden="true">CC</span>
           <div>
             <h1>Camiones Contratos</h1>
-            <p>Panel principal</p>
+            <p>Catálogo en tiempo real</p>
           </div>
         </div>
 
         <section class="filtros" aria-label="Filtros de contratos">
+          <label>
+            <span>Región / Ciudad</span>
+            <input id="filtro-region" type="text" placeholder="Ej: Santiago, Talca" />
+          </label>
           <label>
             <span>Precio mínimo</span>
             <input id="precio-minimo" type="number" min="0" placeholder="$0" />
@@ -27,32 +32,35 @@
             <input id="precio-maximo" type="number" min="0" placeholder="Sin límite" />
           </label>
           <label>
-            <span>Empresa o cliente</span>
+            <span>Tipo de carga</span>
             <select id="filtro-empresa">
-              <option value="">Todas las empresas</option>
+              <option value="">Todos los tipos</option>
             </select>
           </label>
           <button id="limpiar-filtros" class="boton-secundario" type="button">Limpiar</button>
         </section>
 
-        <div class="perfil-contenedor">
-          <button
-            id="boton-perfil"
-            class="foto-perfil"
-            type="button"
-            aria-label="Abrir menú de usuario"
-            aria-expanded="false"
-          >
-            <span id="iniciales-perfil">US</span>
-          </button>
-          <div id="menu-perfil" class="menu-perfil oculto">
-            <p class="menu-titulo">Mi cuenta</p>
-            <button type="button" data-accion-perfil="editar">Editar usuario</button>
-            <button type="button" data-accion-perfil="configuracion">
-              Configuración de la aplicación
+        <div class="acciones-usuario">
+          <a href="../panel/index.html" class="boton-secundario enlace-panel">← Panel</a>
+          <div class="perfil-contenedor">
+            <button
+              id="boton-perfil"
+              class="foto-perfil"
+              type="button"
+              aria-label="Abrir menú de usuario"
+              aria-expanded="false"
+            >
+              <span id="iniciales-perfil">US</span>
             </button>
-            <hr />
-            <button type="button" data-accion-perfil="cerrar">Cerrar sesión</button>
+            <div id="menu-perfil" class="menu-perfil oculto">
+              <p class="menu-titulo">Mi cuenta</p>
+              <button type="button" data-accion-perfil="editar">Mi perfil / KYC</button>
+              <button type="button" data-accion-perfil="configuracion">
+                Ir al panel principal
+              </button>
+              <hr />
+              <button type="button" data-accion-perfil="cerrar">Cerrar sesión</button>
+            </div>
           </div>
         </div>
       </header>
@@ -60,8 +68,8 @@
       <main class="contenido-principal">
         <div class="encabezado-contenido">
           <div>
-            <h2>Contratos disponibles</h2>
-            <p>Encuentra el próximo trabajo para tu camión.</p>
+            <h2 id="titulo-listado">Cargas disponibles en subasta</h2>
+            <p id="subtitulo-listado">Explora los contratos activos publicados en la plataforma.</p>
           </div>
 
           <div class="acciones-contratos">
@@ -84,9 +92,22 @@
 
       <footer class="pie-pagina">
         <span>Camiones Contratos</span>
-        <span>Panel principal</span>
+        <span>Catálogo conectado al servidor</span>
       </footer>
     </div>
+
+    <dialog id="modal-detalle" class="modal-detalle" aria-labelledby="modal-titulo">
+      <div class="modal-cabecera">
+        <h3 id="modal-titulo">Detalle del contrato</h3>
+        <button id="cerrar-modal" type="button" class="boton-secundario">Cerrar</button>
+      </div>
+      <dl id="modal-datos" class="modal-datos"></dl>
+      <div class="modal-acciones">
+        <a id="modal-ir-panel" href="../panel/index.html" class="boton-principal">
+          Gestionar en el panel
+        </a>
+      </div>
+    </dialog>
 
     <script src="principal.js"></script>
   </body>

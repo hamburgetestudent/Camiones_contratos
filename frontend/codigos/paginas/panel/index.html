@@ -4,10 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Camiones Contratos | Inicio</title>
+    <link rel="stylesheet" href="../comun/tema.css" />
     <link rel="stylesheet" href="panel.css" />
     <script src="roles.js" defer></script>
     <script src="panel.js" defer></script>
     <script src="administracion.js" defer></script>
+    <script src="dador.js" defer></script>
+    <script src="transportista.js" defer></script>
   </head>
   <body>
     <button id="menu" aria-controls="lateral" aria-expanded="false">☰ Menú</button>
@@ -26,7 +29,7 @@
         </div>
         <span id="etiqueta"></span>
       </header>
-      <div id="aviso" role="status"></div>
+      <div id="aviso" role="status" aria-live="polite"></div>
       <section id="contenido" aria-label="Contenido del panel"></section>
     </main>
     <dialog id="confirmacion" aria-labelledby="titulo-confirmacion">

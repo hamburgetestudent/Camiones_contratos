@@ -6,14 +6,13 @@ const FUNCIONALIDADES_POR_ROL = {
       descripcion:
         "Explora las cargas publicadas en la plataforma y envía tus postulaciones con ofertas de flete.",
       accionTexto: "Ver Subastas",
-      destino: "../Principal/principal.html",
       modulo: "subastas",
     },
     {
       icono: "📄",
       titulo: "Documentación y Compliance",
       descripcion:
-        "Revisa el estado de verificación de tu licencia, padrón vehicular, revisión técnica y seguros.",
+        "Revisa el estado de verificación de tu licencia, padrón vehicular, revisión técnica, seguro y antecedentes.",
       accionTexto: "Mis Documentos",
       modulo: "onboarding",
     },
@@ -21,7 +20,7 @@ const FUNCIONALIDADES_POR_ROL = {
       icono: "🛣️",
       titulo: "Despacho y Seguimiento",
       descripcion:
-        "Reporta el inicio de tránsito de la carga y confirma la entrega definitiva en destino.",
+        "Reporta el inicio de tránsito de tus contratos adjudicados y confirma la entrega definitiva en destino.",
       accionTexto: "Mis Despachos",
       modulo: "seguimiento",
     },
@@ -31,9 +30,8 @@ const FUNCIONALIDADES_POR_ROL = {
       icono: "📦",
       titulo: "Registrar Contrato de Carga",
       descripcion:
-        "Crea borradores de contratos especificando origen, destino, tipo de carga y tarifas máximas.",
-      accionTexto: "Nuevo Contrato",
-      destino: "../Principal/principal.html",
+        "Crea y administra tus contratos de transporte, controla su publicación y gestiona su ciclo de vida.",
+      accionTexto: "Mis Contratos",
       modulo: "contratos",
     },
     {
@@ -48,7 +46,7 @@ const FUNCIONALIDADES_POR_ROL = {
       icono: "💼",
       titulo: "Perfil Tributario y Facturación",
       descripcion:
-        "Administra el RUT empresarial, razón social y datos fiscales para la emisión de contratos.",
+        "Administra el RUT empresarial, razón social y datos fiscales requeridos para emitir contratos.",
       accionTexto: "Datos Fiscales",
       modulo: "tributario",
     },
@@ -68,6 +66,22 @@ const FUNCIONALIDADES_POR_ROL = {
       descripcion: "Consulta los usuarios registrados y gestiona la eliminación de sus cuentas.",
       accionTexto: "Administrar cuentas",
       modulo: "cuentas",
+    },
+    {
+      icono: "✓",
+      titulo: "Validaciones KYC",
+      descripcion:
+        "Aprueba o rechaza documentos de transportistas y perfiles tributarios de dadores de carga.",
+      accionTexto: "Revisar validaciones",
+      modulo: "validaciones",
+    },
+    {
+      icono: "⚙",
+      titulo: "Configuración",
+      descripcion:
+        "Ajusta reglas globales del sistema: porcentaje de IVA, tolerancia financiera y anticipación mínima.",
+      accionTexto: "Editar reglas",
+      modulo: "configuracion",
     },
     {
       icono: "◷",

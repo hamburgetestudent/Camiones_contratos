@@ -10,33 +10,6 @@ const fechaUTC = (valor) =>
     timeStyle: "medium",
     timeZone: "UTC",
   }).format(new Date(valor));
-function tabla(columnas, filas, vacio) {
-  if (!filas.length) return nodo("p", vacio);
-  const caja = nodo("div", null, "tabla"),
-    tabla = nodo("table"),
-    cabecera = tabla.createTHead().insertRow();
-  for (const nombre of columnas) {
-    const th = nodo("th", nombre);
-    th.scope = "col";
-    cabecera.append(th);
-  }
-  const cuerpo = tabla.createTBody();
-  for (const fila of filas) {
-    const tr = cuerpo.insertRow();
-    for (const valor of fila) {
-      const td = tr.insertCell();
-      if (valor instanceof Node) td.append(valor);
-      else td.textContent = valor ?? "—";
-    }
-  }
-  caja.append(tabla);
-  return caja;
-}
-function ficha(campos) {
-  const dl = nodo("dl");
-  for (const [etiqueta, valor] of campos) dl.append(nodo("dt", etiqueta), nodo("dd", valor ?? "—"));
-  return dl;
-}
 function eventos(filas, filtros = {}) {
   return tabla(
     ["Fecha y hora (UTC)", "Administrador", "Acción", "Elemento", "Resultado", "Detalle"],
@@ -343,8 +316,181 @@ async function historialAdmin(params) {
   );
   return f;
 }
+async function validacionesAdmin() {
+  const [documentos, dadores] = await Promise.all([
+    api("/onboarding/admin/documentos"),
+    api("/onboarding/admin/dadores"),
+  ]);
+  const f = document.createDocumentFragment();
+  f.append(
+    nodo(
+      "p",
+      "Revisa y aprueba o rechaza la documentación de transportistas y los perfiles tributarios de dadores pendientes.",
+      "texto-suave"
+    )
+  );
+
+  async function resolverDocumento(id, estado) {
+    try {
+      await api("/onboarding/admin/documentos/" + id + "/validar", { estado }, { method: "PATCH" });
+      await navegar();
+      mostrarAviso("Documento marcado como " + estado + ".", "exito");
+    } catch (error) {
+      mostrarAviso(error.message, "error");
+    }
+  }
+
+  async function resolverDador(id, estado_validacion) {
+    try {
+      await api(
+        "/onboarding/admin/dadores/" + id + "/validar",
+        { estado_validacion },
+        { method: "PATCH" }
+      );
+      await navegar();
+      mostrarAviso("Perfil de dador marcado como " + estado_validacion + ".", "exito");
+    } catch (error) {
+      mostrarAviso(error.message, "error");
+    }
+  }
+
+  f.append(
+    nodo("h2", "Documentos de transportistas pendientes (" + documentos.length + ")"),
+    tabla(
+      ["Tipo de documento", "Archivo", "Usuario ID", "Fecha carga", "Estado", "Acciones"],
+      documentos.map((doc) => {
+        const acciones = nodo("div", null, "acciones-grupo");
+        acciones.append(
+          boton("Aprobar", () => resolverDocumento(doc.id, "APROBADO"), "btn-exito"),
+          boton("Rechazar", () => resolverDocumento(doc.id, "RECHAZADO"), "peligro")
+        );
+        return [
+          doc.tipo,
+          doc.archivo,
+          doc.user_id,
+          fechaLocal(doc.created_at),
+          badgeEstado(doc.estado),
+          acciones,
+        ];
+      }),
+      "No hay documentos de transportistas pendientes de revisión."
+    )
+  );
+
+  f.append(
+    nodo("h2", "Perfiles tributarios de dadores pendientes (" + dadores.length + ")"),
+    tabla(
+      ["RUT empresa", "Razón social", "Dirección", "Correo facturación", "Estado", "Acciones"],
+      dadores.map((dador) => {
+        const acciones = nodo("div", null, "acciones-grupo");
+        acciones.append(
+          boton("Aprobar", () => resolverDador(dador.id, "APROBADO"), "btn-exito"),
+          boton("Rechazar", () => resolverDador(dador.id, "RECHAZADO"), "peligro")
+        );
+        return [
+          dador.rut_id_empresa,
+          dador.datos_facturacion?.razon_social,
+          dador.datos_facturacion?.direccion,
+          dador.datos_facturacion?.correo_facturacion,
+          badgeEstado(dador.estado_validacion),
+          acciones,
+        ];
+      }),
+      "No hay perfiles tributarios de dadores pendientes de validación."
+    )
+  );
+
+  return f;
+}
+
+async function configuracionAdmin() {
+  const cfg = await api("/configuracion");
+  const f = document.createDocumentFragment();
+  f.append(
+    nodo(
+      "p",
+      "Ajusta las reglas de negocio globales vigentes para la creación y validación de contratos.",
+      "texto-suave"
+    )
+  );
+
+  const form = nodo("form", null, "form-panel");
+  const grid = nodo("div", null, "form-grid");
+
+  const labelIva = nodo("label", "Tasa de IVA (decimal entre 0 y 1)");
+  const inputIva = nodo("input");
+  inputIva.type = "number";
+  inputIva.name = "iva_porcentaje";
+  inputIva.min = "0";
+  inputIva.max = "1";
+  inputIva.step = "0.01";
+  inputIva.required = true;
+  inputIva.value = String(cfg.iva_porcentaje);
+  labelIva.append(inputIva, nodo("small", "Ejemplo: 0.19 equivale a 19%.", "texto-suave"));
+
+  const labelTol = nodo("label", "Tolerancia financiera máxima");
+  const inputTol = nodo("input");
+  inputTol.type = "number";
+  inputTol.name = "tolerancia_max";
+  inputTol.min = "0";
+  inputTol.step = "0.01";
+  inputTol.required = true;
+  inputTol.value = String(cfg.tolerancia_max);
+  labelTol.append(inputTol, nodo("small", "Margen máximo en cuadratura de montos.", "texto-suave"));
+
+  const labelAnt = nodo("label", "Anticipación mínima de salida (horas)");
+  const inputAnt = nodo("input");
+  inputAnt.type = "number";
+  inputAnt.name = "anticipacion_min_h";
+  inputAnt.min = "0";
+  inputAnt.step = "1";
+  inputAnt.required = true;
+  inputAnt.value = String(cfg.anticipacion_min_h);
+  labelAnt.append(
+    inputAnt,
+    nodo("small", "Horas mínimas antes de la salida programada.", "texto-suave")
+  );
+
+  grid.append(labelIva, labelTol, labelAnt);
+
+  const acciones = nodo("div", null, "acciones-grupo");
+  const btnGuardar = nodo("button", "Guardar configuración", "btn-primario");
+  btnGuardar.type = "submit";
+  acciones.append(btnGuardar);
+
+  form.append(grid, acciones);
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    btnGuardar.disabled = true;
+    try {
+      const actualizado = await api(
+        "/configuracion",
+        {
+          iva_porcentaje: Number(inputIva.value),
+          tolerancia_max: Number(inputTol.value),
+          anticipacion_min_h: Number(inputAnt.value),
+        },
+        { method: "PATCH" }
+      );
+      inputIva.value = String(actualizado.iva_porcentaje);
+      inputTol.value = String(actualizado.tolerancia_max);
+      inputAnt.value = String(actualizado.anticipacion_min_h);
+      mostrarAviso("Configuración global actualizada correctamente.", "exito");
+    } catch (error) {
+      mostrarAviso(error.message, "error");
+    } finally {
+      btnGuardar.disabled = false;
+    }
+  };
+
+  f.append(form);
+  return f;
+}
+
 async function vistaAdmin(ruta, params) {
   if (ruta === "inicio") return inicioAdmin();
   if (ruta === "historial") return historialAdmin(params);
+  if (ruta === "validaciones") return validacionesAdmin();
+  if (ruta === "configuracion") return configuracionAdmin();
   return elementosAdmin(ruta, params);
 }

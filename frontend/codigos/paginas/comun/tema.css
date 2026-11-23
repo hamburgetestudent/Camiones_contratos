@@ -1,0 +1,174 @@
+/* Sistema de diseño compartido de Camiones Contratos */
+:root {
+  --azul: #14579b;
+  --azul-oscuro: #0f447a;
+  --azul-suave: #eaf2fc;
+  --texto: #182c42;
+  --texto-suave: #52657a;
+  --fondo: #f5f6f8;
+  --superficie: #ffffff;
+  --linea: #d9e2ec;
+  --borde-control: #afc1d2;
+
+  --exito: #166534;
+  --exito-fondo: #ecfdf3;
+  --exito-borde: #abefc6;
+
+  --aviso: #9a5b13;
+  --aviso-fondo: #fff4df;
+  --aviso-borde: #f5d08a;
+
+  --peligro: #992c26;
+  --peligro-fondo: #fef2f2;
+  --peligro-borde: #c5817d;
+
+  --neutro: #475569;
+  --neutro-fondo: #eef2f6;
+
+  --radio-sm: 6px;
+  --radio-md: 10px;
+  --radio-lg: 14px;
+  --sombra-sm: 0 2px 8px rgba(24, 44, 66, 0.05);
+  --sombra-md: 0 8px 24px rgba(24, 44, 66, 0.08);
+
+  font-family:
+    "Segoe UI",
+    system-ui,
+    -apple-system,
+    Arial,
+    Helvetica,
+    sans-serif;
+  color: var(--texto);
+  background: var(--fondo);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--texto);
+  background: var(--fondo);
+}
+
+a {
+  color: var(--azul);
+}
+
+:focus-visible {
+  outline: 3px solid #2074b9;
+  outline-offset: 2px;
+}
+
+/* Badges de estado semánticos */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.badge-aprobado {
+  background: var(--exito-fondo);
+  color: var(--exito);
+  border: 1px solid var(--exito-borde);
+}
+
+.badge-pendiente {
+  background: var(--aviso-fondo);
+  color: var(--aviso);
+  border: 1px solid var(--aviso-borde);
+}
+
+.badge-rechazado {
+  background: var(--peligro-fondo);
+  color: var(--peligro);
+  border: 1px solid var(--peligro-borde);
+}
+
+.badge-info {
+  background: var(--azul-suave);
+  color: var(--azul);
+  border: 1px solid #c5dcf7;
+}
+
+.badge-neutro {
+  background: var(--neutro-fondo);
+  color: var(--neutro);
+  border: 1px solid var(--linea);
+}
+
+/* Botones compartidos */
+.btn-primario {
+  background: var(--azul);
+  color: #ffffff;
+  border: 1px solid var(--azul);
+  font-weight: 600;
+}
+
+.btn-primario:hover:not(:disabled) {
+  background: var(--azul-oscuro);
+  border-color: var(--azul-oscuro);
+  color: #ffffff;
+}
+
+.btn-exito {
+  background: var(--exito);
+  color: #ffffff;
+  border: 1px solid var(--exito);
+  font-weight: 600;
+}
+
+.btn-exito:hover:not(:disabled) {
+  background: #14532d;
+  color: #ffffff;
+}
+
+.peligro {
+  color: var(--peligro);
+  border-color: var(--peligro-borde);
+  background: var(--superficie);
+}
+
+.peligro:hover:not(:disabled) {
+  background: var(--peligro-fondo);
+}
+
+/* Avisos / Alertas */
+.aviso-exito {
+  background: var(--exito-fondo) !important;
+  color: var(--exito);
+  border: 1px solid var(--exito-borde);
+  border-radius: var(--radio-sm);
+}
+
+.aviso-error {
+  background: var(--peligro-fondo) !important;
+  color: var(--peligro);
+  border: 1px solid var(--peligro-borde);
+  border-radius: var(--radio-sm);
+}
+
+.aviso-info {
+  background: var(--aviso-fondo) !important;
+  color: var(--aviso);
+  border: 1px solid var(--aviso-borde);
+  border-radius: var(--radio-sm);
+}
+
+.texto-suave {
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+
+.oculto {
+  display: none !important;
+}
