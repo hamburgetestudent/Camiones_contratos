@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Principal Dador de Carga | Camiones Contratos</title>
+    <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+    <div class="aplicacion">
+        <header class="barra-superior">
+            <div class="marca">
+                <span class="marca-icono" aria-hidden="true">CC</span>
+                <div>
+                    <h1>Camiones Contratos</h1>
+                    <p>Panel principal · Dador de carga</p>
+                </div>
+            </div>
+
+            <nav class="navegacion-secciones" aria-label="Secciones de dador de carga">
+                <button id="boton-seccion-publicaciones" class="boton-seccion activo" type="button">
+                    Mis publicaciones
+                </button>
+                <button id="boton-seccion-mis-contratos" class="boton-seccion" type="button">
+                    Mis contratos
+                </button>
+            </nav>
+
+            <div class="perfil-contenedor">
+                <button id="boton-perfil" class="foto-perfil" type="button"
+                    aria-label="Abrir menú de usuario" aria-expanded="false">
+                    <span id="iniciales-perfil">DC</span>
+                </button>
+                <div id="menu-perfil" class="menu-perfil oculto">
+                    <p class="menu-titulo">Mi cuenta · Dador de carga</p>
+                    <button type="button" data-accion-perfil="editar">Editar usuario</button>
+                    <button type="button" data-accion-perfil="configuracion">Configuración de la aplicación</button>
+                    <hr>
+                    <button type="button" data-accion-perfil="cerrar">Cerrar sesión</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="contenido-principal">
+            <!-- SECCIÓN 1: MIS PUBLICACIONES (TODOS LOS CONTRATOS VISIBLES) -->
+            <section id="seccion-mis-publicaciones" aria-label="Mis publicaciones y contratos generales">
+                <div class="encabezado-contenido">
+                    <div>
+                        <h2>Mis publicaciones</h2>
+                        <p>Visualiza todos los contratos registrados en la plataforma y gestiona tus publicaciones.</p>
+                    </div>
+
+                    <div class="acciones-contratos">
+                        <span id="contador-publicaciones" class="contador">0 contratos</span>
+                        <label class="orden-control">
+                            <span>Origen del contrato</span>
+                            <select id="filtro-propiedad-publicacion">
+                                <option value="todos">Todos los contratos</option>
+                                <option value="propios">Solo publicados por mí</option>
+                                <option value="otros">De otros dadores</option>
+                            </select>
+                        </label>
+                        <label class="orden-control">
+                            <span>Estado</span>
+                            <select id="filtro-estado-publicacion">
+                                <option value="">Todos los estados</option>
+                                <option value="DISPONIBLE">DISPONIBLE</option>
+                                <option value="ACEPTADO">ACEPTADO</option>
+                                <option value="EN_PROCESO">EN_PROCESO</option>
+                                <option value="ATRASADO">ATRASADO</option>
+                                <option value="FINALIZADO">FINALIZADO</option>
+                                <option value="CANCELADO">CANCELADO</option>
+                            </select>
+                        </label>
+                        <button id="boton-crear-contrato" class="boton-principal" type="button">+ Crear contrato</button>
+                    </div>
+                </div>
+
+                <p id="estado-publicaciones" class="mensaje-estado oculto" role="status"></p>
+
+                <div id="lista-publicaciones" class="rejilla-contratos" aria-live="polite"></div>
+
+                <p id="mensaje-sin-publicaciones" class="sin-resultados oculto">
+                    No se encontraron contratos con los filtros seleccionados.
+                </p>
+            </section>
+
+            <!-- SECCIÓN 2: MIS CONTRATOS (ASIGNADOS A TRANSPORTISTA) -->
+            <section id="seccion-mis-contratos" class="oculto" aria-label="Mis contratos aceptados">
+                <div class="encabezado-contenido">
+                    <div>
+                        <h2>Mis contratos</h2>
+                        <p>Supervisa tus publicaciones que ya tienen un transportista asignado.</p>
+                    </div>
+
+                    <div class="acciones-contratos">
+                        <span id="contador-mis-contratos" class="contador">0 activos · 0 historial</span>
+                        <button id="boton-crear-contrato-secundario" class="boton-principal" type="button">+ Crear contrato</button>
+                    </div>
+                </div>
+
+                <p id="estado-mis-contratos" class="mensaje-estado oculto" role="status"></p>
+
+                <div class="subseccion-contratos">
+                    <h3 class="subtitulo-seccion">Contratos activos</h3>
+                    <div id="lista-contratos-activos" class="rejilla-contratos" aria-live="polite"></div>
+                    <p id="sin-contratos-activos" class="sin-resultados oculto">
+                        No tienes contratos activos con transportista asignado.
+                    </p>
+                </div>
+
+                <div class="subseccion-contratos">
+                    <h3 class="subtitulo-seccion">Historial</h3>
+                    <div id="lista-contratos-historial" class="rejilla-contratos" aria-live="polite"></div>
+                    <p id="sin-contratos-historial" class="sin-resultados oculto">
+                        No tienes contratos finalizados o cancelados en tu historial.
+                    </p>
+                </div>
+            </section>
+        </main>
+
+        <!-- MODAL DE DETALLE -->
+        <div id="modal-detalle" class="modal-fondo oculto" role="dialog" aria-modal="true" aria-labelledby="modal-detalle-titulo">
+            <div class="modal-caja">
+                <div class="modal-encabezado">
+                    <h3 id="modal-detalle-titulo">Detalle del contrato</h3>
+                    <button id="cerrar-modal-detalle" class="boton-icono" type="button" aria-label="Cerrar detalle">✕</button>
+                </div>
+                <div id="modal-detalle-cuerpo" class="modal-cuerpo"></div>
+                <div id="modal-detalle-acciones" class="modal-acciones"></div>
+            </div>
+        </div>
+
+        <!-- MODAL DE CANCELACIÓN -->
+        <div id="modal-cancelar" class="modal-fondo oculto" role="dialog" aria-modal="true" aria-labelledby="modal-cancelar-titulo">
+            <div class="modal-caja">
+                <div class="modal-encabezado">
+                    <h3 id="modal-cancelar-titulo">Cancelar contrato</h3>
+                    <button id="cerrar-modal-cancelar" class="boton-icono" type="button" aria-label="Cerrar ventana de cancelación">✕</button>
+                </div>
+                <form id="formulario-cancelar" class="modal-cuerpo">
+                    <label class="campo-modal">
+                        <span>Motivo de cancelación</span>
+                        <select id="motivo-cancelacion" required>
+                            <option value="">Selecciona un motivo</option>
+                            <option value="Avería del vehículo">1. Avería del vehículo</option>
+                            <option value="Problemas mecánicos o técnicos">2. Problemas mecánicos o técnicos</option>
+                            <option value="Situaciones personales o familiares">3. Situaciones personales o familiares</option>
+                            <option value="Problemas de salud">4. Problemas de salud</option>
+                            <option value="Problemas con la carga">5. Problemas con la carga</option>
+                            <option value="Problemas en el lugar de retiro">6. Problemas en el lugar de retiro</option>
+                            <option value="Problemas en el lugar de entrega">7. Problemas en el lugar de entrega</option>
+                            <option value="Condiciones climáticas adversas">8. Condiciones climáticas adversas</option>
+                            <option value="Incumplimiento de condiciones del contrato">9. Incumplimiento de condiciones del contrato</option>
+                            <option value="Otro motivo">10. Otro motivo</option>
+                        </select>
+                    </label>
+                    <label id="contenedor-otro-motivo" class="campo-modal oculto">
+                        <span>Explicación adicional (máximo 300 caracteres)</span>
+                        <textarea id="texto-otro-motivo" maxlength="300" rows="3" placeholder="Describe el motivo de la cancelación..."></textarea>
+                    </label>
+                    <div class="modal-acciones">
+                        <button type="button" id="cancelar-accion-modal" class="boton-secundario">Volver</button>
+                        <button type="submit" class="boton-peligro">Confirmar cancelación</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <footer class="pie-pagina">
+            <span>Camiones Contratos</span>
+            <span>Panel principal · Dador de carga</span>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

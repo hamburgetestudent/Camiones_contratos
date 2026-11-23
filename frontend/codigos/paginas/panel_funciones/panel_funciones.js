@@ -17,7 +17,7 @@ const funcionesPorRol = {
         nombre: "Transportista",
         descripcion: "Puedes encontrar oportunidades de transporte y revisar la actividad asociada a tu cuenta.",
         funciones: [
-            { icono: "⌕", titulo: "Buscar contratos", descripcion: "Explora los contratos publicados y revisa sus detalles.", disponible: true, destino: "../Principal/principal.html" },
+            { icono: "⌕", titulo: "Buscar contratos", descripcion: "Explora los contratos publicados y revisa sus detalles.", disponible: true, destino: "../Principal/transportista/vista.html" },
             { icono: "▤", titulo: "Mis contratos", descripcion: "Consulta los contratos que has solicitado o aceptado.", disponible: false },
             { icono: "♙", titulo: "Administrar perfil", descripcion: "Revisa y actualiza la información de tu cuenta.", disponible: false }
         ]
@@ -26,8 +26,8 @@ const funcionesPorRol = {
         nombre: "Dador de carga",
         descripcion: "Puedes publicar necesidades de transporte y administrar los contratos de tu empresa o actividad.",
         funciones: [
-            { icono: "+", titulo: "Crear contratos", descripcion: "Prepara una nueva publicación de transporte.", disponible: true, destino: "../Principal/principal.html" },
-            { icono: "▤", titulo: "Mis contratos", descripcion: "Consulta y administra los contratos que has publicado.", disponible: false },
+            { icono: "+", titulo: "Crear contratos", descripcion: "Prepara una nueva publicación de transporte.", disponible: true, destino: false },
+            { icono: "▤", titulo: "Ver contratos", descripcion: "Consulta los contratos que estan disponibles", disponible: "../Principal/Dador_Carga/cista.html" },
             { icono: "♙", titulo: "Administrar perfil", descripcion: "Revisa y actualiza la información de tu cuenta.", disponible: false }
         ]
     },

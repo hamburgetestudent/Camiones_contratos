@@ -1,0 +1,137 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #f0f2f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.contenedor-recuperar {
+    background-color: #ffffff;
+    width: 100%;
+    max-width: 420px;
+    padding: 32px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+    text-align: center;
+    color: #1f2937;
+    margin-bottom: 16px;
+}
+
+.instruccion {
+    font-size: 0.9rem;
+    color: #4b5563;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+.grupo-input {
+    margin-bottom: 18px;
+}
+
+.grupo-input label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+}
+
+.grupo-input input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+.grupo-input input:focus {
+    outline: none;
+    border-color: #2563eb;
+}
+
+.btn-primario, .btn-secundario {
+    width: 100%;
+    padding: 11px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-primario {
+    background-color: #2563eb;
+    color: white;
+}
+
+.btn-primario:hover {
+    background-color: #1d4ed8;
+}
+
+.btn-primario:disabled {
+    background-color: #93c5fd;
+    cursor: not-allowed;
+}
+
+.btn-secundario {
+    background-color: #e5e7eb;
+    color: #374151;
+    margin-top: 10px;
+}
+
+.btn-secundario:hover {
+    background-color: #d1d5db;
+}
+
+.mensaje {
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.mensaje.error {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #f87171;
+}
+
+.mensaje.exito {
+    background-color: #dcfce7;
+    color: #15803d;
+    border: 1px solid #4ade80;
+}
+
+.oculto {
+    display: none;
+}
+
+.enlaces-pie {
+    margin-top: 22px;
+    text-align: center;
+}
+
+.enlaces-pie a {
+    color: #2563eb;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.enlaces-pie a:hover {
+    text-decoration: underline;
+}
