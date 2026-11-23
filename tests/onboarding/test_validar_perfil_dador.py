@@ -40,3 +40,14 @@ class TestValidarPerfilDador(BaseTestOnboarding):
         pendientes = self.onboarding_service.listar_dadores_pendientes_admin()
         self.assertEqual(len(pendientes), 1)
         self.assertEqual(pendientes[0].id, perfil.id)
+
+    def test_volver_a_pendiente_conserva_el_rechazo(self) -> None:
+        perfil = self.onboarding_service.registrar_o_actualizar_perfil_dador(
+            self.dador_id, "76123456-0",
+            DatosFacturacion(razon_social="Test", direccion="Dir", correo_facturacion="a@b.cl"),
+        )
+        self.onboarding_service.validar_dador(perfil.id, EstadoValidacion.RECHAZADO)
+        with self.assertRaisesRegex(ValueError, "APROBADO o RECHAZADO"):
+            self.onboarding_service.validar_dador(perfil.id, EstadoValidacion.PENDIENTE)
+        guardado = self.onboarding_service.obtener_perfil_dador(self.dador_id)
+        self.assertEqual(guardado.estado_validacion, EstadoValidacion.RECHAZADO)
