@@ -270,27 +270,21 @@ class OnboardingService:
             doc.estado == EstadoValidacion.RECHAZADO for doc in documentos
         )
 
-        # Verificar si todos los requeridos existen y estan aprobados
-        todos_cargados = all(
-            tipo in docs_por_tipo for tipo in DOCUMENTOS_REQUERIDOS_TRANSPORTISTA
-        )
-        todos_aprobados = todos_cargados and all(
-            docs_por_tipo[tipo].estado == EstadoValidacion.APROBADO
-            for tipo in DOCUMENTOS_REQUERIDOS_TRANSPORTISTA
-        )
-
-        if tiene_rechazados:
-            estado_global = EstadoValidacion.RECHAZADO
-        elif todos_aprobados:
-            estado_global = EstadoValidacion.APROBADO
-        else:
-            estado_global = EstadoValidacion.PENDIENTE
-
         faltantes = [
             tipo
             for tipo in DOCUMENTOS_REQUERIDOS_TRANSPORTISTA
             if tipo not in docs_por_tipo
         ]
+
+        if tiene_rechazados:
+            estado_global = EstadoValidacion.RECHAZADO
+        elif not faltantes and all(
+            docs_por_tipo[tipo].estado == EstadoValidacion.APROBADO
+            for tipo in DOCUMENTOS_REQUERIDOS_TRANSPORTISTA
+        ):
+            estado_global = EstadoValidacion.APROBADO
+        else:
+            estado_global = EstadoValidacion.PENDIENTE
 
         return EstadoOnboardingTransportistaDTO(
             user_id=user_id,
