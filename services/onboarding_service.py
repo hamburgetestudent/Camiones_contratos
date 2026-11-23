@@ -202,6 +202,11 @@ def _buscar_dador_por_id(conn: sqlite3.Connection, dador_id: UUID) -> DadorCarga
 # ---------------------------------------------------------------------------
 
 
+def _validar_decision_revision(estado: EstadoValidacion) -> None:
+    if estado not in (EstadoValidacion.APROBADO, EstadoValidacion.RECHAZADO):
+        raise ValueError("El estado de validacion debe ser APROBADO o RECHAZADO")
+
+
 class OnboardingService:
     """Servicio que implementa las reglas de negocio de onboarding y validacion documental."""
 
@@ -376,13 +381,7 @@ class OnboardingService:
             if not doc:
                 raise ValueError(f"No se encontro el documento con ID {documento_id}")
 
-            if nuevo_estado not in (
-                EstadoValidacion.APROBADO,
-                EstadoValidacion.RECHAZADO,
-            ):
-                raise ValueError(
-                    "El estado de validacion debe ser APROBADO o RECHAZADO"
-                )
+            _validar_decision_revision(nuevo_estado)
 
             doc.estado = nuevo_estado
             _actualizar_documento(conn, doc)
@@ -406,13 +405,7 @@ class OnboardingService:
             if not dador:
                 raise ValueError(f"No se encontro el perfil dador con ID {dador_id}")
 
-            if nuevo_estado not in (
-                EstadoValidacion.APROBADO,
-                EstadoValidacion.RECHAZADO,
-            ):
-                raise ValueError(
-                    "El estado de validacion debe ser APROBADO o RECHAZADO"
-                )
+            _validar_decision_revision(nuevo_estado)
 
             dador.estado_validacion = nuevo_estado
             _actualizar_dador(conn, dador)
