@@ -1,0 +1,337 @@
+/* Inicio de sesión — MansoViaje (SaaS Minimalista Neutro) */
+body {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(29, 78, 216, 0.05), transparent 36%),
+    radial-gradient(circle at 88% 90%, rgba(15, 23, 42, 0.04), transparent 40%), var(--fondo);
+}
+
+.auth-shell {
+  width: min(940px, 100%);
+}
+
+.login-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  background: var(--superficie);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-md);
+  overflow: hidden;
+}
+
+.panel-formulario {
+  padding: clamp(28px, 4vw, 44px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.marca-auth {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.marca-auth h1 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--texto);
+}
+
+.marca-auth p {
+  margin: 1px 0 0;
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+}
+
+.encabezado-form {
+  margin-bottom: 22px;
+}
+
+.encabezado-form h2 {
+  margin: 0 0 6px;
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--texto);
+}
+
+.encabezado-form p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--texto-suave);
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.campo-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.campo label {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.campo input {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--radio-sm);
+  padding: 0 12px;
+  font: inherit;
+  font-size: 0.9rem;
+  background: var(--superficie);
+  color: var(--texto);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.campo input::placeholder {
+  color: #94a3b8;
+}
+
+.campo input:focus {
+  border-color: var(--acento);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.14);
+}
+
+.recuperar {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--texto-suave);
+  text-decoration: none;
+}
+
+.recuperar:hover {
+  color: var(--acento);
+  text-decoration: underline;
+}
+
+.mensaje-login {
+  padding: 10px 12px;
+  border-radius: var(--radio-sm);
+  font-size: 0.84rem;
+  line-height: 1.4;
+  border: 1px solid var(--linea);
+  background: var(--superficie-sutil);
+  color: var(--texto-secundario);
+}
+
+.mensaje-login.error {
+  background: var(--peligro-fondo);
+  border-color: var(--peligro-borde);
+  color: var(--peligro);
+}
+
+.mensaje-login.success {
+  background: var(--exito-fondo);
+  border-color: var(--exito-borde);
+  color: var(--exito);
+}
+
+.mensaje-login.info {
+  background: var(--acento-suave);
+  border-color: var(--acento-borde);
+  color: var(--acento);
+}
+
+.boton-login {
+  width: 100%;
+  min-height: 42px;
+  margin-top: 4px;
+  font-size: 0.92rem;
+}
+
+.registro {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--linea);
+  font-size: 0.86rem;
+  color: var(--texto-suave);
+}
+
+.registro a {
+  color: var(--acento);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.registro a:hover {
+  text-decoration: underline;
+}
+
+/* Panel visual derecho (100% HTML/SVG/CSS offline) */
+.panel-visual {
+  padding: clamp(28px, 4vw, 40px);
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border-left: 1px solid var(--linea);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.visual-etiqueta {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: var(--radio-pill);
+  border: 1px solid var(--linea);
+  background: var(--superficie);
+  color: var(--texto-secundario);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.visual-cabecera h3 {
+  margin: 0 0 8px;
+  font-size: 1.18rem;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+  color: var(--texto);
+}
+
+.visual-cabecera p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--texto-secundario);
+  line-height: 1.5;
+}
+
+.preview-tarjeta {
+  background: var(--superficie);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-md);
+  padding: 16px;
+  box-shadow: var(--sombra-sm);
+  display: grid;
+  gap: 14px;
+}
+
+.preview-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.preview-monto {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.preview-ruta {
+  display: grid;
+  gap: 4px;
+}
+
+.preview-nodo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.punto-origen,
+.punto-destino {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.punto-origen {
+  background: var(--acento);
+}
+
+.punto-destino {
+  background: var(--exito);
+}
+
+.preview-linea {
+  width: 1px;
+  height: 12px;
+  margin-left: 3.5px;
+  background: var(--linea-fuerte);
+}
+
+.preview-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--linea);
+  font-size: 0.76rem;
+  color: var(--texto-suave);
+}
+
+.visual-pilares {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.visual-pilares li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: var(--texto-secundario);
+}
+
+.pilar-icono {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: var(--superficie);
+  border: 1px solid var(--linea);
+  color: var(--acento);
+  flex-shrink: 0;
+}
+
+@media (max-width: 780px) {
+  .login-card {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-visual {
+    display: none;
+  }
+}

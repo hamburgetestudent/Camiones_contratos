@@ -1,4 +1,4 @@
-"""Servicio de negocio para la gestion del ciclo de vida de los Contratos.
+"""Servicio de negocio para la gestion del ciclo de vida de los contratos.
 
 Orquesta los modelos de dominio y la maquina de estados, y persiste directamente
 en SQLite (tabla ``contratos``) mediante ``database.conexion``.
@@ -153,14 +153,14 @@ def buscar_contrato(
 ) -> ContratoModelo | None:
     """Obtiene un contrato por su ID, o None si no existe."""
     fila = conn.execute(
-        f"{_SQL_SELECT_CONTRATO} WHERE id = ?", (str(contrato_id),)
+        f"{_SQL_SELECT_CONTRATO} WHERE id = ? AND eliminado = 0", (str(contrato_id),)
     ).fetchone()
     return _fila_a_contrato(fila) if fila else None
 
 
 def buscar_todos_los_contratos(conn: sqlite3.Connection) -> list[ContratoModelo]:
     """Retorna todos los contratos en orden de insercion."""
-    filas = conn.execute(f"{_SQL_SELECT_CONTRATO} ORDER BY rowid").fetchall()
+    filas = conn.execute(f"{_SQL_SELECT_CONTRATO} WHERE eliminado = 0 ORDER BY rowid").fetchall()
     return [_fila_a_contrato(fila) for fila in filas]
 
 
@@ -188,7 +188,7 @@ def actualizar_contrato(
 
 
 class ServicioContrato:
-    """Servicio que encapsula los casos de uso principales de Contratos."""
+    #Servicio que encapsula los casos de uso principales de Contratos.
 
     def __init__(
         self,
@@ -274,3 +274,97 @@ class ServicioContrato:
 
 # Alias para retrocompatibilidad
 ContratoService = ServicioContrato
+
+
+if __name__ == "__main__":
+    import unittest
+    from datetime import UTC, datetime, timedelta
+    from unittest.mock import MagicMock
+    from uuid import uuid4
+
+    from domain.modelos import Moneda, TipoCarga
+
+    class TestServicioContrato(unittest.TestCase):
+        def setUp(self):
+            # Mocks
+            self.mock_dao = MagicMock()
+            self.mock_onboarding_service = MagicMock()
+
+            # SUT (System Under Test)
+            self.servicio = ServicioContrato(
+                dao=self.mock_dao,
+                onboarding_service=self.mock_onboarding_service
+            )
+
+            # Datos base válidos para pruebas
+            self.id_empresa = uuid4()
+            ahora = datetime.now(UTC)
+            datos_dict = {
+                "id_empresa_generadora": self.id_empresa,
+                "origen": "SANTIAGO",
+                "destino": "VALPARAISO",
+                "f_estimada_salida": ahora + timedelta(hours=48),
+                "f_estimada_llegada": ahora + timedelta(hours=72),
+                "f_cierre_postulaciones": ahora + timedelta(hours=24),
+                "input_camionKG": 20000,
+                "tipo_carga": TipoCarga.GENERAL,
+                "peso_total": 15000,
+                "moneda": Moneda.CLP,
+                "monto_neto": 100000,
+                "monto_iva": 19000,
+                "monto_total": 119000
+            }
+            self.datos_validos = ContratoCrear(**datos_dict)
+
+        def test_crear_contrato_exito_y_guardado(self):
+            """Prueba que el contrato se crea y guarda exitosamente cuando la empresa está aprobada."""
+            self.mock_onboarding_service.es_dador_aprobado.return_value = True
+
+            self.servicio.crear_contrato(self.datos_validos)
+
+            self.mock_onboarding_service.es_dador_aprobado.assert_called_once_with(self.id_empresa)
+            self.mock_dao.guardar.assert_called_once()
+            argumento_guardado = self.mock_dao.guardar.call_args[0][0]
+            self.assertEqual(argumento_guardado.id_empresa_generadora, self.id_empresa)
+            self.assertEqual(argumento_guardado.estado, "BORRADOR")
+
+        def test_crear_contrato_falla_empresa_no_aprobada(self):
+            """Prueba que la función lanza PermissionError cuando la validación KYC no está aprobada."""
+            self.mock_onboarding_service.es_dador_aprobado.return_value = False
+
+            with self.assertRaises(PermissionError) as context:
+                self.servicio.crear_contrato(self.datos_validos)
+
+            self.assertIn("no cuenta con su verificacion KYC/Onboarding en estado APROBADO", str(context.exception))
+            self.mock_onboarding_service.es_dador_aprobado.assert_called_once_with(self.id_empresa)
+            self.mock_dao.guardar.assert_not_called()
+
+        def test_crear_contrato_falla_por_datos_inconsistentes(self):
+            """Prueba que crear un contrato con datos inconsistentes (Entrada inválida 2 en a.md)
+            arroja un ValidationError de Pydantic (ValueError).
+            """
+            from pydantic import ValidationError
+
+            # Replicamos los datos, pero con un IVA que no corresponde al 19%
+            datos_invalidos_dict = {
+                "id_empresa_generadora": self.id_empresa,
+                "origen": "SANTIAGO",
+                "destino": "VALPARAISO",
+                "f_estimada_salida": datetime.now(UTC) + timedelta(hours=48),
+                "f_estimada_llegada": datetime.now(UTC) + timedelta(hours=72),
+                "f_cierre_postulaciones": datetime.now(UTC) + timedelta(hours=24),
+                "input_camionKG": 20000,
+                "tipo_carga": TipoCarga.GENERAL,
+                "peso_total": 15000,
+                "moneda": Moneda.CLP,
+                "monto_neto": 100000,
+                "monto_iva": 0, # Error intencional: en CLP debería ser 19000
+                "monto_total": 100000 # Error intencional
+            }
+
+            with self.assertRaises(ValidationError) as context:
+                ContratoCrear(**datos_invalidos_dict)
+
+            self.assertIn("no corresponde al", str(context.exception))
+
+    unittest.main()

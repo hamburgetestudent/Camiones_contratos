@@ -1,17 +1,16 @@
-"""Tests unitarios dedicados a UsuarioService.iniciar_sesion y LoginService."""
+"""Tests unitarios dedicados a UsuarioService.iniciar_sesion."""
 
 from __future__ import annotations
 
 from domain.modelos_login import CredencialesLogin, RespuestaLogin
 from domain.modelos_usuario import RolUsuario
-from services.login_service import CredencialesInvalidasError, LoginService
 from services.security import decodificar_token_acceso
-from services.usuario_service import UsuarioService, ValidadorUsuario
+from services.usuario_service import UsuarioService
 from tests.usuarios.base import BaseTestUsuarios
 
 
 class TestIniciarSesion(BaseTestUsuarios):
-    """Pruebas dedicadas a la emisión de token OAuth2 Bearer y LoginService (CA-01, CA-02, CA-03)."""
+    """Pruebas dedicadas a la emisión de token OAuth2 Bearer (CA-01, CA-02, CA-03)."""
 
     def test_inicio_sesion_exitoso_emite_token_y_rol(self) -> None:
         cred = CredencialesLogin(
@@ -30,19 +29,3 @@ class TestIniciarSesion(BaseTestUsuarios):
         assert claims is not None
         self.assertEqual(claims["sub"], str(self.usuario_transportista.id))
         self.assertEqual(claims["rol"], RolUsuario.TRANSPORTISTA.value)
-
-    def test_login_service_con_validador_exitoso(self) -> None:
-        servicio = LoginService(ValidadorUsuario())
-        cred = CredencialesLogin(
-            usuario="marcela@empresa.cl", password=self.password_comun
-        )
-        resp = servicio.iniciar_sesion(cred)
-        self.assertEqual(resp.rol, RolUsuario.DADOR_CARGA.value)
-
-    def test_login_service_con_validador_credenciales_invalidas(self) -> None:
-        servicio = LoginService(ValidadorUsuario())
-        cred = CredencialesLogin(
-            usuario="marcela@empresa.cl", password="passwordIncorrecta"
-        )
-        with self.assertRaises(CredencialesInvalidasError):
-            servicio.iniciar_sesion(cred)

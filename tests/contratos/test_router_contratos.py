@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from domain.maquina_estados import EstadoContrato
+from domain.modelos_usuario import RolUsuario, UsuarioModelo
 from routers.contratos_router import (
     SolicitudCambioEstado,
     cambiar_estado_contrato,
@@ -37,6 +38,7 @@ class TestRouterContratos(BaseTestContratos):
         actualizado = cambiar_estado_contrato(
             contrato_id=contrato.id,
             payload=payload,
+            actor=UsuarioModelo.model_construct(rol=RolUsuario.DADOR_CARGA),
             contrato_service=self.contrato_service,
         )
         self.assertEqual(actualizado.estado, EstadoContrato.PUBLICADO)

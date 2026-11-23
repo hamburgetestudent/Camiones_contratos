@@ -2,13 +2,35 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Depends, status
 
 from domain.modelos_login import CredencialesLogin, RespuestaLogin
 from domain.modelos_usuario import UsuarioCrear, UsuarioModelo
+from routers.sesion import (
+    Bearer,
+    UsuarioActual,
+    administrador_actual,
+    cerrar_sesion,
+    usuario_actual,
+)
 from services.usuario_service import UsuarioService
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
+
+
+@router.get("/sesion")
+def consultar_sesion(usuario: UsuarioActual):
+    return {
+        "id": usuario.id,
+        "nombre": usuario.nombre,
+        "email": usuario.email,
+        "rol": usuario.rol,
+    }
+
+
+@router.post("/logout", status_code=204, dependencies=[Depends(usuario_actual)])
+def salir(bearer: Bearer):
+    cerrar_sesion(bearer)
 
 
 @router.post(
@@ -39,6 +61,7 @@ def registrar_usuario(usuario: UsuarioCrear) -> UsuarioModelo:
 
 @router.get(
     "/usuarios",
+    dependencies=[Depends(administrador_actual)],
     response_model=list[UsuarioModelo],
     status_code=status.HTTP_200_OK,
     summary="Listar todos los usuarios registrados",
@@ -50,6 +73,7 @@ def listar_usuarios() -> list[UsuarioModelo]:
 
 @router.get(
     "/usuarios/{usuario_id}",
+    dependencies=[Depends(administrador_actual)],
     response_model=UsuarioModelo,
     status_code=status.HTTP_200_OK,
     summary="Obtener un usuario por su UUID",
