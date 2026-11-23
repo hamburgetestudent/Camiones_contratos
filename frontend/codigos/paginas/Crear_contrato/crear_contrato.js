@@ -10,6 +10,24 @@ let reglasNegocio = {
 };
 let modoEnvio = "PUBLICADO";
 
+function resolverUrlRetorno() {
+  const params = new URLSearchParams(window.location.search);
+  const desde = params.get("desde");
+  if (desde === "catalogo") {
+    return { href: "../Principal/principal.html", texto: "← Volver al catálogo" };
+  }
+  if (desde === "panel" || document.referrer.includes("/panel/")) {
+    return { href: "../panel/index.html#contratos", texto: "← Volver a mis contratos" };
+  }
+  return { href: "../Principal/principal.html", texto: "← Volver al catálogo" };
+}
+
+function inicializarIconosCrear() {
+  if (!window.MVIconos) return;
+  const logo = $("logo-crear");
+  if (logo) logo.replaceChildren(window.MVIconos.crear("isotipo", { size: 20 }));
+}
+
 function volverALogin() {
   for (const clave of ["usuario_actual", "access_token", "usuario_rol", "sesion_usuario"]) {
     localStorage.removeItem(clave);
@@ -65,6 +83,28 @@ function mostrarAlerta(mensaje, tipo = "error") {
   alerta.textContent = mensaje;
   alerta.className = `alerta ${tipo}`;
   alerta.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function establecerErrorCampo(id, msg) {
+  const input = $(id);
+  const errorEl = $("error-" + id);
+  if (input && input.tagName !== "P") {
+    input.classList.toggle("invalido", Boolean(msg));
+  }
+  if (errorEl) {
+    errorEl.textContent = msg || "";
+    errorEl.classList.toggle("oculto", !msg);
+  }
+}
+
+function limpiarMarcasInvalidas() {
+  for (const el of $("form-contrato").querySelectorAll(".invalido")) {
+    el.classList.remove("invalido");
+  }
+  for (const err of $("form-contrato").querySelectorAll(".error-inline")) {
+    err.textContent = "";
+    err.classList.add("oculto");
+  }
 }
 
 function formatoLocalDatetime(fecha) {
@@ -165,11 +205,30 @@ function formatearMoneda(valor, moneda) {
   return `${valor.toLocaleString("es-CL")} ${moneda}`;
 }
 
+function actualizarIndicadorCapacidad(peso, cap) {
+  const wrap = $("ocupacion-wrap");
+  const barra = $("barra-capacidad");
+  const texto = $("texto-capacidad");
+  if (!wrap || !barra || !texto) return;
+
+  if (!Number.isFinite(peso) || !Number.isFinite(cap) || peso <= 0 || cap <= 0) {
+    wrap.classList.add("oculto");
+    return;
+  }
+
+  const porcentaje = Math.round((peso / cap) * 100);
+  const excedido = peso > cap;
+  wrap.classList.remove("oculto");
+  wrap.classList.toggle("excedido", excedido);
+  barra.style.width = Math.min(100, porcentaje) + "%";
+  texto.textContent = excedido ? `${porcentaje}% (excede capacidad)` : `${porcentaje}%`;
+}
+
 function actualizarResumen() {
   const origen = $("origen").value.trim().toUpperCase();
   const destino = $("destino").value.trim().toUpperCase();
-  $("resumen-ruta").textContent =
-    origen || destino ? `${origen || "?"} → ${destino || "?"}` : "Sin definir";
+  $("resumen-origen").textContent = origen || "Origen sin definir";
+  $("resumen-destino").textContent = destino || "Destino sin definir";
 
   const salidaVal = $("f_estimada_salida").value;
   $("resumen-salida").textContent = salidaVal
@@ -182,23 +241,40 @@ function actualizarResumen() {
   const cap = Number($("input_camionKG").value);
   $("resumen-capacidad").textContent =
     peso > 0 || cap > 0 ? `${peso > 0 ? peso : "—"} KG / ${cap > 0 ? cap : "—"} KG` : "—";
+  actualizarIndicadorCapacidad(peso, cap);
+
+  const reqs = [];
+  if ($("requiere_termo").checked) reqs.push("Equipo termo");
+  if ($("req_blindaje").checked) reqs.push("Blindado");
+  if ($("numero_onu").value.trim()) reqs.push("ONU " + $("numero_onu").value.trim().toUpperCase());
+  if ($("req_embalaje").value.trim()) reqs.push("Embalaje");
+
+  const reqWrap = $("resumen-requisitos");
+  reqWrap.replaceChildren();
+  if (!reqs.length) {
+    reqWrap.textContent = "Ninguno";
+  } else {
+    for (const r of reqs) {
+      const chip = document.createElement("span");
+      chip.className = "chip-mini";
+      chip.textContent = r;
+      reqWrap.append(chip);
+    }
+  }
 
   const total = Number($("monto_total").value);
   $("resumen-total").textContent = formatearMoneda(total, $("moneda").value);
 }
 
-function limpiarMarcasInvalidas() {
-  for (const el of $("form-contrato").querySelectorAll(".invalido")) {
-    el.classList.remove("invalido");
-  }
-}
-
 function validarFormulario() {
   limpiarMarcasInvalidas();
   const errores = [];
+  let primerInvalido = null;
+
   const marcar = (id, msg) => {
-    $(id).classList.add("invalido");
+    establecerErrorCampo(id, msg);
     errores.push(msg);
+    if (!primerInvalido && $(id)) primerInvalido = $(id);
   };
 
   const origen = $("origen").value.trim().toUpperCase();
@@ -251,11 +327,16 @@ function validarFormulario() {
 
   const tipo = $("tipo_carga").value;
   if ((tipo === "REFRIGERADA" || tipo === "PERECEDERA") && !$("requiere_termo").checked) {
-    errores.push(`La carga ${tipo} requiere activar el equipo termo/refrigeración.`);
+    const msg = `La carga ${tipo} requiere activar el equipo termo/refrigeración.`;
+    establecerErrorCampo("checks", msg);
+    errores.push(msg);
   }
   if (tipo === "VALORES" && !$("req_blindaje").checked) {
-    errores.push("La carga de VALORES requiere obligatoriamente camión blindado.");
+    const msg = "La carga de VALORES requiere obligatoriamente camión blindado.";
+    establecerErrorCampo("checks", msg);
+    errores.push(msg);
   }
+
   const onu = $("numero_onu").value.trim();
   if (tipo === "PELIGROSA") {
     if (!/^(UN)?\d{4}$/i.test(onu)) {
@@ -285,7 +366,7 @@ function validarFormulario() {
     marcar("monto_total", "El monto total debe ser mayor a 0.");
   }
 
-  return errores;
+  return { errores, primerInvalido };
 }
 
 function construirPayload() {
@@ -322,9 +403,11 @@ async function enviarContrato(evento) {
   mostrarAlerta("");
   $("resultado-creacion").classList.add("oculto");
 
-  const errores = validarFormulario();
+  const { errores, primerInvalido } = validarFormulario();
   if (errores.length > 0) {
-    mostrarAlerta(errores[0], "error");
+    const sufijo = errores.length > 1 ? ` (+${errores.length - 1} campos más por revisar)` : "";
+    mostrarAlerta(errores[0] + sufijo, "error");
+    if (primerInvalido) primerInvalido.focus();
     return;
   }
 
@@ -371,19 +454,33 @@ async function cargarEstadoKyc() {
     });
     const badge = $("etiqueta-kyc");
     badge.classList.remove("oculto");
-    if (perfil.estado_validacion === "APROBADO") {
-      badge.textContent = "KYC Aprobado";
-      badge.className = "etiqueta-estado aprobado";
-    } else {
-      badge.textContent = `KYC: ${perfil.estado_validacion}`;
-      badge.className = "etiqueta-estado pendiente";
-    }
+    const clase = window.MVIconos
+      ? window.MVIconos.claseBadgeEstado(perfil.estado_validacion)
+      : "badge-info";
+    badge.className = "badge " + clase;
+    badge.textContent =
+      perfil.estado_validacion === "APROBADO" ? "KYC Aprobado" : `KYC: ${perfil.estado_validacion}`;
   } catch {
     // Si no tiene perfil o no aplica, no bloqueamos la carga de la pantalla.
   }
 }
 
 async function inicializar() {
+  inicializarIconosCrear();
+
+  const retorno = resolverUrlRetorno();
+  const btnVolver = $("boton-volver");
+  if (btnVolver) {
+    btnVolver.textContent = retorno.texto;
+    btnVolver.addEventListener("click", () => {
+      window.location.href = retorno.href;
+    });
+  }
+  const enlaceResultado = $("enlace-resultado-volver");
+  if (enlaceResultado) {
+    enlaceResultado.href = retorno.href;
+  }
+
   try {
     usuarioSesion = await solicitarApi("/auth/sesion");
     $("resumen-empresa").textContent = `${usuarioSesion.nombre} (${usuarioSesion.email})`;
@@ -416,10 +513,6 @@ async function inicializar() {
     mostrarAlerta(error.message || "No se pudo verificar tu sesión.", "error");
   }
 
-  $("boton-volver").addEventListener("click", () => {
-    window.location.href = "../Principal/principal.html";
-  });
-
   $("btn-guardar-borrador").addEventListener("click", () => {
     modoEnvio = "BORRADOR";
   });
@@ -443,9 +536,30 @@ async function inicializar() {
   $("monto_neto").addEventListener("input", () => recalcularMontos(false));
   $("monto_iva").addEventListener("input", () => recalcularMontos(true));
 
-  for (const id of ["origen", "destino", "f_estimada_salida", "peso_total", "input_camionKG"]) {
+  for (const id of [
+    "origen",
+    "destino",
+    "f_estimada_salida",
+    "peso_total",
+    "input_camionKG",
+    "numero_onu",
+    "req_embalaje",
+  ]) {
     $(id).addEventListener("input", actualizarResumen);
   }
+  for (const id of ["requiere_termo", "req_blindaje"]) {
+    $(id).addEventListener("change", () => {
+      establecerErrorCampo("checks", "");
+      actualizarResumen();
+    });
+  }
+
+  $("form-contrato")
+    .querySelectorAll("input, select, textarea")
+    .forEach((campo) => {
+      campo.addEventListener("input", () => establecerErrorCampo(campo.id, ""));
+      campo.addEventListener("change", () => establecerErrorCampo(campo.id, ""));
+    });
 
   $("form-contrato").addEventListener("submit", enviarContrato);
 }

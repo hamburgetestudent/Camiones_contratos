@@ -1,43 +1,75 @@
 // =============================================
-// LOGIN - versión 1.1
+// LOGIN — MansoViaje
 // Redirige al panel según el rol entregado por el backend.
 // =============================================
 
 const API_BASE_URL = window.API_BASE_URL || "http://127.0.0.1:8000";
 
+const loginForm = document.getElementById("loginForm");
 const btnLogin = document.getElementById("btnLogin");
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
 const mensajeLogin = document.getElementById("mensajeLogin");
+const togglePassword = document.getElementById("togglePassword");
+
+function inicializarIconosLogin() {
+  if (!window.MVIconos) return;
+  const logo = document.getElementById("logoMarca");
+  if (logo) logo.replaceChildren(window.MVIconos.crear("isotipo", { size: 22 }));
+
+  if (btnLogin) {
+    btnLogin.append(window.MVIconos.crear("flechaDer", { size: 16 }));
+  }
+
+  if (togglePassword) {
+    togglePassword.replaceChildren(window.MVIconos.crear("ojo", { size: 17 }));
+  }
+
+  document.querySelectorAll("[data-icono]").forEach((el) => {
+    const nombre = el.getAttribute("data-icono");
+    el.replaceChildren(window.MVIconos.crear(nombre, { size: 15 }));
+  });
+}
 
 function mostrarMensajeLogin(texto, tipo = "") {
   if (!mensajeLogin) return;
-
+  if (!texto) {
+    mensajeLogin.textContent = "";
+    mensajeLogin.className = "mensaje-login oculto";
+    return;
+  }
   mensajeLogin.textContent = texto;
-  mensajeLogin.className = "mensaje-login";
-  if (tipo) mensajeLogin.classList.add(tipo);
+  mensajeLogin.className = "mensaje-login" + (tipo ? " " + tipo : "");
 }
 
-async function ejecutarLogin() {
+function marcarErroresCampos(emailInvalido, passInvalido) {
+  if (emailInput) emailInput.classList.toggle("campo-error", emailInvalido);
+  if (passwordInput) passwordInput.classList.toggle("campo-error", passInvalido);
+}
+
+async function ejecutarLogin(evento) {
+  if (evento) evento.preventDefault();
   if (!emailInput || !passwordInput || !btnLogin) return;
 
   const email = emailInput.value.trim();
   const password = passwordInput.value;
   mostrarMensajeLogin("");
+  marcarErroresCampos(false, false);
 
   if (!email || !password) {
-    mostrarMensajeLogin("Debes ingresar tu email y contraseña.", "error");
+    marcarErroresCampos(!email, !password);
+    mostrarMensajeLogin("Debes ingresar tu correo electrónico y contraseña.", "error");
+    (!email ? emailInput : passwordInput).focus();
     return;
   }
 
   btnLogin.disabled = true;
-  mostrarMensajeLogin("Verificando credenciales...");
+  mostrarMensajeLogin("Verificando credenciales...", "info");
 
   try {
     const respuesta = await fetch(`${API_BASE_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      // Se conserva la estructura que utiliza el backend actual.
       body: JSON.stringify({ email, password }),
     });
 
@@ -55,8 +87,6 @@ async function ejecutarLogin() {
       return;
     }
 
-    // Se conserva la respuesta para que el panel pueda mostrar los datos.
-    // La autorización real debe validarse siempre en el backend.
     localStorage.setItem("usuario_actual", JSON.stringify(datos));
     localStorage.setItem("access_token", datos.access_token);
     localStorage.setItem("usuario_rol", datos.rol);
@@ -74,49 +104,45 @@ async function ejecutarLogin() {
   }
 }
 
-if (btnLogin) btnLogin.addEventListener("click", ejecutarLogin);
+if (loginForm) {
+  loginForm.addEventListener("submit", ejecutarLogin);
+}
 
 [emailInput, passwordInput].filter(Boolean).forEach((campo) => {
-  campo.addEventListener("keydown", (evento) => {
-    if (evento.key === "Enter") {
-      evento.preventDefault();
-      ejecutarLogin();
-    }
+  campo.addEventListener("input", () => {
+    campo.classList.remove("campo-error");
   });
 });
 
-// Los proveedores sociales siguen siendo informativos: aún no existe OAuth.
-const btnGoogle = document.getElementById("btnGoogle");
-if (btnGoogle)
-  btnGoogle.addEventListener("click", () =>
-    alert("El inicio con Google todavía no está conectado.")
-  );
-
-const btnMicrosoft = document.getElementById("btnMicrosoft");
-if (btnMicrosoft)
-  btnMicrosoft.addEventListener("click", () =>
-    alert("El inicio con Microsoft todavía no está conectado.")
-  );
-
-const btnApple = document.getElementById("btnApple");
-if (btnApple)
-  btnApple.addEventListener("click", () => alert("El inicio con Apple todavía no está conectado."));
+if (togglePassword && passwordInput) {
+  togglePassword.addEventListener("click", () => {
+    const mostrar = passwordInput.type === "password";
+    passwordInput.type = mostrar ? "text" : "password";
+    togglePassword.setAttribute("aria-pressed", String(mostrar));
+    togglePassword.setAttribute(
+      "aria-label",
+      mostrar ? "Ocultar contraseña" : "Mostrar contraseña"
+    );
+    if (window.MVIconos) {
+      togglePassword.replaceChildren(
+        window.MVIconos.crear(mostrar ? "ojoCerrado" : "ojo", { size: 17 })
+      );
+    }
+  });
+}
 
 const recuperarContraseña = document.getElementById("recuperarContraseña");
 if (recuperarContraseña) {
   recuperarContraseña.addEventListener("click", (evento) => {
     evento.preventDefault();
-    alert("El sistema para recuperar la contraseña todavía no está conectado.");
+    mostrarMensajeLogin(
+      "La recuperación automática de contraseña aún no está habilitada. Contacta al administrador de MansoViaje.",
+      "info"
+    );
   });
 }
 
-const btnRegistro = document.getElementById("btnRegistro");
-if (btnRegistro) {
-  btnRegistro.addEventListener("click", (evento) => {
-    evento.preventDefault();
-    window.location.href = "../Registrar_nuevoUsuario/registro.html";
-  });
-}
+inicializarIconosLogin();
 
 if (localStorage.getItem("access_token")) {
   window.location.replace("../panel/index.html");

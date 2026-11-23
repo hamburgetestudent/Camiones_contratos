@@ -1,4 +1,4 @@
-/* Vistas operativas para el rol DADOR_CARGA dentro del panel unificado. */
+/* Vistas operativas para el rol DADOR_CARGA dentro del panel unificado — MansoViaje */
 
 const ESTADOS_CONTRATO_DADOR = [
   "BORRADOR",
@@ -38,29 +38,50 @@ async function inicioDador() {
     nodo(
       "p",
       "Administra tus contratos de transporte, supervisa postulaciones y mantén al día tu perfil tributario.",
-      "texto-suave"
+      "subtitulo-seccion"
     )
   );
 
-  const grid = nodo("div", null, "rejilla");
-  const kpis = [
-    ["Estado KYC tributario", perfil ? perfil.estado_validacion : "SIN REGISTRAR", "tributario"],
-    ["Mis contratos", String(propios.length), "contratos"],
-    ["En subasta / postulación", String(enSubasta), "subastas"],
-    ["Adjudicados / en curso", String(activos), "contratos"],
-  ];
-  for (const [titulo, valor, modulo] of kpis) {
-    const card = enlace("", modulo);
-    card.className = "tarjeta";
-    card.append(nodo("span", titulo), nodo("strong", valor, "indicador"));
-    grid.append(card);
+  const grid = nodo("div", null, "rejilla-kpi");
+  for (const kpi of [
+    {
+      titulo: "Estado KYC tributario",
+      valor: perfil ? perfil.estado_validacion : "SIN REGISTRAR",
+      modulo: "tributario",
+      iconoNombre: "validaciones",
+      esEstado: true,
+    },
+    {
+      titulo: "Mis contratos",
+      valor: propios.length,
+      modulo: "contratos",
+      iconoNombre: "contratos",
+    },
+    {
+      titulo: "En subasta / postulación",
+      valor: enSubasta,
+      modulo: "subastas",
+      iconoNombre: "subastas",
+    },
+    {
+      titulo: "Adjudicados / en curso",
+      valor: activos,
+      modulo: "contratos",
+      iconoNombre: "seguimiento",
+    },
+  ]) {
+    grid.append(tarjetaKpi(kpi));
   }
 
   f.append(grid, nodo("h2", "Accesos rápidos"), tarjetas(FUNCIONALIDADES_POR_ROL.DADOR_CARGA));
   return f;
 }
 
-async function cambiarEstadoContratoDador(contratoId, nuevoEstado) {
+async function cambiarEstadoContratoDador(contratoId, nuevoEstado, confirmacion = null) {
+  if (confirmacion) {
+    const ok = await confirmarAccion(confirmacion);
+    if (!ok) return;
+  }
   try {
     await api(
       "/contratos/" + contratoId + "/estado",
@@ -76,11 +97,36 @@ async function cambiarEstadoContratoDador(contratoId, nuevoEstado) {
 
 function accionesEstadoDador(contrato) {
   const grupo = nodo("div", null, "acciones-grupo");
+  const confirmarCancelar = {
+    titulo: "Cancelar contrato",
+    descripcion:
+      "El contrato pasará a estado CANCELADO (terminal) y dejará de aceptar postulaciones o avanzar en el flujo.",
+    textoConfirmar: "Sí, cancelar contrato",
+    variante: "btn-peligro-solido",
+  };
+  const confirmarFinalizar = {
+    titulo: "Finalizar contrato",
+    descripcion:
+      "Confirmas la conformidad del servicio. El contrato pasará a estado FINALIZADO y no podrá modificarse.",
+    textoConfirmar: "Finalizar contrato",
+    variante: "btn-exito",
+  };
+  const confirmarDisputa = {
+    titulo: "Abrir disputa",
+    descripcion: "El contrato quedará marcado EN_DISPUTA para su revisión y resolución posterior.",
+    textoConfirmar: "Abrir disputa",
+    variante: "btn-peligro-solido",
+  };
+
   if (contrato.estado === "BORRADOR") {
     grupo.append(
       boton("Publicar", () => cambiarEstadoContratoDador(contrato.id, "PUBLICADO"), "btn-primario"),
       boton("Abrir subasta", () => cambiarEstadoContratoDador(contrato.id, "EN_SUBASTA")),
-      boton("Cancelar", () => cambiarEstadoContratoDador(contrato.id, "CANCELADO"), "peligro")
+      boton(
+        "Cancelar",
+        () => cambiarEstadoContratoDador(contrato.id, "CANCELADO", confirmarCancelar),
+        "peligro"
+      )
     );
   } else if (["PUBLICADO", "EN_SUBASTA", "EN_POSTULACION"].includes(contrato.estado)) {
     if (contrato.estado === "PUBLICADO") {
@@ -90,25 +136,37 @@ function accionesEstadoDador(contrato) {
     }
     grupo.append(
       enlace("Ver postulaciones", "subastas", { contrato: contrato.id }),
-      boton("Cancelar", () => cambiarEstadoContratoDador(contrato.id, "CANCELADO"), "peligro")
+      boton(
+        "Cancelar",
+        () => cambiarEstadoContratoDador(contrato.id, "CANCELADO", confirmarCancelar),
+        "peligro"
+      )
     );
   } else if (contrato.estado === "ENTREGADO") {
     grupo.append(
       boton(
         "Finalizar contrato",
-        () => cambiarEstadoContratoDador(contrato.id, "FINALIZADO"),
+        () => cambiarEstadoContratoDador(contrato.id, "FINALIZADO", confirmarFinalizar),
         "btn-exito"
       ),
-      boton("Abrir disputa", () => cambiarEstadoContratoDador(contrato.id, "EN_DISPUTA"), "peligro")
+      boton(
+        "Abrir disputa",
+        () => cambiarEstadoContratoDador(contrato.id, "EN_DISPUTA", confirmarDisputa),
+        "peligro"
+      )
     );
   } else if (contrato.estado === "EN_DISPUTA") {
     grupo.append(
       boton(
         "Finalizar contrato",
-        () => cambiarEstadoContratoDador(contrato.id, "FINALIZADO"),
+        () => cambiarEstadoContratoDador(contrato.id, "FINALIZADO", confirmarFinalizar),
         "btn-exito"
       ),
-      boton("Cancelar", () => cambiarEstadoContratoDador(contrato.id, "CANCELADO"), "peligro")
+      boton(
+        "Cancelar",
+        () => cambiarEstadoContratoDador(contrato.id, "CANCELADO", confirmarCancelar),
+        "peligro"
+      )
     );
   }
   return grupo;
@@ -123,34 +181,44 @@ async function contratosDador(params) {
   const barra = nodo("div", null, "acciones-barra");
   const links = nodo("div", null, "acciones-grupo");
   const btnCrear = nodo("a", "+ Nuevo contrato", "boton btn-primario");
-  btnCrear.href = "../Crear_contrato/crear_contrato.html";
+  btnCrear.href = "../Crear_contrato/crear_contrato.html?desde=panel";
   const btnCatalogo = nodo("a", "Abrir vista catálogo", "boton");
   btnCatalogo.href = "../Principal/principal.html";
+  btnCatalogo.prepend(icono("catalogo", 15));
   links.append(btnCrear, btnCatalogo);
   barra.append(links);
   f.append(barra);
 
   if (detalleId) {
     const c = propios.find((item) => item.id === detalleId);
-    f.append(enlace("← Volver a mis contratos", "contratos"));
+    const barraVolver = nodo("div", null, "acciones-barra");
+    barraVolver.append(enlace("← Volver a mis contratos", "contratos"));
+    f.append(barraVolver);
+
     if (!c) {
-      f.append(nodo("p", "No se encontró el contrato solicitado.", "texto-suave"));
+      f.append(estadoVacio("No se encontró el contrato solicitado."));
       return f;
     }
     f.append(
       ficha([
-        ["Identificador", c.id],
+        ["Identificador", celdaId(c.id)],
         ["Estado", badgeEstado(c.estado)],
         ["Ruta", c.origen + " → " + c.destino],
         ["Tipo de carga", c.tipo_carga],
-        ["Peso / Capacidad", c.peso_total + " KG / " + c.input_camionKG + " KG"],
-        ["Cierre postulaciones", fechaLocal(c.f_cierre_postulaciones)],
-        ["Salida estimada", fechaLocal(c.f_estimada_salida)],
-        ["Llegada estimada", fechaLocal(c.f_estimada_llegada)],
-        ["Monto neto", formatearMoneda(c.monto_neto, c.moneda)],
-        ["IVA", formatearMoneda(c.monto_iva, c.moneda)],
-        ["Monto total", formatearMoneda(c.monto_total, c.moneda)],
-        ["Transportista asignado", c.id_transportista || "Sin asignar"],
+        [
+          "Peso / Capacidad",
+          nodo("span", c.peso_total + " KG / " + c.input_camionKG + " KG", "num-tabular"),
+        ],
+        ["Cierre postulaciones", nodo("span", fechaLocal(c.f_cierre_postulaciones), "num-tabular")],
+        ["Salida estimada", nodo("span", fechaLocal(c.f_estimada_salida), "num-tabular")],
+        ["Llegada estimada", nodo("span", fechaLocal(c.f_estimada_llegada), "num-tabular")],
+        ["Monto neto", nodo("span", formatearMoneda(c.monto_neto, c.moneda), "num-tabular")],
+        ["IVA", nodo("span", formatearMoneda(c.monto_iva, c.moneda), "num-tabular")],
+        ["Monto total", nodo("span", formatearMoneda(c.monto_total, c.moneda), "num-tabular")],
+        [
+          "Transportista asignado",
+          c.id_transportista ? celdaId(c.id_transportista) : "Sin asignar",
+        ],
       ]),
       accionesEstadoDador(c)
     );
@@ -158,14 +226,17 @@ async function contratosDador(params) {
   }
 
   const estadoFiltro = params.get("estado") || "";
-  const formFiltro = nodo("form");
-  const fs = nodo("fieldset");
-  fs.append(nodo("legend", "Filtrar mis contratos"));
+  const formFiltro = nodo("form", null, "barra-filtros");
+  const tituloFiltro = nodo("p", null, "barra-filtros-titulo");
+  tituloFiltro.append(icono("filtro", 14), nodo("span", "Filtrar mis contratos"));
+  const gridFiltro = nodo("div", null, "barra-filtros-grid");
+
   const labelEstado = nodo("label", "Estado");
   const selEstado = nodo("select");
   selEstado.name = "estado";
-  selEstado.append(nodo("option", "Todos"));
-  selEstado.firstChild.value = "";
+  const optTodos = nodo("option", "Todos");
+  optTodos.value = "";
+  selEstado.append(optTodos);
   for (const est of ESTADOS_CONTRATO_DADOR) {
     const opt = nodo("option", est);
     opt.value = est;
@@ -173,16 +244,22 @@ async function contratosDador(params) {
   }
   selEstado.value = estadoFiltro;
   labelEstado.append(selEstado);
-  const btnFiltrar = nodo("button", "Filtrar");
+  gridFiltro.append(labelEstado);
+
+  const accionesFiltro = nodo("div", null, "barra-filtros-acciones");
+  const btnFiltrar = nodo("button", "Filtrar", "btn-primario");
   btnFiltrar.type = "submit";
-  fs.append(labelEstado, btnFiltrar, enlace("Limpiar", "contratos"));
-  formFiltro.append(fs);
+  accionesFiltro.append(btnFiltrar, enlace("Limpiar", "contratos"));
+
+  formFiltro.append(tituloFiltro, gridFiltro, accionesFiltro);
   formFiltro.onsubmit = (e) => {
     e.preventDefault();
     location.hash = selEstado.value ? "contratos?estado=" + selEstado.value : "contratos";
   };
 
   const filtrados = estadoFiltro ? propios.filter((c) => c.estado === estadoFiltro) : propios;
+  const ctaNuevo = nodo("a", "+ Crear primer contrato", "boton btn-primario");
+  ctaNuevo.href = "../Crear_contrato/crear_contrato.html?desde=panel";
 
   f.append(
     formFiltro,
@@ -191,12 +268,13 @@ async function contratosDador(params) {
       filtrados.map((c) => [
         c.origen + " → " + c.destino,
         c.tipo_carga,
-        formatearMoneda(c.monto_total, c.moneda),
-        fechaLocal(c.f_estimada_salida),
+        nodo("span", formatearMoneda(c.monto_total, c.moneda), "num-tabular"),
+        nodo("span", fechaLocal(c.f_estimada_salida), "num-tabular"),
         badgeEstado(c.estado),
         enlace("Gestionar", "contratos", { detalle: c.id }),
       ]),
-      "Aún no tienes contratos registrados con este filtro."
+      "Aún no tienes contratos registrados con este filtro.",
+      estadoFiltro ? enlace("Ver todos mis contratos", "contratos") : ctaNuevo
     )
   );
   return f;
@@ -214,9 +292,12 @@ async function subastasDador(params) {
 
   if (seleccionadoId) {
     const contrato = subastables.find((c) => c.id === seleccionadoId);
-    f.append(enlace("← Volver a mis subastas", "subastas"));
+    const barra = nodo("div", null, "acciones-barra");
+    barra.append(enlace("← Volver a mis subastas", "subastas"));
+    f.append(barra);
+
     if (!contrato) {
-      f.append(nodo("p", "No se encontró la subasta solicitada.", "texto-suave"));
+      f.append(estadoVacio("No se encontró la subasta solicitada."));
       return f;
     }
 
@@ -225,17 +306,36 @@ async function subastasDador(params) {
       nodo("h2", contrato.origen + " → " + contrato.destino),
       ficha([
         ["Estado", badgeEstado(contrato.estado)],
-        ["Monto referencial", formatearMoneda(contrato.monto_total, contrato.moneda)],
-        ["Cierre postulaciones", fechaLocal(contrato.f_cierre_postulaciones)],
-        ["Postulaciones recibidas", String(postulaciones.length)],
+        [
+          "Monto referencial",
+          nodo("span", formatearMoneda(contrato.monto_total, contrato.moneda), "num-tabular"),
+        ],
+        [
+          "Cierre postulaciones",
+          nodo("span", fechaLocal(contrato.f_cierre_postulaciones), "num-tabular"),
+        ],
+        ["Postulaciones recibidas", nodo("span", String(postulaciones.length), "num-tabular")],
       ])
     );
 
-    async function adjudicar(postulacionId) {
+    async function adjudicar(postulacion) {
+      const ok = await confirmarAccion({
+        titulo: "Confirmar adjudicación",
+        descripcion:
+          "Adjudicarás esta carga por " +
+          formatearMoneda(postulacion.precio_oferta, "CLP") +
+          " (" +
+          postulacion.tiempo_entrega_horas +
+          " h). Las demás postulaciones pasarán automáticamente a RECHAZADA.",
+        textoConfirmar: "Adjudicar oferta",
+        variante: "btn-exito",
+      });
+      if (!ok) return;
+
       try {
         await api("/subastas/adjudicar", {
           carga_id: contrato.id,
-          postulacion_id: postulacionId,
+          postulacion_id: postulacion.id,
         });
         await navegar();
         mostrarAviso("Subasta adjudicada correctamente.", "exito");
@@ -250,13 +350,13 @@ async function subastasDador(params) {
       tabla(
         ["Transportista ID", "Oferta", "Tiempo entrega", "Comentario", "Estado", "Acción"],
         postulaciones.map((p) => [
-          p.transportista_id,
-          formatearMoneda(p.precio_oferta, "CLP"),
-          p.tiempo_entrega_horas + " h",
+          celdaId(p.transportista_id),
+          nodo("span", formatearMoneda(p.precio_oferta, "CLP"), "num-tabular"),
+          nodo("span", p.tiempo_entrega_horas + " h", "num-tabular"),
           p.comentario || "—",
           badgeEstado(p.estado),
           adjudicable && p.estado === "POSTULADA"
-            ? boton("Adjudicar oferta", () => adjudicar(p.id), "btn-exito")
+            ? boton("Adjudicar oferta", () => adjudicar(p), "btn-exito btn-sm")
             : "—",
         ]),
         "Aún no se han recibido postulaciones para esta carga."
@@ -269,19 +369,20 @@ async function subastasDador(params) {
     nodo(
       "p",
       "Selecciona uno de tus contratos publicados o en subasta para revisar ofertas y adjudicar al transportista ganador.",
-      "texto-suave"
+      "subtitulo-seccion"
     ),
     tabla(
       ["Ruta", "Tipo carga", "Monto total", "Cierre postulaciones", "Estado", "Ofertas"],
       subastables.map((c) => [
         c.origen + " → " + c.destino,
         c.tipo_carga,
-        formatearMoneda(c.monto_total, c.moneda),
-        fechaLocal(c.f_cierre_postulaciones),
+        nodo("span", formatearMoneda(c.monto_total, c.moneda), "num-tabular"),
+        nodo("span", fechaLocal(c.f_cierre_postulaciones), "num-tabular"),
         badgeEstado(c.estado),
         enlace("Revisar ofertas", "subastas", { contrato: c.id }),
       ]),
-      "No tienes cargas en subasta o publicadas actualmente. Crea o publica un contrato desde Mis Contratos."
+      "No tienes cargas en subasta o publicadas actualmente. Crea o publica un contrato desde Mis Contratos.",
+      enlace("Ir a Mis Contratos", "contratos")
     )
   );
   return f;

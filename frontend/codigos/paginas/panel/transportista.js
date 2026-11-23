@@ -1,4 +1,4 @@
-/* Vistas operativas para el rol TRANSPORTISTA dentro del panel unificado. */
+/* Vistas operativas para el rol TRANSPORTISTA dentro del panel unificado — MansoViaje */
 
 const ETIQUETAS_DOCUMENTOS = {
   LICENCIA_CONDUCIR: "Licencia de conducir",
@@ -28,6 +28,15 @@ async function obtenerEstadoCompliance() {
   });
 }
 
+function obtenerChipsRequisitos(carga) {
+  const chips = [];
+  if (carga.requiere_termo) chips.push("Equipo termo");
+  if (carga.req_blindaje) chips.push("Blindado");
+  if (carga.numero_onu) chips.push("ONU " + carga.numero_onu);
+  if (carga.req_embalaje) chips.push("Embalaje especial");
+  return chips;
+}
+
 async function inicioTransportista() {
   const [estadoKyc, cargas, contratos] = await Promise.all([
     obtenerEstadoCompliance(),
@@ -41,21 +50,33 @@ async function inicioTransportista() {
     nodo(
       "p",
       "Explora cargas disponibles para postular, gestiona tu documentación de cumplimiento y reporta el avance de tus viajes.",
-      "texto-suave"
+      "subtitulo-seccion"
     )
   );
 
-  const grid = nodo("div", null, "rejilla");
-  const kpis = [
-    ["Estado Compliance", estadoKyc.estado_global, "onboarding"],
-    ["Cargas disponibles", String(cargas.length), "subastas"],
-    ["Despachos asignados", String(asignados.length), "seguimiento"],
-  ];
-  for (const [titulo, valor, modulo] of kpis) {
-    const card = enlace("", modulo);
-    card.className = "tarjeta";
-    card.append(nodo("span", titulo), nodo("strong", valor, "indicador"));
-    grid.append(card);
+  const grid = nodo("div", null, "rejilla-kpi");
+  for (const kpi of [
+    {
+      titulo: "Estado Compliance",
+      valor: estadoKyc.estado_global,
+      modulo: "onboarding",
+      iconoNombre: "validaciones",
+      esEstado: true,
+    },
+    {
+      titulo: "Cargas disponibles",
+      valor: cargas.length,
+      modulo: "subastas",
+      iconoNombre: "subastas",
+    },
+    {
+      titulo: "Despachos asignados",
+      valor: asignados.length,
+      modulo: "seguimiento",
+      iconoNombre: "seguimiento",
+    },
+  ]) {
+    grid.append(tarjetaKpi(kpi));
   }
 
   f.append(grid, nodo("h2", "Accesos rápidos"), tarjetas(FUNCIONALIDADES_POR_ROL.TRANSPORTISTA));
@@ -78,15 +99,22 @@ async function subastasTransportista(params) {
   const barra = nodo("div", null, "acciones-barra");
   const btnCatalogo = nodo("a", "Abrir vista catálogo", "boton");
   btnCatalogo.href = "../Principal/principal.html";
-  barra.append(btnCatalogo, badgeEstado("KYC: " + estadoKyc.estado_global));
+  btnCatalogo.prepend(icono("catalogo", 15));
+  barra.append(
+    btnCatalogo,
+    badgeEstado(estadoKyc.estado_global, "KYC: " + estadoKyc.estado_global)
+  );
   f.append(barra);
 
   const cargaId = params.get("carga");
   if (cargaId) {
     const carga = cargas.find((c) => c.id === cargaId);
-    f.append(enlace("← Volver a cargas disponibles", "subastas"));
+    const barraVolver = nodo("div", null, "acciones-barra");
+    barraVolver.append(enlace("← Volver a cargas disponibles", "subastas"));
+    f.append(barraVolver);
+
     if (!carga) {
-      f.append(nodo("p", "La carga seleccionada ya no está disponible.", "texto-suave"));
+      f.append(estadoVacio("La carga seleccionada ya no está disponible."));
       return f;
     }
 
@@ -101,27 +129,41 @@ async function subastasTransportista(params) {
       ficha([
         ["Estado", badgeEstado(carga.estado)],
         ["Tipo de carga", carga.tipo_carga],
-        ["Peso / Capacidad", carga.peso_total + " KG / " + carga.input_camionKG + " KG"],
+        [
+          "Peso / Capacidad",
+          nodo("span", carga.peso_total + " KG / " + carga.input_camionKG + " KG", "num-tabular"),
+        ],
         ["Distancia", carga.distancia_km != null ? carga.distancia_km + " km" : "Estimada 150 km"],
-        ["Monto referencial", formatearMoneda(carga.monto_total, carga.moneda)],
-        ["Cierre de postulaciones", fechaLocal(carga.f_cierre_postulaciones)],
-        ["Salida estimada", fechaLocal(carga.f_estimada_salida)],
-        ["Llegada estimada", fechaLocal(carga.f_estimada_llegada)],
+        [
+          "Monto referencial",
+          nodo("span", formatearMoneda(carga.monto_total, carga.moneda), "num-tabular"),
+        ],
+        [
+          "Cierre de postulaciones",
+          nodo("span", fechaLocal(carga.f_cierre_postulaciones), "num-tabular"),
+        ],
+        ["Salida estimada", nodo("span", fechaLocal(carga.f_estimada_salida), "num-tabular")],
+        ["Llegada estimada", nodo("span", fechaLocal(carga.f_estimada_llegada), "num-tabular")],
         ["Requisitos especiales", requisitos.length ? requisitos.join(" · ") : "Ninguno"],
       ])
     );
 
     const aprobado = estadoKyc.estado_global === "APROBADO";
     if (!aprobado) {
-      const alerta = nodo(
-        "p",
-        "Tu documentación aún no está en estado APROBADO (" +
-          estadoKyc.estado_global +
-          "). Completa tus documentos para poder postular.",
-        "aviso-info"
+      const alerta = nodo("div", null, "aviso-banner aviso-info");
+      alerta.style.marginBottom = "14px";
+      const cuerpoAlerta = nodo("div", null, "aviso-banner-contenido");
+      cuerpoAlerta.append(
+        icono("alerta", 17),
+        nodo(
+          "span",
+          "Tu documentación aún no está en estado APROBADO (" +
+            estadoKyc.estado_global +
+            "). Completa tus documentos para poder postular."
+        )
       );
-      alerta.style.padding = "12px";
-      f.append(alerta, enlace("Ir a Documentación y Compliance", "onboarding"));
+      alerta.append(cuerpoAlerta, enlace("Ir a Documentación", "onboarding"));
+      f.append(alerta);
     }
 
     const form = nodo("form", null, "form-panel");
@@ -188,9 +230,10 @@ async function subastasTransportista(params) {
   }
 
   // Filtros reales conectados a GET /subastas/cargas
-  const formFiltros = nodo("form");
-  const fs = nodo("fieldset");
-  fs.append(nodo("legend", "Filtrar cargas disponibles"));
+  const formFiltros = nodo("form", null, "barra-filtros");
+  const tituloFiltros = nodo("p", null, "barra-filtros-titulo");
+  tituloFiltros.append(icono("filtro", 14), nodo("span", "Filtrar cargas disponibles"));
+  const gridFiltros = nodo("div", null, "barra-filtros-grid");
 
   const lRegion = nodo("label", "Región / Comuna");
   const iRegion = nodo("input");
@@ -223,10 +266,14 @@ async function subastasTransportista(params) {
   iDist.value = params.get("distancia_max_km") || "";
   lDist.append(iDist);
 
+  gridFiltros.append(lRegion, lTipo, lDist);
+
+  const accionesFiltros = nodo("div", null, "barra-filtros-acciones");
   const btnBuscar = nodo("button", "Buscar", "btn-primario");
   btnBuscar.type = "submit";
-  fs.append(lRegion, lTipo, lDist, btnBuscar, enlace("Limpiar", "subastas"));
-  formFiltros.append(fs);
+  accionesFiltros.append(btnBuscar, enlace("Limpiar", "subastas"));
+
+  formFiltros.append(tituloFiltros, gridFiltros, accionesFiltros);
   formFiltros.onsubmit = (e) => {
     e.preventDefault();
     const q = new URLSearchParams();
@@ -240,7 +287,10 @@ async function subastasTransportista(params) {
 
   if (!cargas.length) {
     f.append(
-      nodo("p", "No hay cargas disponibles que coincidan con los filtros actuales.", "texto-suave")
+      estadoVacio(
+        "No hay cargas disponibles que coincidan con los filtros actuales.",
+        consulta.toString() ? enlace("Limpiar filtros", "subastas") : null
+      )
     );
     return f;
   }
@@ -251,17 +301,27 @@ async function subastasTransportista(params) {
     const top = nodo("div", null, "tarjeta-carga-top");
     top.append(
       badgeEstado(c.estado),
-      nodo("span", formatearMoneda(c.monto_total, c.moneda), "monto-destacado")
+      nodo("span", formatearMoneda(c.monto_total, c.moneda), "monto-destacado num-tabular")
     );
     const meta = nodo("div", null, "meta-linea");
     meta.append(
       nodo("span", "Carga: " + c.tipo_carga),
-      nodo("span", c.peso_total + " / " + c.input_camionKG + " KG"),
-      nodo("span", "Cierre: " + fechaLocal(c.f_cierre_postulaciones))
+      nodo("span", c.peso_total + " / " + c.input_camionKG + " KG", "num-tabular"),
+      nodo("span", "Cierre: " + fechaLocal(c.f_cierre_postulaciones), "num-tabular")
     );
+
+    card.append(top, nodo("h3", c.origen + " → " + c.destino), meta);
+
+    const chips = obtenerChipsRequisitos(c);
+    if (chips.length) {
+      const chipsWrap = nodo("div", null, "chips-requisitos");
+      for (const ch of chips) chipsWrap.append(nodo("span", ch, "chip-requisito"));
+      card.append(chipsWrap);
+    }
+
     const btnPostular = enlace("Ver detalle y postular", "subastas", { carga: c.id });
     btnPostular.classList.add("btn-primario");
-    card.append(top, nodo("h3", c.origen + " → " + c.destino), meta, btnPostular);
+    card.append(btnPostular);
     lista.append(card);
   }
   f.append(lista);
@@ -279,7 +339,6 @@ async function onboardingTransportista() {
   const f = document.createDocumentFragment();
   const resumen = nodo("div", null, "tarjeta");
   const top = nodo("div", null, "resumen-estado");
-  top.style.width = "100%";
   top.append(
     nodo(
       "strong",
@@ -287,7 +346,9 @@ async function onboardingTransportista() {
         aprobados +
         " de " +
         estado.documentos_requeridos.length +
-        " aprobados"
+        " aprobados (" +
+        porcentaje +
+        "%)"
     ),
     badgeEstado(estado.estado_global)
   );
@@ -307,8 +368,8 @@ async function onboardingTransportista() {
         const doc = docsPorTipo.get(tipo);
         return [
           ETIQUETAS_DOCUMENTOS[tipo] || tipo,
-          doc ? doc.archivo : "Sin cargar",
-          doc ? fechaLocal(doc.created_at) : "—",
+          doc ? nodo("code", doc.archivo, "id-corto") : nodo("span", "Sin cargar", "texto-suave"),
+          doc ? nodo("span", fechaLocal(doc.created_at), "num-tabular") : "—",
           doc ? badgeEstado(doc.estado) : badgeEstado("FALTANTE"),
         ];
       }),
@@ -323,13 +384,20 @@ async function onboardingTransportista() {
   const lTipo = nodo("label", "Tipo de documento *");
   const sTipo = nodo("select");
   sTipo.name = "tipo";
+  let primeroPendiente = null;
   for (const tipo of estado.documentos_requeridos) {
+    const doc = docsPorTipo.get(tipo);
+    if (!primeroPendiente && (!doc || doc.estado === "RECHAZADO")) {
+      primeroPendiente = tipo;
+    }
     const opt = nodo("option", ETIQUETAS_DOCUMENTOS[tipo] || tipo);
     opt.value = tipo;
     sTipo.append(opt);
   }
+  if (primeroPendiente) sTipo.value = primeroPendiente;
   lTipo.append(sTipo);
 
+  const lArchivoWrap = nodo("div", null, "archivo-selector-wrap");
   const lArchivo = nodo("label", "Nombre o ruta de archivo (.pdf, .jpg, .jpeg, .png) *");
   const iArchivo = nodo("input");
   iArchivo.type = "text";
@@ -338,7 +406,22 @@ async function onboardingTransportista() {
   iArchivo.placeholder = "Ej: licencia_conducir_2026.pdf";
   lArchivo.append(iArchivo);
 
-  grid.append(lTipo, lArchivo);
+  const selectorDrop = nodo("label", null, "archivo-drop");
+  const textoDrop = nodo("span", "Seleccionar archivo desde tu equipo (autocompleta el nombre)");
+  const iFile = nodo("input");
+  iFile.type = "file";
+  iFile.accept = ".pdf,.jpg,.jpeg,.png";
+  iFile.addEventListener("change", () => {
+    const archivo = iFile.files && iFile.files[0];
+    if (archivo) {
+      iArchivo.value = archivo.name;
+      textoDrop.textContent = "Seleccionado: " + archivo.name;
+    }
+  });
+  selectorDrop.append(icono("subir", 16), textoDrop, iFile);
+  lArchivoWrap.append(lArchivo, selectorDrop);
+
+  grid.append(lTipo, lArchivoWrap);
   const btnCargar = nodo("button", "Cargar documento", "btn-primario");
   btnCargar.type = "submit";
   form.append(grid, btnCargar);
@@ -377,11 +460,15 @@ async function seguimientoTransportista() {
     nodo(
       "p",
       "Reporta el inicio de tránsito y la entrega de los contratos que te fueron adjudicados.",
-      "texto-suave"
+      "subtitulo-seccion"
     )
   );
 
-  async function avanzarEstado(contratoId, nuevoEstado) {
+  async function avanzarEstado(contratoId, nuevoEstado, confirmacion) {
+    if (confirmacion) {
+      const ok = await confirmarAccion(confirmacion);
+      if (!ok) return;
+    }
     try {
       await api(
         "/contratos/" + contratoId + "/estado",
@@ -402,12 +489,47 @@ async function seguimientoTransportista() {
         const acciones = nodo("div", null, "acciones-grupo");
         if (c.estado === "ADJUDICADO") {
           acciones.append(
-            boton("Iniciar tránsito", () => avanzarEstado(c.id, "EN_TRANSITO"), "btn-primario")
+            boton(
+              "Iniciar tránsito",
+              () =>
+                avanzarEstado(c.id, "EN_TRANSITO", {
+                  titulo: "Confirmar inicio de tránsito",
+                  descripcion:
+                    "El despacho " + c.origen + " → " + c.destino + " pasará a estado EN_TRANSITO.",
+                  textoConfirmar: "Iniciar tránsito",
+                  variante: "btn-primario",
+                }),
+              "btn-primario btn-sm"
+            )
           );
         } else if (c.estado === "EN_TRANSITO") {
           acciones.append(
-            boton("Confirmar entrega", () => avanzarEstado(c.id, "ENTREGADO"), "btn-exito"),
-            boton("Reportar disputa", () => avanzarEstado(c.id, "EN_DISPUTA"), "peligro")
+            boton(
+              "Confirmar entrega",
+              () =>
+                avanzarEstado(c.id, "ENTREGADO", {
+                  titulo: "Confirmar entrega en destino",
+                  descripcion:
+                    "Registrarás la entrega definitiva de la carga en " +
+                    c.destino +
+                    " para que el dador pueda finalizar el contrato.",
+                  textoConfirmar: "Confirmar entrega",
+                  variante: "btn-exito",
+                }),
+              "btn-exito btn-sm"
+            ),
+            boton(
+              "Reportar disputa",
+              () =>
+                avanzarEstado(c.id, "EN_DISPUTA", {
+                  titulo: "Reportar incidencia o disputa",
+                  descripcion:
+                    "El contrato pasará a estado EN_DISPUTA y se detendrá el cierre normal hasta su resolución.",
+                  textoConfirmar: "Reportar disputa",
+                  variante: "btn-peligro-solido",
+                }),
+              "peligro btn-sm"
+            )
           );
         } else {
           acciones.append(nodo("span", "Sin acciones pendientes", "texto-suave"));
@@ -415,13 +537,14 @@ async function seguimientoTransportista() {
         return [
           c.origen + " → " + c.destino,
           c.tipo_carga,
-          fechaLocal(c.f_estimada_salida),
-          formatearMoneda(c.monto_total, c.moneda),
+          nodo("span", fechaLocal(c.f_estimada_salida), "num-tabular"),
+          nodo("span", formatearMoneda(c.monto_total, c.moneda), "num-tabular"),
           badgeEstado(c.estado),
           acciones,
         ];
       }),
-      "Aún no tienes contratos adjudicados asignados a tu cuenta."
+      "Aún no tienes contratos adjudicados asignados a tu cuenta.",
+      enlace("Explorar cargas disponibles", "subastas")
     )
   );
   return f;

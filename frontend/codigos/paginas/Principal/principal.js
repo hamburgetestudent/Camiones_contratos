@@ -1,4 +1,4 @@
-/* Catálogo principal conectado a la API real de FastAPI */
+/* Catálogo principal conectado a la API real de FastAPI — MansoViaje */
 const API_BASE_URL = window.API_BASE_URL || "http://127.0.0.1:8000";
 
 let usuarioActual = null;
@@ -13,6 +13,8 @@ const filtroTipo = document.getElementById("filtro-empresa");
 const botonLimpiarFiltros = document.getElementById("limpiar-filtros");
 const contadorContratos = document.getElementById("contador-contratos");
 const mensajeSinResultados = document.getElementById("mensaje-sin-resultados");
+const textoSinResultados = document.getElementById("texto-sin-resultados");
+const avisoPrincipal = document.getElementById("aviso-principal");
 const botonPerfil = document.getElementById("boton-perfil");
 const menuPerfil = document.getElementById("menu-perfil");
 const inicialesPerfil = document.getElementById("iniciales-perfil");
@@ -21,6 +23,63 @@ const botonMisContratos = document.getElementById("boton-mis-contratos");
 const tituloListado = document.getElementById("titulo-listado");
 const subtituloListado = document.getElementById("subtitulo-listado");
 const modalDetalle = document.getElementById("modal-detalle");
+
+function inicializarIconosPrincipal() {
+  if (!window.MVIconos) return;
+  const logo = document.getElementById("logo-principal");
+  if (logo) logo.replaceChildren(window.MVIconos.crear("isotipo", { size: 20 }));
+
+  const tituloFiltros = document.getElementById("titulo-filtros-principal");
+  if (tituloFiltros) {
+    tituloFiltros.prepend(window.MVIconos.crear("filtro", { size: 14 }));
+  }
+
+  const icoVacio = document.getElementById("icono-sin-resultados");
+  if (icoVacio) icoVacio.replaceChildren(window.MVIconos.crear("bandejaVacia", { size: 22 }));
+}
+
+function mostrarAvisoPrincipal(texto, tipo = "error") {
+  if (!avisoPrincipal) return;
+  avisoPrincipal.replaceChildren();
+  if (!texto) {
+    avisoPrincipal.className = "oculto";
+    return;
+  }
+  avisoPrincipal.className = "aviso-banner aviso-" + tipo;
+  const cuerpo = document.createElement("div");
+  cuerpo.className = "aviso-banner-contenido";
+  if (window.MVIconos) {
+    cuerpo.append(window.MVIconos.crear(tipo === "exito" ? "exito" : "error", { size: 17 }));
+  }
+  const span = document.createElement("span");
+  span.textContent = texto;
+  cuerpo.append(span);
+
+  const cerrar = document.createElement("button");
+  cerrar.type = "button";
+  cerrar.className = "aviso-cerrar";
+  cerrar.setAttribute("aria-label", "Cerrar aviso");
+  if (window.MVIconos) cerrar.append(window.MVIconos.crear("cerrar", { size: 15 }));
+  cerrar.addEventListener("click", () => mostrarAvisoPrincipal(""));
+
+  avisoPrincipal.append(cuerpo, cerrar);
+}
+
+function mostrarSkeletonCatalogo() {
+  listaContratos.replaceChildren();
+  mensajeSinResultados.classList.add("oculto");
+  for (let i = 0; i < 6; i++) {
+    const card = document.createElement("div");
+    card.className = "skeleton-card";
+    card.innerHTML = `
+      <div class="skeleton skeleton-linea skeleton-linea--corta"></div>
+      <div class="skeleton skeleton-linea skeleton-linea--grande"></div>
+      <div class="skeleton skeleton-linea skeleton-linea--llena"></div>
+      <div class="skeleton skeleton-linea"></div>
+    `;
+    listaContratos.appendChild(card);
+  }
+}
 
 function volverLogin() {
   for (const clave of ["usuario_actual", "access_token", "usuario_rol", "sesion_usuario"]) {
@@ -76,12 +135,7 @@ function formatearFecha(iso) {
 }
 
 function obtenerIniciales(nombre) {
-  return String(nombre || "US")
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((palabra) => palabra.charAt(0).toLocaleUpperCase("es-CL"))
-    .join("");
+  return window.MVIconos ? window.MVIconos.iniciales(nombre) : "MV";
 }
 
 function escaparTexto(valor) {
@@ -107,10 +161,14 @@ function crearTarjetaContrato(contrato) {
     `Ver detalles del contrato ${contrato.origen} a ${contrato.destino}`
   );
 
+  const claseEstado = window.MVIconos
+    ? window.MVIconos.claseBadgeEstado(contrato.estado)
+    : "badge-info";
+
   tarjeta.innerHTML = `
     <div class="tarjeta-superior">
-      <span class="badge badge-info">${escaparTexto(contrato.estado)}</span>
-      <span class="precio-contrato">${escaparTexto(formatearPrecio(contrato.monto_total, contrato.moneda))}</span>
+      <span class="badge ${claseEstado}">${escaparTexto(contrato.estado)}</span>
+      <span class="precio-contrato num-tabular">${escaparTexto(formatearPrecio(contrato.monto_total, contrato.moneda))}</span>
     </div>
     <h3 class="titulo-contrato">${escaparTexto(contrato.origen)} → ${escaparTexto(contrato.destino)}</h3>
     <div class="ruta-contrato">
@@ -120,11 +178,11 @@ function crearTarjetaContrato(contrato) {
       </div>
       <div class="punto-ruta destino">
         <span class="icono-punto"></span>
-        <span><strong>Peso / Capacidad:</strong> ${escaparTexto(contrato.peso_total)} KG / ${escaparTexto(contrato.input_camionKG)} KG</span>
+        <span class="num-tabular"><strong>Peso / Capacidad:</strong> ${escaparTexto(contrato.peso_total)} KG / ${escaparTexto(contrato.input_camionKG)} KG</span>
       </div>
     </div>
     <div class="pie-tarjeta">
-      <span>Salida: ${escaparTexto(formatearFecha(contrato.f_estimada_salida))}</span>
+      <span class="num-tabular">Salida: ${escaparTexto(formatearFecha(contrato.f_estimada_salida))}</span>
       <span class="ver-detalle">Ver detalles →</span>
     </div>
   `;
@@ -137,6 +195,7 @@ function mostrarContratos(lista) {
   listaContratos.replaceChildren();
   lista.forEach((contrato) => listaContratos.appendChild(crearTarjetaContrato(contrato)));
   contadorContratos.textContent = `${lista.length} ${lista.length === 1 ? "contrato" : "contratos"}`;
+  textoSinResultados.textContent = "No se encontraron contratos con esos filtros.";
   mensajeSinResultados.classList.toggle("oculto", lista.length !== 0);
 }
 
@@ -187,16 +246,31 @@ function limpiarFiltros() {
 
 function abrirDetalleContrato(contrato) {
   document.getElementById("modal-titulo").textContent = `${contrato.origen} → ${contrato.destino}`;
+  const badgeWrap = document.getElementById("modal-badge-wrap");
+  if (badgeWrap) {
+    badgeWrap.replaceChildren(
+      window.MVIconos
+        ? window.MVIconos.badgeEstado(contrato.estado)
+        : document.createTextNode(contrato.estado)
+    );
+  }
+
+  const requisitos = [];
+  if (contrato.requiere_termo) requisitos.push("Equipo termo/refrigeración");
+  if (contrato.req_blindaje) requisitos.push("Camión blindado");
+  if (contrato.numero_onu) requisitos.push("ONU " + contrato.numero_onu);
+  if (contrato.req_embalaje) requisitos.push("Embalaje: " + contrato.req_embalaje);
+
   const dl = document.getElementById("modal-datos");
   dl.replaceChildren();
   const campos = [
     ["Identificador", contrato.id],
-    ["Estado", contrato.estado],
     ["Tipo de carga", contrato.tipo_carga],
     ["Peso / Capacidad", `${contrato.peso_total} KG / ${contrato.input_camionKG} KG`],
     ["Cierre postulaciones", formatearFecha(contrato.f_cierre_postulaciones)],
     ["Salida estimada", formatearFecha(contrato.f_estimada_salida)],
     ["Llegada estimada", formatearFecha(contrato.f_estimada_llegada)],
+    ["Requisitos especiales", requisitos.length ? requisitos.join(" · ") : "Ninguno"],
     ["Monto total", formatearPrecio(contrato.monto_total, contrato.moneda)],
   ];
   for (const [k, v] of campos) {
@@ -218,6 +292,8 @@ function abrirDetalleContrato(contrato) {
 }
 
 async function cargarContratosDesdeApi() {
+  mostrarAvisoPrincipal("");
+  mostrarSkeletonCatalogo();
   try {
     if (modoMisContratos) {
       const todos = await solicitarApi("/contratos");
@@ -241,7 +317,7 @@ async function cargarContratosDesdeApi() {
     filtrarContratos();
   } catch (error) {
     listaContratos.replaceChildren();
-    mensajeSinResultados.textContent = error.message || "No se pudieron cargar los contratos.";
+    textoSinResultados.textContent = error.message || "No se pudieron cargar los contratos.";
     mensajeSinResultados.classList.remove("oculto");
   }
 }
@@ -280,7 +356,7 @@ async function gestionarAccionPerfil(evento) {
       });
       if (!respuesta.ok && respuesta.status !== 401) throw Error();
     } catch {
-      alert("No se pudo cerrar la sesión. Vuelve a intentarlo.");
+      mostrarAvisoPrincipal("No se pudo cerrar la sesión. Vuelve a intentarlo.", "error");
       return;
     }
     volverLogin();
@@ -288,6 +364,7 @@ async function gestionarAccionPerfil(evento) {
 }
 
 async function inicializarPantallaPrincipal() {
+  inicializarIconosPrincipal();
   try {
     usuarioActual = await solicitarApi("/auth/sesion");
     inicialesPerfil.textContent = obtenerIniciales(usuarioActual.nombre);
@@ -304,6 +381,8 @@ async function inicializarPantallaPrincipal() {
   precioMaximo.addEventListener("input", filtrarContratos);
   filtroTipo.addEventListener("change", filtrarContratos);
   botonLimpiarFiltros.addEventListener("click", limpiarFiltros);
+  const btnResetVacio = document.getElementById("btn-reset-vacio");
+  if (btnResetVacio) btnResetVacio.addEventListener("click", limpiarFiltros);
 
   botonPerfil.addEventListener("click", (evento) => {
     evento.stopPropagation();
@@ -313,7 +392,7 @@ async function inicializarPantallaPrincipal() {
   menuPerfil.addEventListener("click", gestionarAccionPerfil);
 
   botonCrear.addEventListener("click", () => {
-    window.location.href = "../Crear_contrato/crear_contrato.html";
+    window.location.href = "../Crear_contrato/crear_contrato.html?desde=catalogo";
   });
 
   botonMisContratos.addEventListener("click", () => {

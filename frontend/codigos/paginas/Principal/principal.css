@@ -1,4 +1,4 @@
-/* Catálogo principal alineado con el sistema de diseño compartido */
+/* Catálogo principal — MansoViaje (SaaS Minimalista Neutro) */
 body {
   margin: 0;
   background: var(--fondo);
@@ -11,14 +11,9 @@ select {
   font: inherit;
 }
 
-button {
-  cursor: pointer;
-}
-
 .aplicacion {
-  width: min(1440px, 100%);
+  width: 100%;
   min-height: 100vh;
-  margin: 0 auto;
   background: var(--fondo);
   display: flex;
   flex-direction: column;
@@ -27,103 +22,47 @@ button {
 .barra-superior {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 20;
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 16px 28px;
-  background: var(--superficie);
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px clamp(16px, 3vw, 32px);
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--linea);
-  box-shadow: var(--sombra-sm);
 }
 
 .marca {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 11px;
   flex-shrink: 0;
-}
-
-.marca-icono {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  color: #ffffff;
-  background: var(--azul);
-  font-size: 0.85rem;
-  font-weight: 800;
 }
 
 .marca h1 {
   margin: 0;
   font-size: 1rem;
-  color: var(--azul);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--texto);
 }
 
 .marca p {
-  margin: 2px 0 0;
+  margin: 1px 0 0;
   color: var(--texto-suave);
-  font-size: 0.78rem;
-}
-
-.filtros {
-  display: flex;
-  align-items: end;
-  gap: 10px;
-  flex: 1;
-  flex-wrap: wrap;
-}
-
-.filtros label {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 120px;
-  color: var(--texto);
-  font-size: 0.78rem;
-  font-weight: 600;
-}
-
-.filtros input,
-.filtros select {
-  width: 100%;
-  min-height: 36px;
-  border: 1px solid var(--borde-control);
-  border-radius: var(--radio-sm);
-  background: var(--superficie);
-  padding: 6px 10px;
-  color: var(--texto);
+  font-size: 0.76rem;
 }
 
 .acciones-usuario {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-left: auto;
   flex-shrink: 0;
 }
 
 .enlace-panel {
-  display: inline-flex;
-  align-items: center;
   text-decoration: none;
-  font-weight: 600;
-}
-
-.boton-secundario {
-  min-height: 36px;
-  border: 1px solid var(--borde-control);
-  border-radius: var(--radio-sm);
-  padding: 7px 12px;
-  background: var(--superficie);
-  color: var(--texto);
-}
-
-.boton-secundario:hover {
-  background: var(--azul-suave);
-  border-color: var(--azul);
 }
 
 .perfil-contenedor {
@@ -133,26 +72,33 @@ button {
 .foto-perfil {
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 42px;
+  width: 38px;
+  height: 38px;
   padding: 0;
-  border: 0;
+  border: 1px solid var(--linea-fuerte);
   border-radius: 50%;
-  color: #ffffff;
-  background: var(--azul);
+  color: var(--texto);
+  background: var(--superficie-sutil);
+  font-size: 0.8rem;
   font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .foto-perfil:hover {
-  background: var(--azul-oscuro);
+  background: var(--acento-suave);
+  border-color: var(--acento-borde);
+  color: var(--acento);
 }
 
 .menu-perfil {
   position: absolute;
-  top: 52px;
+  top: 46px;
   right: 0;
-  width: 230px;
-  padding: 8px;
+  width: 224px;
+  padding: 6px;
   border: 1px solid var(--linea);
   border-radius: var(--radio-md);
   background: var(--superficie);
@@ -160,9 +106,9 @@ button {
 }
 
 .menu-titulo {
-  margin: 6px 8px 8px;
+  margin: 4px 8px 6px;
   color: var(--texto-suave);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -171,48 +117,67 @@ button {
 .menu-perfil button {
   display: block;
   width: 100%;
-  padding: 10px 9px;
+  padding: 9px 10px;
   text-align: left;
   border: 0;
-  border-radius: var(--radio-sm);
+  border-radius: var(--radio-xs);
   background: transparent;
   color: var(--texto);
-  font-size: 0.86rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
 }
 
 .menu-perfil button:hover {
-  background: var(--azul-suave);
+  background: var(--superficie-sutil);
+}
+
+.menu-perfil button.menu-peligro {
+  color: var(--peligro);
+}
+
+.menu-perfil button.menu-peligro:hover {
+  background: var(--peligro-fondo);
 }
 
 .menu-perfil hr {
   border: 0;
   border-top: 1px solid var(--linea);
-  margin: 6px 0;
+  margin: 5px 0;
 }
 
 .contenido-principal {
   flex: 1;
-  padding: 28px;
+  width: min(1360px, 100%);
+  margin: 0 auto;
+  padding: 24px clamp(16px, 3vw, 32px) 36px;
+}
+
+#aviso-principal:not(.oculto) {
+  margin-bottom: 16px;
 }
 
 .encabezado-contenido {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 22px;
+  margin-bottom: 18px;
   flex-wrap: wrap;
 }
 
 .encabezado-contenido h2 {
   margin: 0;
-  font-size: clamp(1.25rem, 2vw, 1.6rem);
+  font-size: clamp(1.25rem, 2vw, 1.55rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--texto);
 }
 
 .encabezado-contenido p {
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   color: var(--texto-suave);
-  font-size: 0.92rem;
+  font-size: 0.88rem;
 }
 
 .acciones-contratos {
@@ -222,60 +187,82 @@ button {
   flex-wrap: wrap;
 }
 
-.boton-principal {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 38px;
-  padding: 8px 14px;
-  border: 1px solid var(--azul);
-  border-radius: var(--radio-sm);
-  color: #ffffff;
-  background: var(--azul);
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.boton-principal:hover {
-  background: var(--azul-oscuro);
-}
-
 .contador {
-  padding: 7px 12px;
-  border-radius: 999px;
-  color: var(--azul);
-  background: var(--azul-suave);
-  font-size: 0.82rem;
-  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: var(--radio-pill);
+  color: var(--texto-secundario);
+  background: var(--superficie);
+  border: 1px solid var(--linea);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Barra de filtros dedicada dentro de <main> */
+.filtros-grid {
+  grid-template-columns: 1.4fr 1fr 1fr 1.1fr auto;
+}
+
+.filtros-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: var(--texto);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.filtros-grid input,
+.filtros-grid select {
+  width: 100%;
+  height: 38px;
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--radio-sm);
+  background: var(--superficie);
+  padding: 0 11px;
+  font-size: 0.86rem;
+  color: var(--texto);
+}
+
+.filtros-grid input:focus,
+.filtros-grid select:focus {
+  border-color: var(--acento);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.14);
+}
+
+.filtro-accion-wrap {
+  display: flex;
+  align-items: flex-end;
 }
 
 .rejilla-contratos {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  gap: 16px;
 }
 
 .tarjeta-contrato {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  min-height: 230px;
+  min-height: 224px;
   padding: 18px;
   border: 1px solid var(--linea);
   border-radius: var(--radio-md);
   background: var(--superficie);
   text-align: left;
-  box-shadow: var(--sombra-sm);
+  cursor: pointer;
+  box-shadow: var(--sombra-xs);
   transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease,
-    border-color 0.15s ease;
+    transform 0.14s ease,
+    box-shadow 0.14s ease,
+    border-color 0.14s ease;
 }
 
 .tarjeta-contrato:hover,
 .tarjeta-contrato:focus-visible {
   transform: translateY(-2px);
-  border-color: var(--azul);
+  border-color: var(--linea-fuerte);
   box-shadow: var(--sombra-md);
 }
 
@@ -287,38 +274,41 @@ button {
 }
 
 .precio-contrato {
-  color: var(--exito);
-  font-size: 1rem;
-  font-weight: 800;
+  color: var(--texto);
+  font-size: 1.02rem;
+  font-weight: 700;
   white-space: nowrap;
 }
 
 .titulo-contrato {
   margin: 14px 0 12px;
-  font-size: 1.02rem;
+  font-size: 0.98rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
   line-height: 1.35;
+  color: var(--texto);
 }
 
 .ruta-contrato {
   display: grid;
-  gap: 8px;
+  gap: 7px;
   margin-bottom: 14px;
 }
 
 .punto-ruta {
   display: flex;
-  align-items: start;
+  align-items: flex-start;
   gap: 8px;
-  color: var(--texto-suave);
-  font-size: 0.85rem;
+  color: var(--texto-secundario);
+  font-size: 0.83rem;
 }
 
 .icono-punto {
-  width: 8px;
-  height: 8px;
-  margin-top: 5px;
+  width: 7px;
+  height: 7px;
+  margin-top: 6px;
   border-radius: 50%;
-  background: var(--azul);
+  background: var(--acento);
   flex-shrink: 0;
 }
 
@@ -333,72 +323,70 @@ button {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
   color: var(--texto-suave);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
 }
 
 .ver-detalle {
-  color: var(--azul);
-  font-weight: 700;
-}
-
-.sin-resultados {
-  padding: 44px 16px;
-  text-align: center;
-  color: var(--texto-suave);
+  color: var(--acento);
+  font-weight: 600;
 }
 
 .pie-pagina {
   display: flex;
   justify-content: space-between;
-  padding: 16px 28px;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px clamp(16px, 3vw, 32px);
   background: var(--superficie);
   border-top: 1px solid var(--linea);
   color: var(--texto-suave);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
 }
 
 .modal-detalle {
-  border: 1px solid var(--linea);
-  border-radius: var(--radio-lg);
   width: min(560px, 92vw);
-  padding: 22px;
-}
-
-.modal-detalle::backdrop {
-  background: rgba(24, 44, 66, 0.45);
 }
 
 .modal-cabecera {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
-  padding-bottom: 12px;
+  padding-bottom: 14px;
   border-bottom: 1px solid var(--linea);
+}
+
+.modal-titulo-wrap {
+  display: grid;
+  gap: 6px;
 }
 
 .modal-cabecera h3 {
   margin: 0;
-  color: var(--azul);
+  font-size: 1.08rem;
+  color: var(--texto);
+  letter-spacing: -0.015em;
 }
 
 .modal-datos {
   display: grid;
-  grid-template-columns: minmax(130px, auto) 1fr;
-  gap: 8px 14px;
-  margin: 16px 0;
+  grid-template-columns: minmax(140px, 180px) 1fr;
+  gap: 10px 16px;
+  margin: 18px 0;
 }
 
 .modal-datos dt {
-  font-weight: 700;
+  font-weight: 600;
   color: var(--texto-suave);
-  font-size: 0.86rem;
+  font-size: 0.82rem;
 }
 
 .modal-datos dd {
   margin: 0;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
+  color: var(--texto);
   overflow-wrap: anywhere;
 }
 
@@ -406,16 +394,13 @@ button {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--linea);
 }
 
 @media (max-width: 1050px) {
-  .barra-superior {
-    flex-wrap: wrap;
-  }
-
-  .filtros {
-    order: 3;
-    flex-basis: 100%;
+  .filtros-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .rejilla-contratos {
@@ -424,12 +409,17 @@ button {
 }
 
 @media (max-width: 650px) {
-  .barra-superior,
-  .contenido-principal {
-    padding: 16px;
-  }
-
+  .filtros-grid,
   .rejilla-contratos {
     grid-template-columns: 1fr;
+  }
+
+  .modal-datos {
+    grid-template-columns: 1fr;
+    gap: 4px 0;
+  }
+
+  .modal-datos dd {
+    margin-bottom: 8px;
   }
 }

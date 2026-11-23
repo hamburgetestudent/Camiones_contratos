@@ -4,71 +4,103 @@ const etiquetasAccion = {
   eliminar_contrato: "Eliminar contrato",
   eliminar_cuenta: "Eliminar cuenta",
 };
+
 const fechaUTC = (valor) =>
   new Intl.DateTimeFormat("es-CL", {
     dateStyle: "short",
     timeStyle: "medium",
     timeZone: "UTC",
   }).format(new Date(valor));
+
+function elementoEventoNodo(e) {
+  const wrap = nodo("div", null, "acciones-grupo");
+  wrap.append(nodo("span", e.tipo, "badge badge-neutro"), celdaId(e.elemento_id));
+  return wrap;
+}
+
 function eventos(filas, filtros = {}) {
   return tabla(
     ["Fecha y hora (UTC)", "Administrador", "Acción", "Elemento", "Resultado", "Detalle"],
     filas.map((e) => [
-      fechaUTC(e.fecha),
+      nodo("span", fechaUTC(e.fecha), "num-tabular"),
       e.administrador,
-      etiquetasAccion[e.accion],
-      e.tipo + " · " + e.elemento_id,
-      e.resultado,
+      etiquetasAccion[e.accion] || e.accion,
+      elementoEventoNodo(e),
+      badgeEstado(e.resultado),
       enlace("Ver detalle", "historial", { ...filtros, detalle: e.id }),
     ]),
     "No hay acciones registradas para esta consulta."
   );
 }
+
 async function inicioAdmin() {
   const r = await api("/admin/resumen"),
     bloque = document.createDocumentFragment(),
-    grid = nodo("div", null, "rejilla");
+    grid = nodo("div", null, "rejilla-kpi");
+
   bloque.append(
     nodo(
       "p",
-      "Gestiona los contratos, las cuentas y las acciones administrativas de la plataforma."
+      "Gestiona los contratos, las cuentas y las acciones administrativas de la plataforma.",
+      "subtitulo-seccion"
     )
   );
-  for (const [titulo, valor, modulo, filtros] of [
-    ["Contratos publicados", r.publicados, "contratos", { estado: "PUBLICADO" }],
-    ["Cuentas activas", r.activas, "cuentas", { activas: "1" }],
-    [
-      "Acciones administrativas de hoy (UTC)",
-      r.acciones,
-      "historial",
-      { desde: r.hoy, hasta: r.hoy, resultado: "Completado" },
-    ],
+
+  for (const kpi of [
+    {
+      titulo: "Contratos publicados",
+      valor: r.publicados,
+      modulo: "contratos",
+      filtros: { estado: "PUBLICADO" },
+      iconoNombre: "contratos",
+    },
+    {
+      titulo: "Cuentas activas",
+      valor: r.activas,
+      modulo: "cuentas",
+      filtros: { activas: "1" },
+      iconoNombre: "cuentas",
+    },
+    {
+      titulo: "Acciones administrativas de hoy (UTC)",
+      valor: r.acciones,
+      modulo: "historial",
+      filtros: { desde: r.hoy, hasta: r.hoy, resultado: "Completado" },
+      iconoNombre: "historial",
+    },
   ]) {
-    const link = enlace("", modulo, filtros);
-    link.className = "tarjeta";
-    link.append(nodo("span", titulo), nodo("strong", valor, "indicador"));
-    grid.append(link);
+    grid.append(tarjetaKpi(kpi));
   }
+
+  const pieHistorial = nodo("div", null, "acciones-barra");
+  pieHistorial.style.marginTop = "14px";
+  const linkHistorial = enlace("Ver todo el historial", "historial");
+  linkHistorial.append(icono("flechaDer", 14));
+  pieHistorial.append(linkHistorial);
+
   bloque.append(
     grid,
     nodo("h2", "Accesos"),
     tarjetas(FUNCIONALIDADES_POR_ROL.ADMIN_BACKOFFICE),
     nodo("h2", "Actividad reciente"),
     eventos(r.recientes),
-    enlace("Ver todo el historial", "historial")
+    pieHistorial
   );
   return bloque;
 }
+
 function filtrosListado(ruta, campos, params) {
-  const form = nodo("form"),
-    grupo = nodo("fieldset");
-  grupo.append(nodo("legend", "Filtros"));
-  for (const [clave, titulo, tipo, opciones] of campos) {
-    const label = nodo("label", titulo);
+  const form = nodo("form", null, "barra-filtros");
+  const titulo = nodo("p", null, "barra-filtros-titulo");
+  titulo.append(icono("filtro", 14), nodo("span", "Filtros"));
+  const grid = nodo("div", null, "barra-filtros-grid");
+
+  for (const [clave, etiqueta, tipo, opcionesLista] of campos) {
+    const label = nodo("label", tipo === "checkbox" ? null : etiqueta);
     let control;
-    if (opciones) {
+    if (opcionesLista) {
       control = nodo("select");
-      for (const [v, t] of opciones) {
+      for (const [v, t] of opcionesLista) {
         const o = nodo("option", t);
         o.value = v;
         control.append(o);
@@ -79,24 +111,34 @@ function filtrosListado(ruta, campos, params) {
     }
     control.name = clave;
     if (tipo === "checkbox") {
+      label.className = "filtro-check";
       control.value = "1";
       control.checked = params.get(clave) === "1";
-    } else control.value = params.get(clave) || "";
-    label.append(control);
-    grupo.append(label);
+      label.append(control, nodo("span", etiqueta));
+    } else {
+      control.value = params.get(clave) || "";
+      label.append(control);
+    }
+    grid.append(label);
   }
-  grupo.append(nodo("button", "Aplicar filtros"), enlace("Limpiar", ruta));
-  form.append(grupo);
+
+  const acciones = nodo("div", null, "barra-filtros-acciones");
+  const btnAplicar = nodo("button", "Aplicar filtros", "btn-primario");
+  btnAplicar.type = "submit";
+  acciones.append(btnAplicar, enlace("Limpiar", ruta));
+
+  form.append(titulo, grid, acciones);
   form.onsubmit = (e) => {
     e.preventDefault();
     const consulta = new URLSearchParams();
     for (const [k, v] of new FormData(form)) {
       if (v.trim()) consulta.set(k, v.trim());
     }
-    location.hash = ruta + "?" + consulta.toString();
+    location.hash = ruta + (consulta.toString() ? "?" + consulta.toString() : "");
   };
   return form;
 }
+
 const estadosContrato = [
   "BORRADOR",
   "PUBLICADO",
@@ -109,9 +151,11 @@ const estadosContrato = [
   "CANCELADO",
   "EN_DISPUTA",
 ];
+
 function opciones(valores) {
   return [["", "Todos"], ...valores.map((v) => [v, v])];
 }
+
 let operacionPendiente;
 function confirmarOperacion(accion, tipo, fila) {
   operacionPendiente = { accion, tipo, id: fila.id };
@@ -133,11 +177,13 @@ function confirmarOperacion(accion, tipo, fila) {
   $("confirmacion").showModal();
   $("motivo").focus();
 }
+
 $("volver").onclick = () => $("confirmacion").close();
 let enviandoBaja = false;
 $("confirmacion").addEventListener("cancel", (e) => {
   if (enviandoBaja) e.preventDefault();
 });
+
 $("form-baja").onsubmit = async (e) => {
   e.preventDefault();
   if (enviandoBaja) return;
@@ -164,10 +210,12 @@ $("form-baja").onsubmit = async (e) => {
         window.addEventListener("hashchange", resolve, { once: true })
       );
     }
-    $("aviso").textContent =
+    mostrarAviso(
       accion === "cancelar"
         ? "Cancelación registrada correctamente."
-        : "Eliminación registrada correctamente.";
+        : "Eliminación registrada correctamente.",
+      "exito"
+    );
   } catch (error) {
     $("error-baja").textContent = error.message;
   } finally {
@@ -175,14 +223,25 @@ $("form-baja").onsubmit = async (e) => {
     botones.forEach((b) => (b.disabled = false));
   }
 };
+
 function detalleElemento(tipo, fila, ruta, params) {
   const f = document.createDocumentFragment(),
     anterior = new URLSearchParams(params);
   anterior.delete("detalle");
+
+  const barraTop = nodo("div", null, "acciones-barra");
+  const btnVolver = enlace("Volver al listado", ruta, Object.fromEntries(anterior));
+  btnVolver.prepend(icono("flechaIzq", 15));
+  barraTop.append(btnVolver);
+
+  const situacion = fila.eliminado
+    ? badgeEstado("ELIMINADO", "Eliminado")
+    : badgeEstado("VIGENTE", "Vigente");
+
   const campos = [
-    ["Identificador", fila.id],
-    ["Estado", fila.estado],
-    ["Eliminación", fila.eliminado ? "Eliminado" : "Vigente"],
+    ["Identificador", celdaId(fila.id)],
+    ["Estado", badgeEstado(fila.estado)],
+    ["Eliminación", situacion],
   ];
   if (tipo === "cuenta")
     campos.push(
@@ -194,19 +253,20 @@ function detalleElemento(tipo, fila, ruta, params) {
     campos.push(
       ["Origen", fila.origen],
       ["Destino", fila.destino],
-      ["Dador de carga", fila.id_empresa_generadora],
-      ["Transportista", fila.id_transportista],
+      ["Dador de carga", celdaId(fila.id_empresa_generadora)],
+      ["Transportista", fila.id_transportista ? celdaId(fila.id_transportista) : "Sin asignar"],
       ["Carga", fila.tipo_carga],
-      ["Monto total", fila.monto_total + " " + fila.moneda]
+      ["Monto total", nodo("span", formatearMoneda(fila.monto_total, fila.moneda), "num-tabular")]
     );
-  f.append(
-    enlace("Volver al listado", ruta, Object.fromEntries(anterior)),
-    ficha(campos),
+
+  const acciones = nodo("div", null, "acciones-grupo");
+  acciones.append(
     enlace("Consultar historial del elemento", "historial", { tipo, elemento_id: fila.id })
   );
   if (tipo === "contrato" && fila.cancelable) {
-    f.append(boton("Cancelar contrato", () => confirmarOperacion("cancelar", tipo, fila)));
+    acciones.append(boton("Cancelar contrato", () => confirmarOperacion("cancelar", tipo, fila)));
   }
+
   let razon = "";
   if (fila.eliminado) razon = "Este elemento ya fue eliminado.";
   else if (tipo === "contrato" && fila.estado !== "PUBLICADO")
@@ -214,14 +274,22 @@ function detalleElemento(tipo, fila, ruta, params) {
   else if (tipo === "cuenta" && fila.rol === "ADMIN_BACKOFFICE")
     razon =
       "Las cuentas administrativas están protegidas. El panel solo permite eliminar cuentas de transportistas y dadores de carga.";
-  if (razon) f.append(nodo("p", razon));
-  else {
+
+  if (!razon) {
     const b = boton("Eliminar " + tipo, () => confirmarOperacion("eliminar", tipo, fila));
     b.classList.add("peligro");
-    f.append(b);
+    acciones.append(b);
+  }
+
+  f.append(barraTop, ficha(campos), acciones);
+  if (razon) {
+    const nota = nodo("p", razon, "nota-protegida");
+    nota.style.marginTop = "14px";
+    f.append(nota);
   }
   return f;
 }
+
 async function elementosAdmin(ruta, params) {
   const contrato = ruta === "contratos",
     tipo = contrato ? "contrato" : "cuenta",
@@ -235,7 +303,10 @@ async function elementosAdmin(ruta, params) {
     const fila = filas.find((f) => f.id === detalle);
     return fila
       ? detalleElemento(tipo, fila, ruta, params)
-      : nodo("p", "El elemento ya no aparece en esta consulta.");
+      : estadoVacio(
+          "El elemento ya no aparece en esta consulta.",
+          enlace("Volver al listado", ruta)
+        );
   }
   const campos = [
     ["incluir_eliminados", contrato ? "Incluir eliminados" : "Incluir eliminadas", "checkbox"],
@@ -243,7 +314,9 @@ async function elementosAdmin(ruta, params) {
   if (contrato) campos.push(["estado", "Estado", null, opciones(estadosContrato)]);
   const f = document.createDocumentFragment();
   f.append(filtrosListado(ruta, campos, params));
-  if (!contrato && !incluir) f.append(nodo("p", "Cuentas activas"));
+  if (!contrato && !incluir) {
+    f.append(nodo("p", "Cuentas activas (" + filas.length + ")", "subtitulo-seccion"));
+  }
   f.append(
     tabla(
       [
@@ -255,9 +328,9 @@ async function elementosAdmin(ruta, params) {
       ],
       filas.map((fila) => [
         contrato ? fila.origen + " → " + fila.destino : fila.nombre,
-        contrato ? fila.estado : nombresRol[fila.rol],
-        fila.id,
-        fila.eliminado ? "Eliminado" : "Vigente",
+        contrato ? badgeEstado(fila.estado) : nombresRol[fila.rol] || fila.rol,
+        celdaId(fila.id),
+        fila.eliminado ? badgeEstado("ELIMINADO", "Eliminado") : badgeEstado("VIGENTE", "Vigente"),
         enlace("Ver detalle", ruta, { ...Object.fromEntries(params), detalle: fila.id }),
       ]),
       "No hay elementos que coincidan con los filtros."
@@ -265,11 +338,13 @@ async function elementosAdmin(ruta, params) {
   );
   return f;
 }
+
 function valoresEvento(valor) {
   return valor
     ? valor.estado + " · " + (valor.eliminado ? "Eliminado" : "Vigente")
     : "Sin registro";
 }
+
 async function historialAdmin(params) {
   const consulta = new URLSearchParams(params);
   consulta.delete("detalle");
@@ -278,24 +353,29 @@ async function historialAdmin(params) {
     detalle = params.get("detalle");
   if (detalle) {
     const e = filas.find((fila) => fila.id === detalle);
-    f.append(enlace("Volver al historial", "historial", Object.fromEntries(consulta)));
+    const barra = nodo("div", null, "acciones-barra");
+    const btnVolver = enlace("Volver al historial", "historial", Object.fromEntries(consulta));
+    btnVolver.prepend(icono("flechaIzq", 15));
+    barra.append(btnVolver);
+    f.append(barra);
+
     if (e)
       f.append(
         ficha([
-          ["Operación", e.id],
-          ["Fecha y hora (UTC)", fechaUTC(e.fecha)],
+          ["Operación", celdaId(e.id)],
+          ["Fecha y hora (UTC)", nodo("span", fechaUTC(e.fecha), "num-tabular")],
           ["Administrador", e.administrador],
-          ["ID administrador", e.administrador_id],
-          ["Acción", etiquetasAccion[e.accion]],
-          ["Elemento", e.tipo + " · " + e.elemento_id],
+          ["ID administrador", celdaId(e.administrador_id)],
+          ["Acción", etiquetasAccion[e.accion] || e.accion],
+          ["Elemento", elementoEventoNodo(e)],
           ["Motivo", e.motivo || "Sin motivo informado"],
           ["Antes", valoresEvento(e.anterior)],
           ["Después", valoresEvento(e.posterior)],
-          ["Resultado", e.resultado],
-          ["Causa", e.causa],
+          ["Resultado", badgeEstado(e.resultado)],
+          ["Causa", e.causa || "—"],
         ])
       );
-    else f.append(nodo("p", "No se encontró la operación."));
+    else f.append(estadoVacio("No se encontró la operación."));
     return f;
   }
   f.append(
@@ -316,6 +396,7 @@ async function historialAdmin(params) {
   );
   return f;
 }
+
 async function validacionesAdmin() {
   const [documentos, dadores] = await Promise.all([
     api("/onboarding/admin/documentos"),
@@ -326,7 +407,7 @@ async function validacionesAdmin() {
     nodo(
       "p",
       "Revisa y aprueba o rechaza la documentación de transportistas y los perfiles tributarios de dadores pendientes.",
-      "texto-suave"
+      "subtitulo-seccion"
     )
   );
 
@@ -361,14 +442,14 @@ async function validacionesAdmin() {
       documentos.map((doc) => {
         const acciones = nodo("div", null, "acciones-grupo");
         acciones.append(
-          boton("Aprobar", () => resolverDocumento(doc.id, "APROBADO"), "btn-exito"),
-          boton("Rechazar", () => resolverDocumento(doc.id, "RECHAZADO"), "peligro")
+          boton("Aprobar", () => resolverDocumento(doc.id, "APROBADO"), "btn-exito btn-sm"),
+          boton("Rechazar", () => resolverDocumento(doc.id, "RECHAZADO"), "peligro btn-sm")
         );
         return [
           doc.tipo,
           doc.archivo,
-          doc.user_id,
-          fechaLocal(doc.created_at),
+          celdaId(doc.user_id),
+          nodo("span", fechaLocal(doc.created_at), "num-tabular"),
           badgeEstado(doc.estado),
           acciones,
         ];
@@ -384,11 +465,11 @@ async function validacionesAdmin() {
       dadores.map((dador) => {
         const acciones = nodo("div", null, "acciones-grupo");
         acciones.append(
-          boton("Aprobar", () => resolverDador(dador.id, "APROBADO"), "btn-exito"),
-          boton("Rechazar", () => resolverDador(dador.id, "RECHAZADO"), "peligro")
+          boton("Aprobar", () => resolverDador(dador.id, "APROBADO"), "btn-exito btn-sm"),
+          boton("Rechazar", () => resolverDador(dador.id, "RECHAZADO"), "peligro btn-sm")
         );
         return [
-          dador.rut_id_empresa,
+          nodo("span", dador.rut_id_empresa, "num-tabular"),
           dador.datos_facturacion?.razon_social,
           dador.datos_facturacion?.direccion,
           dador.datos_facturacion?.correo_facturacion,
@@ -410,7 +491,7 @@ async function configuracionAdmin() {
     nodo(
       "p",
       "Ajusta las reglas de negocio globales vigentes para la creación y validación de contratos.",
-      "texto-suave"
+      "subtitulo-seccion"
     )
   );
 

@@ -4,6 +4,8 @@ import path from "path";
 // Función que crea la ventana principal
 function createWindow(): void {
   const ventana = new BrowserWindow({
+    title: "MansoViaje — Contratos de carga",
+    backgroundColor: "#f8fafc",
     width: 1180,
     height: 760,
     minWidth: 800,

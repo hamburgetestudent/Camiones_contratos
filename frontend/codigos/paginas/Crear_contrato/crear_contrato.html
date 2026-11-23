@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Crear contrato | Camiones Contratos</title>
+    <title>Crear contrato | MansoViaje</title>
     <link rel="stylesheet" href="../comun/tema.css" />
     <link rel="stylesheet" href="crear_contrato.css" />
   </head>
@@ -11,18 +11,18 @@
     <div class="aplicacion">
       <header class="barra-superior">
         <div class="marca">
-          <span class="marca-icono" aria-hidden="true">CC</span>
+          <span class="mv-isotipo" id="logo-crear" aria-hidden="true"></span>
           <div>
-            <h1>Camiones Contratos</h1>
-            <p>Creación de contrato de transporte</p>
+            <h1>MansoViaje</h1>
+            <p>Creación de contrato de carga</p>
           </div>
         </div>
 
         <div class="acciones-barra">
-          <button id="boton-volver" class="boton-secundario" type="button">
+          <button id="boton-volver" class="btn-secundario btn-sm" type="button">
             ← Volver a contratos
           </button>
-          <a href="../panel/index.html" class="boton-secundario enlace-panel">Ir al panel</a>
+          <a href="../panel/index.html" class="btn-secundario btn-sm enlace-panel">Ir al panel</a>
         </div>
       </header>
 
@@ -34,7 +34,7 @@
               Completa las especificaciones de ruta, carga y tarifa para registrar el contrato.
             </p>
           </div>
-          <span id="etiqueta-kyc" class="etiqueta-estado oculto"></span>
+          <span id="etiqueta-kyc" class="badge oculto"></span>
         </div>
 
         <div id="alerta-general" class="alerta oculto" role="alert" aria-live="polite"></div>
@@ -56,6 +56,7 @@
                     autocomplete="off"
                   />
                   <small class="ayuda">Mínimo 3 caracteres. Se normalizará en mayúsculas.</small>
+                  <p class="error-inline oculto" id="error-origen"></p>
                 </label>
 
                 <label>
@@ -70,6 +71,7 @@
                     autocomplete="off"
                   />
                   <small class="ayuda">Debe ser distinto al origen.</small>
+                  <p class="error-inline oculto" id="error-destino"></p>
                 </label>
               </div>
 
@@ -83,6 +85,7 @@
                     required
                   />
                   <small class="ayuda">Debe ser anterior o igual a la salida.</small>
+                  <p class="error-inline oculto" id="error-f_cierre_postulaciones"></p>
                 </label>
 
                 <label>
@@ -96,6 +99,7 @@
                   <small id="ayuda-anticipacion" class="ayuda">
                     Mínimo 2 horas de anticipación.
                   </small>
+                  <p class="error-inline oculto" id="error-f_estimada_salida"></p>
                 </label>
 
                 <label>
@@ -107,6 +111,7 @@
                     required
                   />
                   <small class="ayuda">Posterior a la fecha de salida.</small>
+                  <p class="error-inline oculto" id="error-f_estimada_llegada"></p>
                 </label>
               </div>
             </fieldset>
@@ -142,6 +147,7 @@
                     required
                     placeholder="Ej: 15000"
                   />
+                  <p class="error-inline oculto" id="error-input_camionKG"></p>
                 </label>
 
                 <label>
@@ -156,7 +162,16 @@
                     placeholder="Ej: 8500"
                   />
                   <small class="ayuda">No puede superar la capacidad del camión.</small>
+                  <p class="error-inline oculto" id="error-peso_total"></p>
                 </label>
+              </div>
+
+              <div id="ocupacion-wrap" class="ocupacion-box oculto" aria-live="polite">
+                <div class="ocupacion-cabecera">
+                  <span>Ocupación estimada del camión</span>
+                  <strong id="texto-capacidad" class="num-tabular">0%</strong>
+                </div>
+                <div class="ocupacion-barra"><span id="barra-capacidad"></span></div>
               </div>
 
               <div class="grid-2">
@@ -209,6 +224,7 @@
                   </span>
                 </label>
               </div>
+              <p class="error-inline oculto" id="error-checks"></p>
 
               <div class="grid-2">
                 <label id="wrap-onu">
@@ -220,9 +236,10 @@
                     placeholder="Ej: UN1203 o 1203"
                     autocomplete="off"
                   />
-                  <small class="ayuda"
-                    >4 dígitos (ej. 1234 o UN1234). Obligatorio en carga peligrosa.</small
-                  >
+                  <small class="ayuda">
+                    4 dígitos (ej. 1234 o UN1234). Obligatorio en carga peligrosa.
+                  </small>
+                  <p class="error-inline oculto" id="error-numero_onu"></p>
                 </label>
 
                 <label id="wrap-embalaje">
@@ -235,13 +252,14 @@
                     placeholder="Describe cómo debe embalarse y asegurarse la carga (mín. 10 caracteres)"
                   ></textarea>
                   <small class="ayuda">Obligatorio para carga frágil (mínimo 10 caracteres).</small>
+                  <p class="error-inline oculto" id="error-req_embalaje"></p>
                 </label>
               </div>
             </fieldset>
 
             <fieldset class="seccion-form">
               <legend>4. Condiciones económicas</legend>
-              <div class="grid-4">
+              <div class="grid-2">
                 <label>
                   <span>Moneda <abbr title="Obligatorio">*</abbr></span>
                   <select id="moneda" name="moneda" required>
@@ -265,7 +283,9 @@
                     step="any"
                     required
                     placeholder="Ej: 250000"
+                    class="num-tabular"
                   />
+                  <p class="error-inline oculto" id="error-monto_neto"></p>
                 </label>
 
                 <label>
@@ -278,10 +298,12 @@
                     step="any"
                     required
                     placeholder="Calculado automáticamente"
+                    class="num-tabular"
                   />
-                  <small id="ayuda-iva" class="ayuda"
-                    >En CLP debe corresponder al 19% del neto.</small
-                  >
+                  <small id="ayuda-iva" class="ayuda">
+                    En CLP debe corresponder al 19% del neto.
+                  </small>
+                  <p class="error-inline oculto" id="error-monto_iva"></p>
                 </label>
 
                 <label>
@@ -294,8 +316,10 @@
                     step="any"
                     required
                     readonly
+                    class="num-tabular"
                   />
                   <small class="ayuda">Neto + IVA.</small>
+                  <p class="error-inline oculto" id="error-monto_total"></p>
                 </label>
               </div>
             </fieldset>
@@ -303,7 +327,7 @@
             <div class="acciones-formulario">
               <button
                 id="btn-guardar-borrador"
-                class="boton-secundario"
+                class="btn-secundario"
                 type="submit"
                 data-modo="BORRADOR"
               >
@@ -311,7 +335,7 @@
               </button>
               <button
                 id="btn-crear-publicar"
-                class="boton-principal"
+                class="btn-primario"
                 type="submit"
                 data-modo="PUBLICADO"
               >
@@ -322,34 +346,51 @@
 
           <aside class="panel-resumen" aria-label="Resumen del contrato">
             <h3>Resumen previo</h3>
+
+            <div class="resumen-ruta-visual">
+              <div class="resumen-nodo">
+                <span class="punto-origen"></span>
+                <span id="resumen-origen">Origen sin definir</span>
+              </div>
+              <div class="resumen-conector"></div>
+              <div class="resumen-nodo">
+                <span class="punto-destino"></span>
+                <span id="resumen-destino">Destino sin definir</span>
+              </div>
+            </div>
+
             <dl class="lista-resumen">
               <dt>Empresa generadora</dt>
               <dd id="resumen-empresa">—</dd>
 
-              <dt>Ruta</dt>
-              <dd id="resumen-ruta">Sin definir</dd>
-
-              <dt>Salida</dt>
-              <dd id="resumen-salida">—</dd>
+              <dt>Salida estimada</dt>
+              <dd id="resumen-salida" class="num-tabular">—</dd>
 
               <dt>Tipo de carga</dt>
               <dd id="resumen-carga">GENERAL</dd>
 
               <dt>Peso / Capacidad</dt>
-              <dd id="resumen-capacidad">—</dd>
+              <dd id="resumen-capacidad" class="num-tabular">—</dd>
+
+              <dt>Requisitos activos</dt>
+              <dd id="resumen-requisitos" class="chips-resumen">Ninguno</dd>
 
               <dt>Total contrato</dt>
-              <dd id="resumen-total" class="resumen-monto">$0</dd>
+              <dd id="resumen-total" class="resumen-monto num-tabular">$0</dd>
             </dl>
 
             <div id="resultado-creacion" class="resultado-creacion oculto" aria-live="polite">
               <h4 id="resultado-titulo">Contrato creado</h4>
               <p id="resultado-detalle"></p>
               <div class="resultado-acciones">
-                <button id="btn-nuevo-contrato" class="boton-secundario" type="button">
+                <button id="btn-nuevo-contrato" class="btn-secundario" type="button">
                   Crear otro contrato
                 </button>
-                <a href="../Principal/principal.html" class="boton-principal enlace-volver">
+                <a
+                  id="enlace-resultado-volver"
+                  href="../panel/index.html#contratos"
+                  class="btn-primario enlace-volver"
+                >
                   Volver al listado
                 </a>
               </div>
@@ -359,11 +400,12 @@
       </main>
 
       <footer class="pie-pagina">
-        <span>Camiones Contratos</span>
+        <span>MansoViaje · Contratos de carga</span>
         <span>Módulo de creación de contratos</span>
       </footer>
     </div>
 
+    <script src="../comun/iconos.js"></script>
     <script src="crear_contrato.js"></script>
   </body>
 </html>
