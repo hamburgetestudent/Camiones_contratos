@@ -66,4 +66,4 @@ python -m coverage xml
 
 El panel imprime un resultado por caso y termina con código 0 si se cumplen todas las aserciones. La suite local registró **216 pruebas y 70 subpruebas aprobadas**. Coverage.py 7.17.2 midió **93,9 %** en las capas Python configuradas, con 1.240 sentencias y 232 ramas. [Reporte local por módulo](cobertura-criterio-6.txt).
 
-La [CI de RamaSS](https://github.com/hamburgetestudent/Camiones_contratos/actions/workflows/tests.yml?query=branch%3ARamaSS) ejecuta la suite con cobertura en el trabajo de backend y los tres casos en el trabajo de frontend. El artefacto `cobertura` contiene el XML de esa ejecución.
+La [ejecución del commit de entrega `c091544`](https://github.com/hamburgetestudent/Camiones_contratos/actions/runs/45510972035) ejecuta la suite con cobertura en el trabajo de backend y los tres casos en el trabajo de frontend. El artefacto `cobertura` contiene el XML de esa ejecución.
