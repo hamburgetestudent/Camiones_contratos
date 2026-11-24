@@ -101,6 +101,10 @@ pytest inicio_test.py -v
 
 ---
 
+## Evidencias del Hito 3
+
+- [Criterio 4 · Modularización de las interfaces y dependencias](docs/criterio-4-modularizacion.md)
+
 ## Contratos de diseño: precondiciones, postcondiciones e invariantes
 
 Las reglas de uso de las operaciones principales están documentadas en el docstring de cada función, bajo los encabezados **Precondiciones**, **Postcondiciones** e **Invariantes**. Cuando se viola una precondición la operación falla con un error claro (`ValueError`, `PermissionError` o `HTTPException`) y **no modifica el estado**.
