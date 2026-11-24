@@ -4,6 +4,7 @@ import sys
 from typing import Any, Optional, Union
 from uuid import UUID, uuid4
 
+from email_validator import EmailNotValidError, validate_email
 from pydantic import BaseModel, Field, field_validator
 
 from domain.modelos_onboarding import (
@@ -36,10 +37,18 @@ class EstadoUsuario(StrEnum):
 
 class UsuarioBase(BaseModel):
     nombre: str = Field(..., min_length=2, description="Nombre del usuario")
-    email: str = Field(
-        ..., pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$", description="Correo electrónico único"
-    )
+    email: str = Field(..., description="Correo electrónico único")
     rol: RolUsuario = Field(..., description="Rol del usuario en el sistema")
+
+    @field_validator("email")
+    @classmethod
+    def _validar_email(cls, valor: str) -> str:
+        """Valida sintaxis con email-validator (sin consultas DNS) y conserva el texto."""
+        try:
+            validate_email(valor, check_deliverability=False)
+        except EmailNotValidError as exc:
+            raise ValueError(f"Correo electrónico inválido: {exc}") from exc
+        return valor
 
 
 class UsuarioCrear(UsuarioBase):
