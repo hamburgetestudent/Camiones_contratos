@@ -389,3 +389,7 @@ mindmap
 | Santiago Sanchez | Backend | 1.2, 2.1, 2.2 |
 | Fabian Ahumada | Backend | 1.1, 2.4 |
 | Gabriel Alvares | Frontend | 2.3, 2.4 |
+
+## Evidencia del Hito 3
+
+- [Criterio 4: Modularización de las interfaces y dependencias](docs/criterio-4-modularizacion.md)

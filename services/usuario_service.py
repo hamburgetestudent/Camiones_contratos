@@ -14,7 +14,7 @@ from domain.modelos_usuario import (
     UsuarioModelo,
 )
 from services.onboarding_service import onboarding_service_instancia
-from services.security import crear_token_acceso
+from services.respuesta_login import construir_respuesta_login
 
 # ---------------------------------------------------------------------------
 # SQL: tabla ``usuarios`` (usa la base de datos por defecto de database.conexion)
@@ -217,34 +217,7 @@ class UsuarioService:
             )
 
         usuario = UsuarioService.autenticar_usuario(email, password)
-        rol_valor = (
-            usuario.rol.value if hasattr(usuario.rol, "value") else str(usuario.rol)
-        )
-        estado_valor = (
-            usuario.estado.value
-            if hasattr(usuario.estado, "value")
-            else str(usuario.estado)
-        )
-
-        access_token = crear_token_acceso(
-            {
-                "sub": str(usuario.id),
-                "email": usuario.email,
-                "rol": rol_valor,
-            }
-        )
-
-        return RespuestaLogin(
-            access_token=access_token,
-            token_type="bearer",
-            rol=rol_valor,
-            mensaje="Inicio de sesión exitoso",
-            usuario=usuario.email,
-            id=str(usuario.id),
-            nombre=usuario.nombre,
-            email=usuario.email,
-            estado=estado_valor,
-        )
+        return construir_respuesta_login(usuario)
 
 
 class ValidadorUsuario:
