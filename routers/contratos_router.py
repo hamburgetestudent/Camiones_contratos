@@ -7,7 +7,14 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from domain.maquina_estados import EstadoContrato
 from domain.modelos import ContratoCrear, ContratoModelo
-from routers.comun import ServicioContratoDep, manejar_excepcion_http
+from domain.modelos_usuario import RolUsuario
+from routers.comun import (
+    ServicioContratoDep,
+    confirmar_operacion,
+    manejar_excepcion_http,
+)
+from routers.sesion import UsuarioActual
+from services import admin_service
 
 router = APIRouter(prefix="/contratos", tags=["Contratos"])
 
@@ -30,6 +37,9 @@ class SolicitudCambioEstado(BaseModel):
     id_camion: UUID | None = Field(
         None, description="Identificador del camion asignado"
     )
+
+    motivo: str = ""
+    confirmado: bool = False
 
     model_config = ConfigDict(extra="forbid")
 
@@ -103,8 +113,21 @@ def cambiar_estado_contrato(
     contrato_id: UUID,
     payload: SolicitudCambioEstado,
     contrato_service: ServicioContratoDep,
+    actor: UsuarioActual,
 ) -> ContratoModelo:
     """Aplica la maquina de estados para avanzar el contrato a un nuevo estado."""
+    if (
+        actor.rol == RolUsuario.ADMIN_BACKOFFICE
+        and payload.nuevo_estado == EstadoContrato.CANCELADO
+    ):
+        confirmar_operacion(
+            admin_service.cancelar_contrato,
+            contrato_id,
+            actor,
+            payload.motivo,
+            payload.confirmado,
+        )
+        return contrato_service.obtener_contrato(contrato_id)
     try:
         return contrato_service.cambiar_estado(
             contrato_id=contrato_id,

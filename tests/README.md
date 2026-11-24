@@ -15,8 +15,8 @@ tests/
 ├── test_registro_usuario.py  # Flujos integrales de registro y validaciones
 ├── configuracion/            # Pruebas de configuración de negocio y parámetros
 ├── contratos/                # Ciclo de vida de contratos, máquina de estados y transiciones
-├── dao/                      # Pruebas de acceso a datos (SQLite y Memoria)
 ├── onboarding/               # Validación de transportistas, dadores y documentos
+├── persistencia/             # Pruebas de acceso a datos y esquema SQLite
 ├── seguridad/                # Codificación base64url, tokens JWT y criptografía
 ├── subastas/                 # Publicación de cargas, ofertas y adjudicaciones
 └── usuarios/                 # CRUD de usuarios, hashing de contraseñas y validaciones
@@ -37,13 +37,11 @@ Todos los tests heredan de `BaseTestCase` (o de sus subclases de módulo), la cu
 
 ### A. Ejecución Unificada con Medición de Cobertura (Recomendado)
 
-Ejecuta los 181 tests y muestra en consola la tabla detallada de líneas y ramas cubiertas:
+Ejecuta los tests y muestra en consola la tabla detallada de líneas y ramas cubiertas:
 ```powershell
-# Opción 1: Python
 python run_tests.py
-
-# Opción 2: Script directo PowerShell
-.\run_tests.ps1
+# o bien
+npm run test
 ```
 
 ### B. Reporte Interactivo HTML
@@ -51,7 +49,7 @@ Genera una interfaz web interactiva en la carpeta `htmlcov/` para auditar visual
 ```powershell
 python run_tests.py --html
 # o bien
-.\run_tests.ps1 -Html
+npm run test:html
 ```
 Ruta del reporte generado:
 `htmlcov/index.html`
@@ -61,15 +59,15 @@ Elimina de forma segura la base de datos `.coverage`, la carpeta `htmlcov/` y cu
 ```powershell
 python run_tests.py --clean
 # o bien
-.\run_tests.ps1 -Clean
+npm run test:clean
 ```
 
 ---
 
 ## 3. Ejecución Directa con `unittest` (Filtros Específicos)
 
-> [!WARNING]
-> Debido a que existe tanto una carpeta `dao/` en la raíz como una carpeta `tests/dao/`, al usar `unittest` nativo **siempre** debes indicar `-t .` (top-level directory) para evitar conflictos de importación de módulos (`ModuleNotFoundError`).
+> [!TIP]
+> Al usar `unittest` nativo, indica `-t .` (top-level directory) para asegurar la resolución correcta de importaciones desde la raíz del proyecto.
 
 ### Ejecutar todos los tests:
 ```powershell
@@ -122,7 +120,7 @@ El reporte generado por `coverage.py` evalúa dos criterios clave:
 - **`Missing`:** **Números exactos de línea** que no fueron alcanzados por las pruebas.
 
 ### Priorización para nuevos tests:
-1. **Prioridad 1:** Archivos con bajo porcentaje en líneas y ramas (ej. `routers/login_router.py`).
+1. **Prioridad 1:** Archivos con bajo porcentaje en líneas y ramas (ej. `routers/auth_router.py`).
 2. **Prioridad 2:** Archivos con alto porcentaje de líneas pero ramas faltantes (`BrPart` > 0). El 90% de líneas puede dar falsa seguridad si las ramas de error no se recorren.
 3. **Prioridad 3:** Casos borde de validadores y transiciones de estado.
 
@@ -151,3 +149,15 @@ El reporte generado por `coverage.py` evalúa dos criterios clave:
 4. **Validación de errores:**
    - Emplea `with self.assertHttpException(400, "detalle"):` para probar los fallos esperados en routers y servicios.
 
+
+## Expiración de subastas
+
+Las cinco pruebas de `tests/test_subasta_expiracion.py` utilizan una base SQLite temporal por caso. Para simular el vencimiento, actualizan el plazo del contrato y conservan las ofertas existentes. Una oferta tardía se rechaza. Si era una subasta sin ofertas, el servicio confirma su cancelación antes de comunicar el rechazo. Si tenía ofertas, el dador aún puede adjudicarla.
+
+## Bajas administrativas
+
+Las pruebas de `tests/test_panel_admin.py` comprueban la baja lógica de contratos publicados, la conservación de ofertas y la revocación de acceso al eliminar cuentas. También simulan un fallo al escribir el historial para verificar que la baja se revierta. Para ejecutar únicamente estos casos, usa `python -m pytest tests/test_panel_admin.py -q`.
+
+Los intentos de baja de un usuario autenticado sin rol administrativo reciben HTTP 403. El historial identifica al usuario de la sesión y registra el rechazo sin exponer datos del contrato o de la cuenta solicitada.
+
+Desde `frontend`, ejecuta `npm ci` y `npm run test:panel` para verificar el acceso de los tres roles. Esta prueba usa Playwright con Microsoft Edge, inicia FastAPI con SQLite temporal y comprueba el resumen, una baja administrativa, el historial y el cierre de sesión.

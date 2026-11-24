@@ -54,6 +54,12 @@ def _asegurar_esquema(ruta: str) -> None:
         conn = sqlite3.connect(ruta)
         try:
             conn.executescript(SCHEMA_SQL)
+            # CREATE TABLE IF NOT EXISTS no añade columnas a una base ya instalada.
+            conn.execute("BEGIN IMMEDIATE")
+            for tabla in ("usuarios", "contratos"):
+                columnas = {fila[1] for fila in conn.execute(f"PRAGMA table_info({tabla})")}
+                if "eliminado" not in columnas:
+                    conn.execute(f"ALTER TABLE {tabla} ADD COLUMN eliminado INTEGER NOT NULL DEFAULT 0")
             conn.commit()
         finally:
             conn.close()

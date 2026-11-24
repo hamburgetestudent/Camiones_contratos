@@ -1,16 +1,17 @@
-{ 
-    "compilerOptions": { 
-        "target": "ES2022", 
-        "module": "CommonJS", 
-        "rootDir": "codigos", 
-        "outDir": "dist", 
-        "strict": true, 
-        "esModuleInterop": true, 
-        "forceConsistentCasingInFileNames": true, 
-        "sourceMap": true, 
-        "skipLibCheck": true, 
-        "types": [ "node", "electron" ] 
-        }, 
-    "include": [ "codigos/**/*.ts" ], 
-    "exclude": [ "node_modules", "dist" ] 
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "rootDir": "codigos",
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "types": ["node", "electron"]
+  },
+  "files": ["codigos/main.ts"],
+  "include": ["codigos/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

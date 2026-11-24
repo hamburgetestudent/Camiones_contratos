@@ -14,11 +14,7 @@ from domain.modelos_usuario import (
     UsuarioModelo,
 )
 from services.onboarding_service import onboarding_service_instancia
-
-# TD-01: Se importa el componente reutilizable de autenticación.
-# Antes, este servicio construía directamente el token y la respuesta.
-# Ahora delega esa responsabilidad para evitar lógica duplicada.
-from services.respuesta_login import construir_respuesta_login
+from services.security import crear_token_acceso
 
 # ---------------------------------------------------------------------------
 # SQL: tabla ``usuarios`` (usa la base de datos por defecto de database.conexion)
@@ -44,7 +40,7 @@ def buscar_usuario_por_id(
 ) -> UsuarioModelo | None:
     """Obtiene un usuario por su UUID, o None si no existe."""
     fila = conn.execute(
-        f"{_SELECT_USUARIO} WHERE id = ?", (str(usuario_id),)
+        f"{_SELECT_USUARIO} WHERE id = ? AND eliminado = 0", (str(usuario_id),)
     ).fetchone()
     return _fila_a_usuario(fila) if fila else None
 
@@ -54,7 +50,7 @@ def buscar_usuario_por_email(
 ) -> UsuarioModelo | None:
     """Busca un usuario por correo (insensible a mayusculas y espacios extremos)."""
     fila = conn.execute(
-        f"{_SELECT_USUARIO} WHERE lower(trim(email)) = ?", (email.strip().lower(),)
+        f"{_SELECT_USUARIO} WHERE lower(trim(email)) = ? AND eliminado = 0", (email.strip().lower(),)
     ).fetchone()
     return _fila_a_usuario(fila) if fila else None
 
@@ -62,7 +58,7 @@ def buscar_usuario_por_email(
 def buscar_todos_los_usuarios(conn: sqlite3.Connection) -> list[UsuarioModelo]:
     """Retorna todos los usuarios en orden de creacion."""
     filas = conn.execute(
-        f"{_SELECT_USUARIO} ORDER BY created_at ASC, rowid ASC"
+        f"{_SELECT_USUARIO} WHERE eliminado = 0 ORDER BY created_at ASC, rowid ASC"
     ).fetchall()
     return [_fila_a_usuario(fila) for fila in filas]
 
@@ -117,7 +113,8 @@ class UsuarioService:
         # Comprobar unicidad del email y guardar en una sola transaccion (evita
         # que dos registros simultaneos con el mismo email pasen la comprobacion).
         with transaccion_exclusiva() as conn:
-            if buscar_usuario_por_email(conn, usuario_data.email):
+            # El correo sigue vinculado a su titular tras una baja lógica.
+            if conn.execute("SELECT 1 FROM usuarios WHERE email = ?", (usuario_data.email.strip(),)).fetchone():
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="El email ya está registrado",
@@ -132,7 +129,6 @@ class UsuarioService:
             usuario_guardado = guardar_usuario(conn, nuevo_usuario)
 
         # Si adjuntó documentos de transportista en el registro, persistirlos en SQLite
-        # persistirlos en SQLite.
         if usuario_data.documentos:
             for doc in usuario_data.documentos:
                 onboarding_service_instancia.cargar_documento(
@@ -142,7 +138,6 @@ class UsuarioService:
                 )
 
         # Si adjuntó perfil tributario de dador de carga en el registro, persistirlo en SQLite
-        # persistirlo en SQLite.
         if isinstance(usuario_data.perfil_tributario, CrearPerfilDadorDTO):
             onboarding_service_instancia.registrar_o_actualizar_perfil_dador(
                 user_id=usuario_guardado.id,
@@ -196,17 +191,10 @@ class UsuarioService:
 
     @staticmethod
     def iniciar_sesion(credenciales: CredencialesLogin) -> RespuestaLogin:
-        """Autentica las credenciales y devuelve una respuesta OAuth2 Bearer.
-
-        TD-01:
-        Se conserva la validación original de credenciales.
-        La construcción del token y de la respuesta se delega
-        al componente compartido services/respuesta_login.py.
-        """
+        """Autentica las credenciales del usuario y emite credencial de acceso OAuth2 Bearer."""
         email = credenciales.usuario.strip() if credenciales.usuario else ""
         password = credenciales.obtener_password_texto()
 
-        # Validaciones originales: no modificar códigos ni mensajes.
         if not email and not password:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -223,32 +211,34 @@ class UsuarioService:
                 detail="La contraseña es un campo obligatorio.",
             )
 
-        # Se conserva el mecanismo original de autenticación.
         usuario = UsuarioService.autenticar_usuario(email, password)
+        rol_valor = (
+            usuario.rol.value if hasattr(usuario.rol, "value") else str(usuario.rol)
+        )
+        estado_valor = (
+            usuario.estado.value
+            if hasattr(usuario.estado, "value")
+            else str(usuario.estado)
+        )
 
-        # ============================================================
-        # TD-01: REFACTORIZACIÓN DE AUTENTICACIÓN
-        #
-        # ANTES:
-        # Este servicio convertía el rol y el estado del usuario,
-        # preparaba los datos del token y construía RespuestaLogin.
-        #
-        # AHORA:
-        # Se utiliza un componente compartido que concentra
-        # esas operaciones para evitar su duplicación.
-        #
-        # IMPORTANTE:
-        # Se mantiene usuario.email como identificador de respuesta
-        # para conservar el comportamiento del endpoint /auth/login.
-        #
-        # Clases aplicadas:
-        # 3.1 - Refactorización sistemática.
-        # 3.2 - Eliminación de duplicación y deuda técnica.
-        # 3.3 - Reutilización de componentes.
-        # ============================================================
-        return construir_respuesta_login(
-            datos_usuario=usuario,
-            usuario_solicitado=usuario.email,
+        access_token = crear_token_acceso(
+            {
+                "sub": str(usuario.id),
+                "email": usuario.email,
+                "rol": rol_valor,
+            }
+        )
+
+        return RespuestaLogin(
+            access_token=access_token,
+            token_type="bearer",
+            rol=rol_valor,
+            mensaje="Inicio de sesión exitoso",
+            usuario=usuario.email,
+            id=str(usuario.id),
+            nombre=usuario.nombre,
+            email=usuario.email,
+            estado=estado_valor,
         )
 
 

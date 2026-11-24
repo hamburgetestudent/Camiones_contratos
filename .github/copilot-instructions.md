@@ -8,11 +8,8 @@ Run backend commands from the repository root (`Camiones_contratos/`).
 
 - Create/activate the documented Python virtual environment and install runtime dependencies with `pip install -r requirements.txt`.
 - Start the FastAPI app with `uvicorn main:app --reload --host 127.0.0.1 --port 8000`. The OpenAPI UI is at `http://127.0.0.1:8000/docs`.
-- Install development tools with `pip install -r requirements-dev.txt`.
-- Run the full Python test suite with `pytest -v`.
-- Run the repository verification harness with `pytest inicio_test.py -v`. It checks Python compilation/importability and required frontend files.
-- Run one verification test with, for example, `pytest inicio_test.py::TestCompilacionCodigo::test_compilacion_integral_sin_errores -v`. Use `pytest inicio_test.py -k <substring> -v` when selecting by name.
-- Run Ruff linting with `ruff check .` and formatting validation with `ruff format --check .`. `ruff check --fix .` and `ruff format .` apply the project's safe fixes and formatting.
+- Run the full Python test suite with `npm run test` (or `python run_tests.py`).
+- Run Ruff linting with `npm run lint` (`ruff check .`) and formatting validation with `npm run format:py:check` (`ruff format --check .`). `npm run lint:fix` and `npm run format:py` apply safe fixes and formatting.
 
 ### Frontend
 
@@ -29,14 +26,14 @@ The frontend TypeScript compiler is strict, targets ES2022/CommonJS, writes comp
 
 This is a desktop Electron client backed by a modular FastAPI REST application.
 
-- `main.py` creates the FastAPI application and registers the authentication, login, configuration, contracts, onboarding, and auction routers.
+- `main.py` creates the FastAPI application and registers the authentication, configuration, contracts, onboarding, and auction routers.
 - `routers/` is the HTTP boundary. Routers define Pydantic request/response schemas, translate domain/service failures to HTTP errors, and obtain services through typed dependencies in `routers/comun.py`.
-- `services/` contains application use cases. Contract and auction services orchestrate domain validation and persistence; `services/dependencies.py` owns the shared in-memory DAO/service instances.
+- `services/` contains application use cases. Contract, auction, onboarding, and user services orchestrate domain validation and persistence; `services/dependencies.py` owns the shared service instances.
 - `domain/` contains Pydantic domain models and business rules. `MaquinaEstadosContrato` is the authoritative finite-state machine for contract lifecycle transitions; contract creation and state changes must go through these rules.
-- `dao/` isolates persistence behind Spanish-named CRUD interfaces. Current implementations use thread-safe in-memory dictionaries, so data is process-local and is lost on restart.
-- `frontend/src/main.ts` creates the Electron window and loads `frontend/paginas/index.html`; TypeScript is compiled before Electron runs.
+- `database/` isolates SQLite persistence (`conexion.py` and `schema.sql`).
+- `frontend/src/main.ts` creates the Electron window and loads `frontend/paginas/Login/index.html`; TypeScript is compiled before Electron runs.
 
-For the fuller rationale and module boundaries, consult [`Arquitectura.md`](../Arquitectura.md). For setup details, consult [`README.md`](../README.md).
+For the fuller rationale and module boundaries, consult [`docs_clases/Arquitectura.md`](../docs_clases/Arquitectura.md). For setup details, consult [`README.md`](../README.md).
 
 ## Repository conventions
 
