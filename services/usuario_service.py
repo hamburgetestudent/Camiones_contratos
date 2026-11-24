@@ -1,4 +1,3 @@
-
 import hashlib
 import sqlite3
 from uuid import UUID
@@ -20,7 +19,6 @@ from services.onboarding_service import onboarding_service_instancia
 # Antes, este servicio construía directamente el token y la respuesta.
 # Ahora delega esa responsabilidad para evitar lógica duplicada.
 from services.respuesta_login import construir_respuesta_login
-
 
 # ---------------------------------------------------------------------------
 # SQL: tabla ``usuarios`` (usa la base de datos por defecto de database.conexion)

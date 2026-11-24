@@ -1,4 +1,3 @@
-
 """Orquestación del inicio de sesión, sin implementar la validación."""
 
 from __future__ import annotations

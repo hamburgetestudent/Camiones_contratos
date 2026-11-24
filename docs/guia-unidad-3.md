@@ -87,40 +87,67 @@ En `LoginService`:
 | Lugares con construcción directa de `RespuestaLogin` en los dos servicios | 2 | 0 |
 | Funciones compartidas para construir la respuesta | 0 | 1 |
 | Servicios que utilizan la nueva función compartida | 0 | 2 |
-| Pruebas automatizadas ejecutadas | 183 | 184 |
+| Pruebas automatizadas ejecutadas (unittest base -> tras merge Dev -> suite final) | 183 | 207 |
 | Pruebas fallidas | 0 | 0 |
+| Cobertura de pruebas en `services/respuesta_login.py` | 0% (no existía) | 100% |
+| Cobertura de ramas en `services/login_service.py` | Parcial | 100% |
+| Errores de linter (Ruff) en archivos de TD-01 | 0 | 0 |
 
 La construcción de respuestas que anteriormente se encontraba duplicada en ambos servicios se centralizó en un componente compartido.
 
-La cantidad de pruebas aumentó porque se incorporó una prueba de caracterización antes de completar la refactorización.
+La cantidad de pruebas aumentó progresivamente:
+1. Se incorporó una prueba de caracterización antes de completar la refactorización (183 -> 184).
+2. Tras la sincronización con la rama `Dev`, la suite acumuló 198 pruebas aprobadas.
+3. Se agregaron pruebas para credenciales inválidas, valores límite (campos vacíos), duck-typing de validadores y pruebas unitarias directas del contrato de `construir_respuesta_login()`, alcanzando un total de 207 pruebas en `unittest` (y 210 en `pytest`).
 
 ### 6. Pruebas y verificación
 
-Antes de modificar la lógica de los servicios se ejecutó la batería de pruebas del proyecto, obteniendo 183 pruebas aprobadas.
+#### Batería de pruebas automatizadas
+- **Pruebas de caracterización inicial:** Registrada en el commit `d753e6f` (`test_login_sin_datos_usuario` en `tests/usuarios/test_iniciar_sesion.py`) para congelar el comportamiento de usuarios sin perfil previo a la refactorización.
+- **Refactorización del componente:** Registrada en el commit `9b20d3f`.
+- **Ejecución de regresión post-merge:** Se validó la ejecución contra la rama `Dev` con 198 pruebas aprobadas.
+- **Ampliación de casos límite y validación directa:**
+  - Validación de contraseña incorrecta y usuario no registrado (`HTTPException 401`).
+  - Validación de valores límite: correo vacío, contraseña vacía o ambos vacíos (`HTTPException 400`).
+  - Validación de desacoplamiento de validadores sin método opcional `obtener_datos_usuario`.
+  - Pruebas unitarias directas de `construir_respuesta_login()` con datos completos, datos `None` y tipos string planos.
 
-Posteriormente se incorporó una prueba de caracterización en:
+Comando de ejecución:
+```bash
+python -m unittest discover -t . -s tests
+```
+**Resultado:** `Ran 207 tests in 1.289s — OK` (0 fallos, 0 errores).
 
-`tests/usuarios/test_iniciar_sesion.py`
+Con `pytest`:
+```bash
+pytest
+```
+**Resultado:** `210 passed, 1 warning in 1.78s`.
 
-La nueva prueba verifica el inicio de sesión válido cuando no se dispone de información adicional del perfil del usuario.
+#### Control de calidad y estilo (Ruff)
+Se ejecutaron las herramientas de linting y formateo oficiales del proyecto:
+```bash
+ruff check services/respuesta_login.py services/login_service.py services/usuario_service.py tests/usuarios/test_iniciar_sesion.py
+ruff format --check services/respuesta_login.py services/login_service.py services/usuario_service.py tests/usuarios/test_iniciar_sesion.py
+```
+**Resultado:** `All checks passed!` y `4 files already formatted`.
 
-La prueba fue registrada en el commit:
+#### Verificación de espacios en blanco
+```bash
+git diff --check
+```
+**Resultado:** Sin advertencias ni errores de formato de espacios.
 
-`d753e6f` — `test(auth): agrega prueba de caracterizacion TD-01`
-
-Después de integrar el componente reutilizable en ambos servicios se ejecutó:
-
-`python -m unittest discover -t . -s tests`
-
-**Resultado final: 184 pruebas ejecutadas y aprobadas (OK).**
-
-También se ejecutó:
-
-`git diff --check`
-
-El comando no reportó errores de espacios.
-
-Estas pruebas aportan evidencia de que los escenarios automatizados existentes continúan funcionando después de la refactorización.
+#### Cobertura de código (Coverage.py)
+```bash
+coverage run -m unittest discover -t . -s tests
+coverage report --include="services/respuesta_login.py,services/login_service.py,services/usuario_service.py"
+```
+**Métricas obtenidas:**
+- `services/respuesta_login.py`: 100.0% de cobertura (20 declaraciones, 2 ramas).
+- `services/usuario_service.py`: 100.0% de cobertura en flujos de autenticación.
+- `services/login_service.py`: 95.7% de cobertura total, con 100% de cobertura de ramas (4/4 ramas cubiertas; la única línea excluida corresponde a la elipsis `...` en la definición del protocolo).
+- **Total del módulo TD-01:** 99.1% de cobertura global.
 
 ### 7. Relación con las clases de la Unidad 3
 

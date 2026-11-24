@@ -1,4 +1,3 @@
-
 """TD-01: Componente reutilizable de respuestas de autenticación.
 
 Unidad 3 - Refactorización y modularización.
@@ -11,6 +10,8 @@ Clases aplicadas:
 3.2 - Identificación de deuda técnica.
 3.3 - Construcción para reutilización.
 """
+
+from __future__ import annotations
 
 from domain.modelos_login import RespuestaLogin
 from domain.modelos_usuario import UsuarioModelo
@@ -50,11 +51,7 @@ def construir_respuesta_login(
 
         # Convertir el rol a texto para la respuesta y el token.
         rol_objeto = datos_usuario.rol
-        rol = (
-            rol_objeto.value
-            if hasattr(rol_objeto, "value")
-            else str(rol_objeto)
-        )
+        rol = rol_objeto.value if hasattr(rol_objeto, "value") else str(rol_objeto)
 
         # Convertir el estado del usuario a texto.
         estado_objeto = datos_usuario.estado
