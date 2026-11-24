@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from uuid import UUID, uuid4
 
+from dao.usuario_dao import UsuarioDAOSQLite
 from database.conexion import obtener_conexion
 from domain.modelos_onboarding import (
     CargarDocumentoDTO,
@@ -18,12 +19,10 @@ from domain.modelos_usuario import (
     UsuarioModelo,
 )
 from services.onboarding_service import OnboardingService
-from services.usuario_service import (
-    buscar_usuario_por_id,
-    guardar_usuario,
-    hash_password,
-)
+from services.usuario_service import hash_password
 from tests.base import BaseTestCase
+
+_usuarios = UsuarioDAOSQLite()
 
 
 class BaseTestUsuarios(BaseTestCase):
@@ -79,12 +78,12 @@ class BaseTestUsuarios(BaseTestCase):
     def guardar_usuario_bd(self, usuario: UsuarioModelo) -> UsuarioModelo:
         """Persiste un usuario directamente en SQLite (datos semilla del test)."""
         with obtener_conexion(self.db_path) as conn:
-            return guardar_usuario(conn, usuario)
+            return _usuarios.guardar(conn, usuario)
 
     def leer_usuario_bd(self, usuario_id: UUID) -> UsuarioModelo | None:
         """Lee un usuario directamente de SQLite (verifica persistencia real)."""
         with obtener_conexion(self.db_path) as conn:
-            return buscar_usuario_por_id(conn, usuario_id)
+            return _usuarios.obtener_por_id(conn, usuario_id)
 
     def crear_dto_transportista_valido(
         self,

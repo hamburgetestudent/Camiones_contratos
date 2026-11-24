@@ -1,21 +1,41 @@
 """Modulo centralizado de inyeccion de dependencias y singletons para los servicios.
 
 Aqui se construyen los almacenes persistentes (DAO sobre SQLite) y se inyectan
-en los servicios. Contratos y subastas comparten los mismos DAO, de modo que
-todo el estado de negocio sobrevive a un reinicio de la aplicacion.
+en los servicios, de modo que todo el estado de negocio (usuarios, onboarding,
+contratos y subastas) sobrevive a un reinicio de la aplicacion.
 """
 
 from dao.contrato_dao import ContratoDAO, ContratoDAOSQLite
+from dao.onboarding_dao import (
+    DadorCargaDAO,
+    DadorCargaDAOSQLite,
+    DocumentoDAO,
+    DocumentoDAOSQLite,
+)
 from dao.postulacion_dao import PostulacionDAO, PostulacionDAOSQLite
+from dao.usuario_dao import UsuarioDAO, UsuarioDAOSQLite
 from services.contrato_service import ServicioContrato
+from services.onboarding_service import OnboardingService
 from services.subasta_service import ServicioSubasta
+from services.usuario_service import UsuarioService
 
 # Almacenes persistentes compartidos (usan la base de datos por defecto)
 contrato_dao: ContratoDAO = ContratoDAOSQLite()
 postulacion_dao: PostulacionDAO = PostulacionDAOSQLite()
+usuario_dao: UsuarioDAO = UsuarioDAOSQLite()
+documento_dao: DocumentoDAO = DocumentoDAOSQLite()
+dador_dao: DadorCargaDAO = DadorCargaDAOSQLite()
+
+# Usuarios y onboarding usan los mismos DAO compartidos
+UsuarioService.dao = usuario_dao
+servicio_onboarding = OnboardingService(
+    documento_dao=documento_dao, dador_dao=dador_dao
+)
 
 # Instancias compartidas a nivel de aplicacion
-servicio_contrato = ServicioContrato(dao=contrato_dao)
+servicio_contrato = ServicioContrato(
+    dao=contrato_dao, onboarding_service=servicio_onboarding
+)
 servicio_subasta = ServicioSubasta(
     contrato_dao=contrato_dao, postulacion_dao=postulacion_dao
 )
@@ -29,6 +49,16 @@ def obtener_contrato_dao() -> ContratoDAO:
 def obtener_postulacion_dao() -> PostulacionDAO:
     """Retorna el DAO persistente de postulaciones."""
     return postulacion_dao
+
+
+def obtener_usuario_dao() -> UsuarioDAO:
+    """Retorna el DAO persistente de usuarios."""
+    return usuario_dao
+
+
+def obtener_servicio_onboarding() -> OnboardingService:
+    """Retorna el servicio de onboarding con sus DAO persistentes."""
+    return servicio_onboarding
 
 
 def obtener_servicio_contrato() -> ServicioContrato:
