@@ -1,10 +1,10 @@
-# Suite de tests en cada push a main y en cada pull request.
+# Suite de la entrega en RamaSS, en main y en cada pull request.
 # Corre en Windows porque es el entorno de desarrollo y de uso del sistema.
 name: Tests
 
 on:
   push:
-    branches: [main]
+    branches: [main, RamaSS]
   pull_request:
   workflow_dispatch:
 
@@ -50,7 +50,7 @@ jobs:
           if-no-files-found: ignore
 
   frontend:
-    name: Frontend (typecheck)
+    name: Frontend (typecheck e integración del panel)
     runs-on: windows-latest
     timeout-minutes: 15
     defaults:
@@ -73,3 +73,13 @@ jobs:
 
       - name: Typecheck
         run: npx tsc --noEmit
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Preparar API para el panel
+        run: python -m pip install -r ../requirements.txt
+
+      - name: Verificar el panel con FastAPI y SQLite
+        run: npm run test:panel
