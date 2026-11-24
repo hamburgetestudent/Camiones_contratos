@@ -1,15 +1,34 @@
 """Modulo centralizado de inyeccion de dependencias y singletons para los servicios.
 
-Los servicios acceden directamente a SQLite (ver ``database.conexion``); aqui solo
-se crean las instancias compartidas que consumen los routers.
+Aqui se construyen los almacenes persistentes (DAO sobre SQLite) y se inyectan
+en los servicios. Contratos y subastas comparten los mismos DAO, de modo que
+todo el estado de negocio sobrevive a un reinicio de la aplicacion.
 """
 
+from dao.contrato_dao import ContratoDAO, ContratoDAOSQLite
+from dao.postulacion_dao import PostulacionDAO, PostulacionDAOSQLite
 from services.contrato_service import ServicioContrato
 from services.subasta_service import ServicioSubasta
 
-# Instancias compartidas a nivel de aplicacion (usan la base de datos por defecto)
-servicio_contrato = ServicioContrato()
-servicio_subasta = ServicioSubasta()
+# Almacenes persistentes compartidos (usan la base de datos por defecto)
+contrato_dao: ContratoDAO = ContratoDAOSQLite()
+postulacion_dao: PostulacionDAO = PostulacionDAOSQLite()
+
+# Instancias compartidas a nivel de aplicacion
+servicio_contrato = ServicioContrato(dao=contrato_dao)
+servicio_subasta = ServicioSubasta(
+    contrato_dao=contrato_dao, postulacion_dao=postulacion_dao
+)
+
+
+def obtener_contrato_dao() -> ContratoDAO:
+    """Retorna el DAO persistente de contratos."""
+    return contrato_dao
+
+
+def obtener_postulacion_dao() -> PostulacionDAO:
+    """Retorna el DAO persistente de postulaciones."""
+    return postulacion_dao
 
 
 def obtener_servicio_contrato() -> ServicioContrato:

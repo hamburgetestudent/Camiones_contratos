@@ -5,18 +5,16 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
+from dao.contrato_dao import ContratoDAOSQLite
+from dao.postulacion_dao import PostulacionDAOSQLite
 from database.conexion import obtener_conexion
 from domain.maquina_estados import EstadoContrato
 from domain.modelos import ContratoModelo, Moneda, TipoCarga
 from domain.postulacion import EstadoPostulacion, PostulacionCrear
-from services.contrato_service import (
-    actualizar_contrato,
-    buscar_contrato,
-    buscar_todos_los_contratos,
-    guardar_contrato,
-)
 from services.subasta_service import ServicioSubasta
 from tests.persistencia.base import BaseTestPersistencia
+
+_dao = ContratoDAOSQLite()
 
 
 def _contrato(**cambios) -> ContratoModelo:
@@ -46,11 +44,11 @@ class TestPersistenciaContratos(BaseTestPersistencia):
 
     def _guardar(self, contrato: ContratoModelo) -> ContratoModelo:
         with obtener_conexion(self.db_path) as conn:
-            return guardar_contrato(conn, contrato)
+            return _dao.guardar(conn, contrato)
 
     def _buscar(self, contrato_id):
         with obtener_conexion(self.db_path) as conn:
-            return buscar_contrato(conn, contrato_id)
+            return _dao.obtener_por_id(conn, contrato_id)
 
     def test_guardar_y_obtener_contrato(self) -> None:
         contrato = _contrato()
@@ -60,7 +58,7 @@ class TestPersistenciaContratos(BaseTestPersistencia):
         recuperado = self._buscar(contrato.id)
         self.assertIsNotNone(recuperado)
         with obtener_conexion(self.db_path) as conn:
-            self.assertEqual(len(buscar_todos_los_contratos(conn)), 1)
+            self.assertEqual(len(_dao.obtener_todos(conn)), 1)
 
     def test_ciclo_completo_conserva_todos_los_campos(self) -> None:
         contrato = _contrato(
@@ -105,7 +103,7 @@ class TestPersistenciaContratos(BaseTestPersistencia):
         tercero = self._guardar(_contrato(origen="CALAMA", destino="COPIAPO"))
 
         with obtener_conexion(self.db_path) as conn:
-            ids = [c.id for c in buscar_todos_los_contratos(conn)]
+            ids = [c.id for c in _dao.obtener_todos(conn)]
         self.assertEqual(ids, [primero.id, segundo.id, tercero.id])
 
     def test_guardar_mismo_id_actualiza_en_lugar_de_duplicar(self) -> None:
@@ -115,7 +113,7 @@ class TestPersistenciaContratos(BaseTestPersistencia):
         self._guardar(contrato)
 
         with obtener_conexion(self.db_path) as conn:
-            todos = buscar_todos_los_contratos(conn)
+            todos = _dao.obtener_todos(conn)
         self.assertEqual(len(todos), 1)
         self.assertEqual(todos[0].estado, EstadoContrato.CANCELADO)
 
@@ -123,8 +121,8 @@ class TestPersistenciaContratos(BaseTestPersistencia):
         contrato = self._guardar(_contrato())
         contrato.estado = EstadoContrato.PUBLICADO
         with obtener_conexion(self.db_path) as conn:
-            self.assertIsNotNone(actualizar_contrato(conn, contrato.id, contrato))
-            self.assertIsNone(actualizar_contrato(conn, uuid4(), contrato))
+            self.assertIsNotNone(_dao.actualizar(conn, contrato.id, contrato))
+            self.assertIsNone(_dao.actualizar(conn, uuid4(), contrato))
         recuperado = self._buscar(contrato.id)
         assert recuperado is not None
         self.assertEqual(recuperado.estado, EstadoContrato.PUBLICADO)
@@ -158,9 +156,7 @@ class TestPersistenciaPostulaciones(BaseTestPersistencia):
         super().setUp()
         self.servicio = ServicioSubasta(db_path=self.db_path)
         with obtener_conexion(self.db_path) as conn:
-            self.carga = guardar_contrato(
-                conn, _contrato(estado=EstadoContrato.PUBLICADO)
-            )
+            self.carga = _dao.guardar(conn, _contrato(estado=EstadoContrato.PUBLICADO))
 
     def _postular(self, precio: float, comentario: str | None = None):
         return self.servicio.postular_a_carga(
@@ -198,3 +194,31 @@ class TestPersistenciaPostulaciones(BaseTestPersistencia):
         self.assertEqual(filas[0]["carga_id"], str(self.carga.id))
         self.assertEqual(filas[0]["precio_oferta"], 70000.0)
         self.assertEqual(filas[0]["estado"], "POSTULADA")
+
+
+class TestSupervivenciaAReinicio(BaseTestPersistencia):
+    """Simula un reinicio de FastAPI: nuevas instancias de DAO sobre el mismo archivo."""
+
+    def test_contratos_y_postulaciones_sobreviven_a_nuevas_instancias(self) -> None:
+        carga = _contrato(estado=EstadoContrato.PUBLICADO)
+        servicio = ServicioSubasta(db_path=self.db_path)
+        with obtener_conexion(self.db_path) as conn:
+            _dao.guardar(conn, carga)
+        oferta = servicio.postular_a_carga(
+            PostulacionCrear(
+                carga_id=carga.id,
+                transportista_id=uuid4(),
+                precio_oferta=90000.0,
+                tiempo_entrega_horas=12.0,
+            )
+        )
+
+        reiniciado = ServicioSubasta(
+            contrato_dao=ContratoDAOSQLite(self.db_path),
+            postulacion_dao=PostulacionDAOSQLite(self.db_path),
+        )
+        self.assertEqual(
+            [p.id for p in reiniciado.listar_postulaciones_carga(carga.id)],
+            [oferta.id],
+        )
+        self.assertEqual(len(reiniciado.explorar_cargas()), 1)

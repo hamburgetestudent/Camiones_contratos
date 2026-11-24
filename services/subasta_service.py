@@ -1,8 +1,8 @@
 """Servicio de negocio para el Motor de Postulaciones y Subastas.
 
-Persiste directamente en SQLite (tablas ``postulaciones`` y ``contratos``)
-mediante ``database.conexion``. Las operaciones que leen, validan y escriben
-(postular, adjudicar) se ejecutan en una unica transaccion exclusiva.
+La persistencia se delega en ``ContratoDAO`` y ``PostulacionDAO`` inyectados
+(por defecto sus implementaciones SQLite). Las operaciones que leen, validan y
+escriben (postular, adjudicar) se ejecutan en una unica transaccion exclusiva.
 """
 
 from __future__ import annotations
@@ -12,15 +12,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 from uuid import UUID
 
-from database.conexion import obtener_conexion, transaccion_exclusiva
+from dao.contrato_dao import ContratoDAO, ContratoDAOSQLite
+from dao.postulacion_dao import PostulacionDAO, PostulacionDAOSQLite
 from domain.maquina_estados import EstadoContrato, MaquinaEstadosContrato
 from domain.modelos import ContratoModelo
 from domain.postulacion import EstadoPostulacion, PostulacionCrear, PostulacionModelo
-from services.contrato_service import (
-    actualizar_contrato,
-    buscar_contrato,
-    buscar_todos_los_contratos,
-)
 
 ESTADOS_CARGA_DISPONIBLES: set[EstadoContrato] = {
     EstadoContrato.PUBLICADO,
@@ -50,112 +46,28 @@ def estimar_distancia_entre_puntos(origen: str, destino: str) -> float:
     return 150.0
 
 
-# ---------------------------------------------------------------------------
-# SQL: tabla ``postulaciones``
-# ---------------------------------------------------------------------------
-
-_SELECT_POSTULACION = (
-    "SELECT id, carga_id, transportista_id, precio_oferta, tiempo_entrega_horas, "
-    "comentario, estado, creado_en FROM postulaciones"
-)
-
-
-def _fila_a_postulacion(fila: sqlite3.Row) -> PostulacionModelo:
-    """Reconstruye una postulacion ya validada al momento de crearse (sin revalidar)."""
-    return PostulacionModelo.model_construct(
-        id=UUID(fila["id"]),
-        carga_id=UUID(fila["carga_id"]),
-        transportista_id=UUID(fila["transportista_id"]),
-        precio_oferta=fila["precio_oferta"],
-        tiempo_entrega_horas=fila["tiempo_entrega_horas"],
-        comentario=fila["comentario"],
-        estado=EstadoPostulacion(fila["estado"]),
-        creado_en=datetime.fromisoformat(fila["creado_en"]),
-    )
-
-
-def _insertar_postulacion(
-    conn: sqlite3.Connection, postulacion: PostulacionModelo
-) -> PostulacionModelo:
-    conn.execute(
-        """
-        INSERT INTO postulaciones (
-            id, carga_id, transportista_id, precio_oferta, tiempo_entrega_horas,
-            comentario, estado, creado_en
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            str(postulacion.id),
-            str(postulacion.carga_id),
-            str(postulacion.transportista_id),
-            postulacion.precio_oferta,
-            postulacion.tiempo_entrega_horas,
-            postulacion.comentario,
-            EstadoPostulacion(postulacion.estado).value,
-            postulacion.creado_en.isoformat(),
-        ),
-    )
-    return postulacion
-
-
-def _buscar_postulacion(
-    conn: sqlite3.Connection, postulacion_id: UUID
-) -> PostulacionModelo | None:
-    fila = conn.execute(
-        f"{_SELECT_POSTULACION} WHERE id = ?", (str(postulacion_id),)
-    ).fetchone()
-    return _fila_a_postulacion(fila) if fila else None
-
-
-def _buscar_postulaciones_por_contrato(
-    conn: sqlite3.Connection, contrato_id: UUID
-) -> list[PostulacionModelo]:
-    filas = conn.execute(
-        f"{_SELECT_POSTULACION} WHERE carga_id = ? ORDER BY rowid",
-        (str(contrato_id),),
-    ).fetchall()
-    return [_fila_a_postulacion(fila) for fila in filas]
-
-
-def _actualizar_estado_postulacion(
-    conn: sqlite3.Connection, postulacion: PostulacionModelo
-) -> None:
-    conn.execute(
-        "UPDATE postulaciones SET estado = ? WHERE id = ?",
-        (EstadoPostulacion(postulacion.estado).value, str(postulacion.id)),
-    )
-
-
-def _rechazar_postulaciones_competidoras(
-    conn: sqlite3.Connection, contrato_id: UUID, ganadora_id: UUID
-) -> None:
-    """Marca como RECHAZADA toda postulacion del contrato excepto la ganadora."""
-    conn.execute(
-        """
-        UPDATE postulaciones SET estado = ?
-        WHERE carga_id = ? AND id != ? AND estado != ?
-        """,
-        (
-            EstadoPostulacion.RECHAZADA.value,
-            str(contrato_id),
-            str(ganadora_id),
-            EstadoPostulacion.RECHAZADA.value,
-        ),
-    )
-
-
 class ServicioSubasta:
     """Orquesta la exploracion de cargas, envio de ofertas y adjudicacion de subastas."""
 
-    def __init__(self, db_path: str | Path | None = None) -> None:
-        """Inicializa el servicio sobre una base de datos SQLite.
+    def __init__(
+        self,
+        db_path: str | Path | None = None,
+        contrato_dao: ContratoDAO | None = None,
+        postulacion_dao: PostulacionDAO | None = None,
+    ) -> None:
+        """Inicializa el servicio con sus almacenes persistentes.
 
         Args:
-            db_path (str | Path | None, optional): Archivo SQLite a usar. Si es None se
-                usa ``DEFAULT_DB_PATH``. Defaults to None.
+            db_path (str | Path | None, optional): Archivo SQLite para los DAO que no se
+                inyecten. Si es None se usa ``DEFAULT_DB_PATH``. Defaults to None.
+            contrato_dao (ContratoDAO | None, optional): Almacen de contratos.
+            postulacion_dao (PostulacionDAO | None, optional): Almacen de postulaciones.
+                Ambos DAO deben apuntar a la misma base para compartir transaccion.
         """
-        self._db_path = db_path
+        self._contratos: ContratoDAO = contrato_dao or ContratoDAOSQLite(db_path)
+        self._postulaciones: PostulacionDAO = postulacion_dao or PostulacionDAOSQLite(
+            db_path
+        )
 
     def explorar_cargas(
         self,
@@ -176,8 +88,8 @@ class ServicioSubasta:
         Returns:
             List[ContratoModelo]: Lista de contratos que cumplen con todos los filtros activos.
         """
-        with obtener_conexion(self._db_path) as conn:
-            todos = buscar_todos_los_contratos(conn)
+        with self._contratos.conexion() as conn:
+            todos = self._contratos.obtener_todos(conn)
         cargas = [c for c in todos if c.estado in ESTADOS_CARGA_DISPONIBLES]
 
         if region and region.strip():
@@ -206,26 +118,22 @@ class ServicioSubasta:
 
         return cargas
 
-    @staticmethod
-    def _evaluar_plazo(conn: sqlite3.Connection, contrato: ContratoModelo) -> str:
+    def _evaluar_plazo(self, conn: sqlite3.Connection, contrato: ContratoModelo) -> str:
         if datetime.now(UTC) <= contrato.f_cierre_postulaciones:
             return "VIGENTE"
-        oferta = conn.execute(
-            "SELECT 1 FROM postulaciones WHERE carga_id = ? LIMIT 1", (str(contrato.id),)
-        ).fetchone()
-        if oferta is not None:
+        if self._postulaciones.existe_para_contrato(conn, contrato.id):
             return "CERRADA"
         if contrato.estado in ESTADOS_CARGA_DISPONIBLES:
             cancelado = MaquinaEstadosContrato.cambiar_estado(
                 contrato_data=contrato, nuevo_estado=EstadoContrato.CANCELADO
             )
-            actualizar_contrato(conn, contrato.id, cancelado)
+            self._contratos.actualizar(conn, contrato.id, cancelado)
         return "DESIERTA"
 
     def verificar_expiracion_subasta(self, carga_id: UUID) -> str:
         """Evalua el plazo y persiste el cierre de una subasta desierta."""
-        with transaccion_exclusiva(self._db_path) as conn:
-            contrato = buscar_contrato(conn, carga_id)
+        with self._contratos.transaccion() as conn:
+            contrato = self._contratos.obtener_por_id(conn, carga_id)
             if contrato is None:
                 raise ValueError(f"La carga/contrato con ID {carga_id} no existe")
             return self._evaluar_plazo(conn, contrato)
@@ -261,8 +169,8 @@ class ServicioSubasta:
 
         # Lectura, validacion y escrituras en una sola transaccion: si algo falla,
         # no queda una postulacion guardada con el contrato sin transicionar.
-        with transaccion_exclusiva(self._db_path) as conn:
-            contrato = buscar_contrato(conn, datos_postulacion.carga_id)
+        with self._contratos.transaccion() as conn:
+            contrato = self._contratos.obtener_por_id(conn, datos_postulacion.carga_id)
             if not contrato:
                 raise ValueError(
                     f"La carga/contrato con ID {datos_postulacion.carga_id} no existe"
@@ -278,20 +186,25 @@ class ServicioSubasta:
             plazo = self._evaluar_plazo(conn, contrato)
             if plazo == "VIGENTE":
                 nueva_postulacion = PostulacionModelo(**datos_postulacion.model_dump())
-                _insertar_postulacion(conn, nueva_postulacion)
+                self._postulaciones.guardar(conn, nueva_postulacion)
 
                 # Transicion automatica a EN_POSTULACION si la carga estaba en PUBLICADO o EN_SUBASTA
-                if contrato.estado in (EstadoContrato.PUBLICADO, EstadoContrato.EN_SUBASTA):
+                if contrato.estado in (
+                    EstadoContrato.PUBLICADO,
+                    EstadoContrato.EN_SUBASTA,
+                ):
                     contrato_actualizado = MaquinaEstadosContrato.cambiar_estado(
                         contrato_data=contrato,
                         nuevo_estado=EstadoContrato.EN_POSTULACION,
                     )
-                    actualizar_contrato(conn, contrato.id, contrato_actualizado)
+                    self._contratos.actualizar(conn, contrato.id, contrato_actualizado)
 
                 return nueva_postulacion
 
         # El rechazo se comunica despues del commit para conservar el cierre sin ofertas.
-        raise ValueError(f"La subasta esta {plazo.lower()} y no admite nuevas postulaciones")
+        raise ValueError(
+            f"La subasta esta {plazo.lower()} y no admite nuevas postulaciones"
+        )
 
     def adjudicar_subasta(
         self,
@@ -316,8 +229,8 @@ class ServicioSubasta:
         """
         # Toda la operacion es una unica transaccion: o se aplican los tres cambios
         # (postulacion ganadora, competidoras y contrato) o no se aplica ninguno.
-        with transaccion_exclusiva(self._db_path) as conn:
-            contrato = buscar_contrato(conn, carga_id)
+        with self._contratos.transaccion() as conn:
+            contrato = self._contratos.obtener_por_id(conn, carga_id)
             if not contrato:
                 raise ValueError(
                     f"La carga/contrato con ID {carga_id} no fue encontrada"
@@ -328,7 +241,7 @@ class ServicioSubasta:
                     f"El contrato ya fue adjudicado, finalizado o cancelado (Estado: {contrato.estado.value})"
                 )
 
-            postulacion = _buscar_postulacion(conn, postulacion_id)
+            postulacion = self._postulaciones.obtener_por_id(conn, postulacion_id)
             if not postulacion or postulacion.carga_id != carga_id:
                 raise ValueError(
                     f"La postulacion con ID {postulacion_id} no pertenece al contrato indicado"
@@ -347,10 +260,12 @@ class ServicioSubasta:
 
             # 1. Marcar postulacion como SELECCIONADA
             postulacion.estado = EstadoPostulacion.SELECCIONADA
-            _actualizar_estado_postulacion(conn, postulacion)
+            self._postulaciones.actualizar_estado(
+                conn, postulacion.id, postulacion.estado
+            )
 
             # 2. Rechazar postulaciones competidoras
-            _rechazar_postulaciones_competidoras(conn, carga_id, postulacion.id)
+            self._postulaciones.rechazar_competidoras(conn, carga_id, postulacion.id)
 
             # 3. Transicionar contrato a ADJUDICADO y asignar transportista
             contrato_actualizado = MaquinaEstadosContrato.cambiar_estado(
@@ -358,7 +273,7 @@ class ServicioSubasta:
                 nuevo_estado=EstadoContrato.ADJUDICADO,
                 id_transportista=postulacion.transportista_id,
             )
-            actualizar_contrato(conn, contrato.id, contrato_actualizado)
+            self._contratos.actualizar(conn, contrato.id, contrato_actualizado)
 
         return postulacion
 
@@ -371,10 +286,10 @@ class ServicioSubasta:
         Returns:
             List[PostulacionModelo]: Listado cronologico de postulaciones recibidas.
         """
-        with obtener_conexion(self._db_path) as conn:
-            if not buscar_contrato(conn, carga_id):
+        with self._contratos.conexion() as conn:
+            if not self._contratos.obtener_por_id(conn, carga_id):
                 return []
-            return _buscar_postulaciones_por_contrato(conn, carga_id)
+            return self._postulaciones.obtener_por_contrato(conn, carga_id)
 
 
 # Alias para retrocompatibilidad
