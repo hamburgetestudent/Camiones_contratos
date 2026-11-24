@@ -53,4 +53,4 @@ python -m unittest tests.onboarding.test_validar_perfil_dador tests.onboarding.t
 python -m unittest discover -s tests -t .
 ```
 
-**Comprobación inicial por otro integrante.** Pendiente de recibir el nombre y la salida real. En una copia de revisión, ejecutar `git switch --detach 883b8d2` y luego `python -m unittest tests.onboarding.test_obtener_estado_transportista -v`. Deben pasar los tres casos de la versión original. Registrar nombre, commit y salida al recibir la comprobación.
+**Comprobación inicial por otro integrante.** El compañero ejecutó la revisión desde la cuenta local `f4cks`. La salida de Git compartida previamente situó la copia en `883b8d2`. La captura muestra los tres resultados esperados: APROBADO con cinco documentos aprobados, PENDIENTE cuando faltan documentos y RECHAZADO cuando al menos uno está rechazado. Resultado de unittest: `Ran 3 tests in 0.301s`, `OK`. [Ver captura de la ejecución](comprobacion-transportista.png).
