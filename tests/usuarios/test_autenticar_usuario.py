@@ -33,3 +33,9 @@ class TestAutenticarUsuario(BaseTestUsuarios):
             UsuarioService.autenticar_usuario("", self.password_comun)
         with self.assertHttpException(400, "requeridos"):
             UsuarioService.autenticar_usuario("juan.chofer@transporte.cl", "   ")
+
+    def test_busca_el_correo_sin_distinguir_mayusculas_ni_espacios(self) -> None:
+        usuario = UsuarioService.autenticar_usuario(
+            "  JUAN.CHOFER@TRANSPORTE.CL  ", self.password_comun
+        )
+        self.assertEqual(usuario.id, self.usuario_transportista.id)

@@ -45,12 +45,17 @@ def buscar_usuario_por_id(
     return _fila_a_usuario(fila) if fila else None
 
 
+def _normalizar_correo(email: str) -> str:
+    return email.strip().lower()
+
+
 def buscar_usuario_por_email(
     conn: sqlite3.Connection, email: str
 ) -> UsuarioModelo | None:
     """Busca un usuario por correo (insensible a mayusculas y espacios extremos)."""
     fila = conn.execute(
-        f"{_SELECT_USUARIO} WHERE lower(trim(email)) = ? AND eliminado = 0", (email.strip().lower(),)
+        f"{_SELECT_USUARIO} WHERE lower(trim(email)) = ? AND eliminado = 0",
+        (_normalizar_correo(email),),
     ).fetchone()
     return _fila_a_usuario(fila) if fila else None
 
@@ -79,7 +84,7 @@ def guardar_usuario(conn: sqlite3.Connection, usuario: UsuarioModelo) -> Usuario
         (
             str(usuario.id),
             usuario.nombre,
-            usuario.email.strip().lower(),
+            _normalizar_correo(usuario.email),
             RolUsuario(usuario.rol).value,
             usuario.password_hash,
             EstadoUsuario(usuario.estado).value,
@@ -174,7 +179,7 @@ class UsuarioService:
             )
 
         with obtener_conexion() as conn:
-            usuario = buscar_usuario_por_email(conn, email.strip())
+            usuario = buscar_usuario_por_email(conn, email)
         if not usuario:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

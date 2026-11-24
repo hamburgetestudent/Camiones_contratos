@@ -202,6 +202,11 @@ def _buscar_dador_por_id(conn: sqlite3.Connection, dador_id: UUID) -> DadorCarga
 # ---------------------------------------------------------------------------
 
 
+def _validar_decision_revision(estado: EstadoValidacion) -> None:
+    if estado not in (EstadoValidacion.APROBADO, EstadoValidacion.RECHAZADO):
+        raise ValueError("El estado de validacion debe ser APROBADO o RECHAZADO")
+
+
 class OnboardingService:
     """Servicio que implementa las reglas de negocio de onboarding y validacion documental."""
 
@@ -265,27 +270,21 @@ class OnboardingService:
             doc.estado == EstadoValidacion.RECHAZADO for doc in documentos
         )
 
-        # Verificar si todos los requeridos existen y estan aprobados
-        todos_cargados = all(
-            tipo in docs_por_tipo for tipo in DOCUMENTOS_REQUERIDOS_TRANSPORTISTA
-        )
-        todos_aprobados = todos_cargados and all(
-            docs_por_tipo[tipo].estado == EstadoValidacion.APROBADO
-            for tipo in DOCUMENTOS_REQUERIDOS_TRANSPORTISTA
-        )
-
-        if tiene_rechazados:
-            estado_global = EstadoValidacion.RECHAZADO
-        elif todos_aprobados:
-            estado_global = EstadoValidacion.APROBADO
-        else:
-            estado_global = EstadoValidacion.PENDIENTE
-
         faltantes = [
             tipo
             for tipo in DOCUMENTOS_REQUERIDOS_TRANSPORTISTA
             if tipo not in docs_por_tipo
         ]
+
+        if tiene_rechazados:
+            estado_global = EstadoValidacion.RECHAZADO
+        elif not faltantes and all(
+            docs_por_tipo[tipo].estado == EstadoValidacion.APROBADO
+            for tipo in DOCUMENTOS_REQUERIDOS_TRANSPORTISTA
+        ):
+            estado_global = EstadoValidacion.APROBADO
+        else:
+            estado_global = EstadoValidacion.PENDIENTE
 
         return EstadoOnboardingTransportistaDTO(
             user_id=user_id,
@@ -376,13 +375,7 @@ class OnboardingService:
             if not doc:
                 raise ValueError(f"No se encontro el documento con ID {documento_id}")
 
-            if nuevo_estado not in (
-                EstadoValidacion.APROBADO,
-                EstadoValidacion.RECHAZADO,
-            ):
-                raise ValueError(
-                    "El estado de validacion debe ser APROBADO o RECHAZADO"
-                )
+            _validar_decision_revision(nuevo_estado)
 
             doc.estado = nuevo_estado
             _actualizar_documento(conn, doc)
@@ -406,13 +399,7 @@ class OnboardingService:
             if not dador:
                 raise ValueError(f"No se encontro el perfil dador con ID {dador_id}")
 
-            if nuevo_estado not in (
-                EstadoValidacion.APROBADO,
-                EstadoValidacion.RECHAZADO,
-            ):
-                raise ValueError(
-                    "El estado de validacion debe ser APROBADO o RECHAZADO"
-                )
+            _validar_decision_revision(nuevo_estado)
 
             dador.estado_validacion = nuevo_estado
             _actualizar_dador(conn, dador)
