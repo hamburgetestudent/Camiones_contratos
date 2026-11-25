@@ -5,12 +5,15 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
+from dao.contrato_dao import ContratoDAOSQLite
 from database.conexion import obtener_conexion
 from domain.modelos import ContratoCrear, ContratoModelo, Moneda, TipoCarga
 from domain.modelos_onboarding import DatosFacturacion, EstadoValidacion
-from services.contrato_service import ServicioContrato, buscar_contrato
+from services.contrato_service import ServicioContrato
 from services.onboarding_service import OnboardingService
 from tests.base import BaseTestCase
+
+_dao = ContratoDAOSQLite()
 
 
 class BaseTestContratos(BaseTestCase):
@@ -48,7 +51,7 @@ class BaseTestContratos(BaseTestCase):
     def leer_contrato_bd(self, contrato_id: UUID) -> ContratoModelo | None:
         """Lee un contrato directamente de SQLite (verifica persistencia real)."""
         with obtener_conexion(self.db_path) as conn:
-            return buscar_contrato(conn, contrato_id)
+            return _dao.obtener_por_id(conn, contrato_id)
 
     def crear_datos_contrato_validos(
         self,

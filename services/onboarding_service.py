@@ -1,18 +1,22 @@
 """
 Servicio de Negocio para el modulo de Onboarding y Verificacion de Documentacion (KYC / Fleet Compliance).
 
-Persiste directamente en SQLite (tablas ``documentos_transportista`` y
-``dadores_carga``) mediante ``database.conexion``.
+La persistencia se delega en ``DocumentoDAO`` y ``DadorCargaDAO`` inyectados
+(por defecto sus implementaciones SQLite); el servicio no contiene SQL.
 """
 
 from __future__ import annotations
 
-import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 from uuid import UUID
 
-from database.conexion import obtener_conexion, transaccion_exclusiva
+from dao.onboarding_dao import (
+    DadorCargaDAO,
+    DadorCargaDAOSQLite,
+    DocumentoDAO,
+    DocumentoDAOSQLite,
+)
 from domain.modelos_onboarding import (
     DadorCarga,
     DatosFacturacion,
@@ -31,173 +35,6 @@ DOCUMENTOS_REQUERIDOS_TRANSPORTISTA = [
 ]
 
 # ---------------------------------------------------------------------------
-# SQL: documentos_transportista
-# ---------------------------------------------------------------------------
-
-_SELECT_DOCUMENTO = (
-    "SELECT id, user_id, tipo, archivo, estado, created_at "
-    "FROM documentos_transportista"
-)
-
-
-def _fila_a_documento(fila: sqlite3.Row) -> DocumentoTransportista:
-    return DocumentoTransportista(
-        id=UUID(fila["id"]),
-        user_id=UUID(fila["user_id"]),
-        tipo=TipoDocumento(fila["tipo"]),
-        archivo=fila["archivo"],
-        estado=EstadoValidacion(fila["estado"]),
-        created_at=datetime.fromisoformat(fila["created_at"]),
-    )
-
-
-def _insertar_documento(
-    conn: sqlite3.Connection, doc: DocumentoTransportista
-) -> DocumentoTransportista:
-    conn.execute(
-        """
-        INSERT INTO documentos_transportista (id, user_id, tipo, archivo, estado, created_at)
-        VALUES (?, ?, ?, ?, ?, ?)
-        """,
-        (
-            str(doc.id),
-            str(doc.user_id),
-            TipoDocumento(doc.tipo).value,
-            doc.archivo,
-            EstadoValidacion(doc.estado).value,
-            doc.created_at.isoformat(),
-        ),
-    )
-    return doc
-
-
-def _actualizar_documento(
-    conn: sqlite3.Connection, doc: DocumentoTransportista
-) -> None:
-    conn.execute(
-        """
-        UPDATE documentos_transportista
-        SET archivo = ?, estado = ?, created_at = ?
-        WHERE id = ?
-        """,
-        (
-            doc.archivo,
-            EstadoValidacion(doc.estado).value,
-            doc.created_at.isoformat(),
-            str(doc.id),
-        ),
-    )
-
-
-def _buscar_documento_por_id(
-    conn: sqlite3.Connection, documento_id: UUID
-) -> DocumentoTransportista | None:
-    fila = conn.execute(
-        f"{_SELECT_DOCUMENTO} WHERE id = ?", (str(documento_id),)
-    ).fetchone()
-    return _fila_a_documento(fila) if fila else None
-
-
-def _buscar_documento_por_usuario_y_tipo(
-    conn: sqlite3.Connection, user_id: UUID, tipo: TipoDocumento
-) -> DocumentoTransportista | None:
-    fila = conn.execute(
-        f"{_SELECT_DOCUMENTO} WHERE user_id = ? AND tipo = ?",
-        (str(user_id), TipoDocumento(tipo).value),
-    ).fetchone()
-    return _fila_a_documento(fila) if fila else None
-
-
-def _buscar_documentos_por_usuario(
-    conn: sqlite3.Connection, user_id: UUID
-) -> list[DocumentoTransportista]:
-    filas = conn.execute(
-        f"{_SELECT_DOCUMENTO} WHERE user_id = ? ORDER BY created_at ASC, rowid ASC",
-        (str(user_id),),
-    ).fetchall()
-    return [_fila_a_documento(fila) for fila in filas]
-
-
-# ---------------------------------------------------------------------------
-# SQL: dadores_carga
-# ---------------------------------------------------------------------------
-
-_SELECT_DADOR = (
-    "SELECT id, user_id, rut_id_empresa, razon_social, direccion, "
-    "correo_facturacion, estado_validacion FROM dadores_carga"
-)
-
-
-def _fila_a_dador(fila: sqlite3.Row) -> DadorCarga:
-    return DadorCarga(
-        id=UUID(fila["id"]),
-        user_id=UUID(fila["user_id"]),
-        rut_id_empresa=fila["rut_id_empresa"],
-        datos_facturacion=DatosFacturacion(
-            razon_social=fila["razon_social"],
-            direccion=fila["direccion"],
-            correo_facturacion=fila["correo_facturacion"],
-        ),
-        estado_validacion=EstadoValidacion(fila["estado_validacion"]),
-    )
-
-
-def _insertar_dador(conn: sqlite3.Connection, dador: DadorCarga) -> DadorCarga:
-    conn.execute(
-        """
-        INSERT INTO dadores_carga (
-            id, user_id, rut_id_empresa, razon_social, direccion,
-            correo_facturacion, estado_validacion
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            str(dador.id),
-            str(dador.user_id),
-            dador.rut_id_empresa,
-            dador.datos_facturacion.razon_social,
-            dador.datos_facturacion.direccion,
-            dador.datos_facturacion.correo_facturacion,
-            EstadoValidacion(dador.estado_validacion).value,
-        ),
-    )
-    return dador
-
-
-def _actualizar_dador(conn: sqlite3.Connection, dador: DadorCarga) -> None:
-    conn.execute(
-        """
-        UPDATE dadores_carga
-        SET rut_id_empresa = ?, razon_social = ?, direccion = ?,
-            correo_facturacion = ?, estado_validacion = ?
-        WHERE id = ?
-        """,
-        (
-            dador.rut_id_empresa,
-            dador.datos_facturacion.razon_social,
-            dador.datos_facturacion.direccion,
-            dador.datos_facturacion.correo_facturacion,
-            EstadoValidacion(dador.estado_validacion).value,
-            str(dador.id),
-        ),
-    )
-
-
-def _buscar_dador_por_usuario(
-    conn: sqlite3.Connection, user_id: UUID
-) -> DadorCarga | None:
-    fila = conn.execute(
-        f"{_SELECT_DADOR} WHERE user_id = ?", (str(user_id),)
-    ).fetchone()
-    return _fila_a_dador(fila) if fila else None
-
-
-def _buscar_dador_por_id(conn: sqlite3.Connection, dador_id: UUID) -> DadorCarga | None:
-    fila = conn.execute(f"{_SELECT_DADOR} WHERE id = ?", (str(dador_id),)).fetchone()
-    return _fila_a_dador(fila) if fila else None
-
-
-# ---------------------------------------------------------------------------
 # Servicio
 # ---------------------------------------------------------------------------
 
@@ -210,13 +47,23 @@ def _validar_decision_revision(estado: EstadoValidacion) -> None:
 class OnboardingService:
     """Servicio que implementa las reglas de negocio de onboarding y validacion documental."""
 
-    def __init__(self, db_path: str | Path | None = None) -> None:
+    def __init__(
+        self,
+        db_path: str | Path | None = None,
+        documento_dao: DocumentoDAO | None = None,
+        dador_dao: DadorCargaDAO | None = None,
+    ) -> None:
         """Crea el servicio.
 
         Args:
-            db_path: Archivo SQLite a usar. Si es None se usa ``DEFAULT_DB_PATH``.
+            db_path: Archivo SQLite para los DAO que no se inyecten. Si es None se
+                usa ``DEFAULT_DB_PATH``.
+            documento_dao: Almacen de documentos de transportista.
+            dador_dao: Almacen de perfiles de dador de carga. Ambos DAO deben
+                apuntar a la misma base para compartir transaccion.
         """
-        self._db_path = db_path
+        self._documentos: DocumentoDAO = documento_dao or DocumentoDAOSQLite(db_path)
+        self._dadores: DadorCargaDAO = dador_dao or DadorCargaDAOSQLite(db_path)
 
     # =========================================
     # Operaciones del Transportista
@@ -229,13 +76,13 @@ class OnboardingService:
         Carga o actualiza un documento para el transportista.
         Si ya existe un documento del mismo tipo, se actualiza el archivo y se reinicia a PENDIENTE.
         """
-        with transaccion_exclusiva(self._db_path) as conn:
-            existente = _buscar_documento_por_usuario_y_tipo(conn, user_id, tipo)
+        with self._documentos.transaccion() as conn:
+            existente = self._documentos.obtener_por_usuario_y_tipo(conn, user_id, tipo)
             if existente:
                 existente.archivo = archivo
                 existente.estado = EstadoValidacion.PENDIENTE
                 existente.created_at = datetime.now(UTC)
-                _actualizar_documento(conn, existente)
+                self._documentos.guardar(conn, existente)
                 return existente
 
             nuevo_doc = DocumentoTransportista(
@@ -244,14 +91,14 @@ class OnboardingService:
                 archivo=archivo,
                 estado=EstadoValidacion.PENDIENTE,
             )
-            return _insertar_documento(conn, nuevo_doc)
+            return self._documentos.guardar(conn, nuevo_doc)
 
     def listar_documentos_transportista(
         self, user_id: UUID
     ) -> list[DocumentoTransportista]:
         """Obtiene la lista de todos los documentos cargados por el transportista."""
-        with obtener_conexion(self._db_path) as conn:
-            return _buscar_documentos_por_usuario(conn, user_id)
+        with self._documentos.conexion() as conn:
+            return self._documentos.obtener_por_usuario(conn, user_id)
 
     def obtener_estado_transportista(
         self, user_id: UUID
@@ -310,13 +157,13 @@ class OnboardingService:
         datos_facturacion: DatosFacturacion,
     ) -> DadorCarga:
         """Registra o actualiza los datos tributarios del dador de carga, reiniciando validacion a PENDIENTE."""
-        with transaccion_exclusiva(self._db_path) as conn:
-            existente = _buscar_dador_por_usuario(conn, user_id)
+        with self._dadores.transaccion() as conn:
+            existente = self._dadores.obtener_por_usuario(conn, user_id)
             if existente:
                 existente.rut_id_empresa = rut_id_empresa
                 existente.datos_facturacion = datos_facturacion
                 existente.estado_validacion = EstadoValidacion.PENDIENTE
-                _actualizar_dador(conn, existente)
+                self._dadores.guardar(conn, existente)
                 return existente
 
             nuevo_perfil = DadorCarga(
@@ -325,12 +172,12 @@ class OnboardingService:
                 datos_facturacion=datos_facturacion,
                 estado_validacion=EstadoValidacion.PENDIENTE,
             )
-            return _insertar_dador(conn, nuevo_perfil)
+            return self._dadores.guardar(conn, nuevo_perfil)
 
     def obtener_perfil_dador(self, user_id: UUID) -> DadorCarga | None:
         """Obtiene el perfil del dador de carga por su UUID de usuario."""
-        with obtener_conexion(self._db_path) as conn:
-            return _buscar_dador_por_usuario(conn, user_id)
+        with self._dadores.conexion() as conn:
+            return self._dadores.obtener_por_usuario(conn, user_id)
 
     def es_dador_aprobado(self, user_id: UUID) -> bool:
         """Verifica si el dador de carga cuenta con su validacion tributaria APROBADA."""
@@ -345,12 +192,8 @@ class OnboardingService:
 
     def listar_documentos_pendientes_admin(self) -> list[DocumentoTransportista]:
         """Lista todos los documentos de transportistas pendientes de revision."""
-        with obtener_conexion(self._db_path) as conn:
-            filas = conn.execute(
-                f"{_SELECT_DOCUMENTO} WHERE estado = ? ORDER BY created_at ASC, rowid ASC",
-                (EstadoValidacion.PENDIENTE.value,),
-            ).fetchall()
-            return [_fila_a_documento(fila) for fila in filas]
+        with self._documentos.conexion() as conn:
+            return self._documentos.obtener_por_estado(conn, EstadoValidacion.PENDIENTE)
 
     def validar_documento(
         self, documento_id: UUID, nuevo_estado: EstadoValidacion
@@ -370,39 +213,35 @@ class OnboardingService:
         Raises:
             ValueError: Si el documento no existe o el estado no es valido.
         """
-        with transaccion_exclusiva(self._db_path) as conn:
-            doc = _buscar_documento_por_id(conn, documento_id)
+        with self._documentos.transaccion() as conn:
+            doc = self._documentos.obtener_por_id(conn, documento_id)
             if not doc:
                 raise ValueError(f"No se encontro el documento con ID {documento_id}")
 
             _validar_decision_revision(nuevo_estado)
 
             doc.estado = nuevo_estado
-            _actualizar_documento(conn, doc)
+            self._documentos.guardar(conn, doc)
             return doc
 
     def listar_dadores_pendientes_admin(self) -> list[DadorCarga]:
         """Lista todos los dadores de carga pendientes de validacion tributaria."""
-        with obtener_conexion(self._db_path) as conn:
-            filas = conn.execute(
-                f"{_SELECT_DADOR} WHERE estado_validacion = ? ORDER BY rowid ASC",
-                (EstadoValidacion.PENDIENTE.value,),
-            ).fetchall()
-            return [_fila_a_dador(fila) for fila in filas]
+        with self._dadores.conexion() as conn:
+            return self._dadores.obtener_por_estado(conn, EstadoValidacion.PENDIENTE)
 
     def validar_dador(
         self, dador_id: UUID, nuevo_estado: EstadoValidacion
     ) -> DadorCarga:
         """Aprueba o rechaza el perfil tributario de un dador de carga."""
-        with transaccion_exclusiva(self._db_path) as conn:
-            dador = _buscar_dador_por_id(conn, dador_id)
+        with self._dadores.transaccion() as conn:
+            dador = self._dadores.obtener_por_id(conn, dador_id)
             if not dador:
                 raise ValueError(f"No se encontro el perfil dador con ID {dador_id}")
 
             _validar_decision_revision(nuevo_estado)
 
             dador.estado_validacion = nuevo_estado
-            _actualizar_dador(conn, dador)
+            self._dadores.guardar(conn, dador)
             return dador
 
 

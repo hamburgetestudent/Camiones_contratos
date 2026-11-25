@@ -5,10 +5,13 @@ from datetime import UTC, date, datetime, timedelta
 from typing import Literal
 from uuid import UUID, uuid4
 
+from dao.contrato_dao import ContratoDAOSQLite
 from database.conexion import obtener_conexion, transaccion_exclusiva
 from domain.maquina_estados import EstadoContrato, MaquinaEstadosContrato
 from domain.modelos_usuario import UsuarioModelo
-from services.contrato_service import actualizar_contrato, buscar_contrato
+
+# Misma base por defecto que el resto de servicios; opera sobre la conexion recibida.
+_contratos = ContratoDAOSQLite()
 
 ESTADOS_CANCELACION_ADMIN = frozenset(
     {
@@ -114,11 +117,11 @@ def _operar(tipo, elemento_id, actor, motivo, confirmado, accion):
         if not causa and accion == "cancelar_contrato":
             # El permiso es más estrecho que la máquina de estados. Se comprueban ambos
             # bajo el mismo bloqueo que usa la adjudicación, conservando todas las ofertas.
-            contrato = buscar_contrato(conn, elemento_id)
+            contrato = _contratos.obtener_por_id(conn, elemento_id)
             actualizado = MaquinaEstadosContrato.cambiar_estado(
                 contrato, EstadoContrato.CANCELADO
             )
-            actualizar_contrato(conn, elemento_id, actualizado)
+            _contratos.actualizar(conn, elemento_id, actualizado)
             posterior = dict(anterior, estado=actualizado.estado.value)
         elif not causa:
             tabla = "contratos" if tipo == "contrato" else "usuarios"

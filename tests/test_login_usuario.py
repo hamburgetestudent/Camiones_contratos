@@ -21,6 +21,7 @@ from uuid import UUID, uuid4
 from fastapi import HTTPException
 from pydantic import ValidationError
 
+from dao.usuario_dao import UsuarioDAOSQLite
 from database.conexion import obtener_conexion
 from domain.modelos_login import CredencialesLogin, RespuestaLogin
 from domain.modelos_usuario import (
@@ -31,8 +32,10 @@ from domain.modelos_usuario import (
 )
 from routers.auth_router import iniciar_sesion as router_iniciar_sesion
 from services.security import decodificar_token_acceso
-from services.usuario_service import UsuarioService, guardar_usuario, hash_password
+from services.usuario_service import UsuarioService, hash_password
 from tests.base import crear_bd_aislada
+
+_usuarios = UsuarioDAOSQLite()
 
 
 class _MockResponse:
@@ -139,7 +142,7 @@ class BaseTestLogin(unittest.TestCase):
     def _guardar_usuario(self, usuario: UsuarioModelo) -> None:
         """Persiste un usuario semilla directamente en SQLite."""
         with obtener_conexion(self.db_path) as conn:
-            guardar_usuario(conn, usuario)
+            _usuarios.guardar(conn, usuario)
 
 
 class TestCA01InicioSesionExitoso(BaseTestLogin):

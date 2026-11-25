@@ -3,7 +3,11 @@
 // Redirige al panel según el rol entregado por el backend.
 // =============================================
 
-const API_BASE_URL = window.API_BASE_URL || "http://127.0.0.1:8000";
+const API_BASE_URL =
+  window.API_BASE_URL ||
+  (window.location.protocol.startsWith("http")
+    ? window.location.origin
+    : "http://127.0.0.1:8000");
 
 const loginForm = document.getElementById("loginForm");
 const btnLogin = document.getElementById("btnLogin");
@@ -96,7 +100,7 @@ async function ejecutarLogin(evento) {
   } catch (error) {
     console.error("Error al conectar con el backend:", error);
     mostrarMensajeLogin(
-      "No se pudo conectar con el servidor (http://127.0.0.1:8000). Verifica que el backend esté en ejecución.",
+      `No se pudo conectar con el servidor (${API_BASE_URL}). Verifica que el backend esté en ejecución.`,
       "error"
     );
   } finally {

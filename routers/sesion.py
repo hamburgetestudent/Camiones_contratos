@@ -11,7 +11,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from database.conexion import obtener_conexion
 from domain.modelos_usuario import RolUsuario, UsuarioModelo
 from services.security import decodificar_token_acceso
-from services.usuario_service import buscar_usuario_por_id
+from services.usuario_service import UsuarioService
 
 Bearer = Annotated[
     HTTPAuthorizationCredentials | None, Depends(HTTPBearer(auto_error=False))
@@ -34,7 +34,7 @@ def usuario_actual(bearer: Bearer) -> UsuarioModelo:
                 "SELECT 1 FROM sesiones_cerradas WHERE huella=?",
                 (_huella(bearer.credentials),),
             ).fetchone()
-            usuario = buscar_usuario_por_id(conn, identificador)
+            usuario = UsuarioService.dao.obtener_por_id(conn, identificador)
             if usuario and not cerrada:
                 return usuario
     raise HTTPException(

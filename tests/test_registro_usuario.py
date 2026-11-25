@@ -24,6 +24,7 @@ from uuid import UUID
 from fastapi import HTTPException
 from pydantic import ValidationError
 
+from dao.usuario_dao import UsuarioDAOSQLite
 from database.conexion import obtener_conexion
 from domain.modelos_onboarding import (
     CargarDocumentoDTO,
@@ -37,13 +38,10 @@ from services.onboarding_service import (
     DOCUMENTOS_REQUERIDOS_TRANSPORTISTA,
     OnboardingService,
 )
-from services.usuario_service import (
-    UsuarioService,
-    buscar_usuario_por_email,
-    buscar_usuario_por_id,
-    hash_password,
-)
+from services.usuario_service import UsuarioService, hash_password
 from tests.base import crear_bd_aislada
+
+_usuarios = UsuarioDAOSQLite()
 
 
 class BaseTestRegistro(unittest.TestCase):
@@ -60,7 +58,7 @@ class BaseTestRegistro(unittest.TestCase):
     def _leer_usuario(self, usuario_id: UUID):
         """Lee un usuario directamente de SQLite (verifica persistencia real)."""
         with obtener_conexion(self.db_path) as conn:
-            return buscar_usuario_por_id(conn, usuario_id)
+            return _usuarios.obtener_por_id(conn, usuario_id)
 
     def _crear_documentos_transportista_validos(self) -> list[CargarDocumentoDTO]:
         """Genera la lista con los 5 documentos requeridos en formatos válidos."""
@@ -651,7 +649,7 @@ class TestPersistenciaSQLiteIntegracion(unittest.TestCase):
 
         # Recuperar directamente desde SQLite
         with obtener_conexion(self.db_path) as conn:
-            recuperado = buscar_usuario_por_id(conn, creado.id)
+            recuperado = _usuarios.obtener_por_id(conn, creado.id)
         self.assertIsNotNone(recuperado)
         assert recuperado is not None
         self.assertEqual(recuperado.nombre, "Transportista SQLite")
@@ -662,7 +660,7 @@ class TestPersistenciaSQLiteIntegracion(unittest.TestCase):
 
         # Recuperar por email insensible a mayúsculas
         with obtener_conexion(self.db_path) as conn:
-            recuperado_email = buscar_usuario_por_email(conn, "SQLITE.TEST@CORREO.CL")
+            recuperado_email = _usuarios.obtener_por_email(conn, "SQLITE.TEST@CORREO.CL")
         self.assertIsNotNone(recuperado_email)
         assert recuperado_email is not None
         self.assertEqual(recuperado_email.id, creado.id)
