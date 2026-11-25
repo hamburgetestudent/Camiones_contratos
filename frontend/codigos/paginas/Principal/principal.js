@@ -1,10 +1,4 @@
 /* Catálogo principal conectado a la API real de FastAPI — MansoViaje */
-const API_BASE_URL =
-  window.API_BASE_URL ||
-  (window.location.protocol.startsWith("http")
-    ? window.location.origin
-    : "http://127.0.0.1:8000");
-
 let usuarioActual = null;
 let contratosCargados = [];
 let modoMisContratos = false;
@@ -86,35 +80,14 @@ function mostrarSkeletonCatalogo() {
 }
 
 function volverLogin() {
-  for (const clave of ["usuario_actual", "access_token", "usuario_rol", "sesion_usuario"]) {
-    localStorage.removeItem(clave);
-  }
-  window.location.replace("../Login/index.html");
+  window.MVApi.volverALogin();
 }
 
 async function solicitarApi(ruta, opciones = {}) {
-  const token = localStorage.getItem("access_token");
-  if (!token) {
-    volverLogin();
-    throw new Error("Debes iniciar sesión.");
-  }
-  const r = await fetch(API_BASE_URL + ruta, {
+  return window.MVApi.solicitar(ruta, {
     ...opciones,
-    headers: {
-      Authorization: "Bearer " + token,
-      ...(opciones.headers || {}),
-    },
-    cache: "no-store",
+    mensajeError: "Error al cargar datos.",
   });
-  if (r.status === 401) {
-    volverLogin();
-    throw new Error("Sesión expirada.");
-  }
-  if (!r.ok) {
-    const cuerpo = await r.json().catch(() => ({}));
-    throw new Error(typeof cuerpo.detail === "string" ? cuerpo.detail : "Error al cargar datos.");
-  }
-  return r.status === 204 ? null : r.json();
 }
 
 function formatearPrecio(precio, moneda = "CLP") {
@@ -354,10 +327,7 @@ async function gestionarAccionPerfil(evento) {
         : "../panel/index.html";
   } else if (accion === "cerrar") {
     try {
-      const respuesta = await fetch(API_BASE_URL + "/auth/logout", {
-        method: "POST",
-        headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
-      });
+      const respuesta = await window.MVApi.cerrarSesionEnServidor();
       if (!respuesta.ok && respuesta.status !== 401) throw Error();
     } catch {
       mostrarAvisoPrincipal("No se pudo cerrar la sesión. Vuelve a intentarlo.", "error");
