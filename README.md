@@ -9,6 +9,8 @@ La arquitectura separa claramente las responsabilidades entre cliente y servidor
 
 ## Entrega 1.0.0 para Windows x64
 
+[Acta de aceptación del instalador 1.0.0: SHA-256, commit, instalación, CI y pruebas](docs/aceptacion-escritorio-1.0.0.md) · [Ficha para la revisión por otro equipo](docs/revision-externa.md)
+
 ### Instalar y ejecutar
 
 1. Obtén `MansoViaje-1.0.0-win-x64.exe`, `SHA256SUMS.txt` y `VERSION.txt` de la carpeta de entrega compartida por el equipo. En la copia de construcción están en `release/`. El primer archivo contiene la aplicación, FastAPI, SQLite, las vistas y las cuentas de demostración. El SHA identifica el instalador exacto. `VERSION.txt` identifica el commit y sus comprobaciones en GitHub.
