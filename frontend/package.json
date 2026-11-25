@@ -1,17 +1,25 @@
-{ 
-  "name": "Camiones_contratos", 
-  "version": "1.0.0", 
-  "description": "Aplicación de escritorio desarrollada con Electron, Node.js, TypeScript y python", 
-  "main": "dist/main.js", 
-  "author": "", 
-  "license": "MIT", 
-  "scripts": { 
-    "build": "tsc", 
-    "start": "npm run build && electron .", 
-    "dev": "tsc --watch" }, 
-  "devDependencies": { 
-    "@types/node": "^22.0.0", 
-    "electron": "^44.0.0", 
-    "typescript": "^7.0.2" } 
-
+{
+  "name": "Camiones_contratos",
+  "version": "1.0.0",
+  "description": "Aplicación de escritorio desarrollada con Electron, Node.js, TypeScript y python",
+  "main": "dist/main.js",
+  "author": "",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc && cpx \"codigos/paginas/**/*\" \"dist/paginas\" && cpx \"codigos/imagenes/**/*\" \"dist/imagenes\"",
+    "start": "tsc && cpx \"codigos/paginas/**/*\" \"dist/paginas\" && cpx \"codigos/imagenes/**/*\" \"dist/imagenes\" && electron .",
+    "dev": "tsc --watch",
+    "test:panel": "node tests/panel.e2e.cjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "setup": "npm install --include=dev"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "cpx": "^1.5.0",
+    "electron": "^44.0.0",
+    "typescript": "^7.0.2",
+    "playwright": "^1.65.1",
+    "prettier": "^3.9.10"
+  }
 }

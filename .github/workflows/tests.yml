@@ -1,0 +1,75 @@
+# Suite de tests en cada push a main y en cada pull request.
+# Corre en Windows porque es el entorno de desarrollo y de uso del sistema.
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (pytest + cobertura)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt pytest httpx
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      # La configuración de cobertura está en .coveragerc
+      - name: Ejecutar tests con cobertura
+        run: |
+          coverage run -m pytest
+          coverage report -m
+          coverage xml
+
+      - name: Publicar reporte de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura
+          path: coverage.xml
+          if-no-files-found: ignore
+
+  frontend:
+    name: Frontend (typecheck)
+    runs-on: windows-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      # No se abre la app: no hace falta descargar el binario de Electron.
+      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit

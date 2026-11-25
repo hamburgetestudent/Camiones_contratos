@@ -4,7 +4,7 @@ Router HTTP para el flujo de Onboarding y Verificacion de Documentacion (KYC / F
 
 from uuid import UUID
 
-from fastapi import APIRouter, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 
 from domain.modelos_onboarding import (
     CargarDocumentoDTO,
@@ -15,6 +15,7 @@ from domain.modelos_onboarding import (
     ValidarDocumentoDTO,
     ValidarPerfilDadorDTO,
 )
+from routers.sesion import administrador_actual
 from services.onboarding_service import onboarding_service_instancia
 
 router = APIRouter(prefix="/onboarding", tags=["Onboarding & KYC"])
@@ -33,7 +34,9 @@ router = APIRouter(prefix="/onboarding", tags=["Onboarding & KYC"])
 )
 def cargar_documento_transportista(
     payload: CargarDocumentoDTO,
-    x_user_id: UUID = Header(..., alias="X-User-Id", description="UUID del transportista"),
+    x_user_id: UUID = Header(
+        ..., alias="X-User-Id", description="UUID del transportista"
+    ),
 ):
     """Permite al transportista cargar o actualizar un documento para verificación."""
     return onboarding_service_instancia.cargar_documento(
@@ -49,10 +52,14 @@ def cargar_documento_transportista(
     summary="Listar documentos del transportista",
 )
 def listar_documentos_transportista(
-    x_user_id: UUID = Header(..., alias="X-User-Id", description="UUID del transportista"),
+    x_user_id: UUID = Header(
+        ..., alias="X-User-Id", description="UUID del transportista"
+    ),
 ):
     """Retorna la lista de documentos cargados por el transportista identificado en el header."""
-    return onboarding_service_instancia.listar_documentos_transportista(user_id=x_user_id)
+    return onboarding_service_instancia.listar_documentos_transportista(
+        user_id=x_user_id
+    )
 
 
 @router.get(
@@ -61,7 +68,9 @@ def listar_documentos_transportista(
     summary="Consultar estado global de onboarding del transportista",
 )
 def consultar_estado_transportista(
-    x_user_id: UUID = Header(..., alias="X-User-Id", description="UUID del transportista"),
+    x_user_id: UUID = Header(
+        ..., alias="X-User-Id", description="UUID del transportista"
+    ),
 ):
     """Calcula y retorna el estado global (APROBADO, PENDIENTE o RECHAZADO) del transportista."""
     return onboarding_service_instancia.obtener_estado_transportista(user_id=x_user_id)
@@ -80,7 +89,9 @@ def consultar_estado_transportista(
 )
 def registrar_perfil_dador(
     payload: CrearPerfilDadorDTO,
-    x_user_id: UUID = Header(..., alias="X-User-Id", description="UUID del dador de carga"),
+    x_user_id: UUID = Header(
+        ..., alias="X-User-Id", description="UUID del dador de carga"
+    ),
 ):
     """Registra los datos de facturación e ID de empresa del dador de carga."""
     return onboarding_service_instancia.registrar_o_actualizar_perfil_dador(
@@ -96,7 +107,9 @@ def registrar_perfil_dador(
     summary="Obtener perfil tributario del dador de carga",
 )
 def obtener_perfil_dador(
-    x_user_id: UUID = Header(..., alias="X-User-Id", description="UUID del dador de carga"),
+    x_user_id: UUID = Header(
+        ..., alias="X-User-Id", description="UUID del dador de carga"
+    ),
 ):
     """Obtiene los datos tributarios y el estado_validacion actual del dador de carga."""
     perfil = onboarding_service_instancia.obtener_perfil_dador(user_id=x_user_id)
@@ -115,6 +128,7 @@ def obtener_perfil_dador(
 
 @router.get(
     "/admin/documentos",
+    dependencies=[Depends(administrador_actual)],
     response_model=list[DocumentoTransportista],
     summary="Listar documentos de transportistas pendientes de revisión",
 )
@@ -125,6 +139,7 @@ def listar_documentos_pendientes_admin():
 
 @router.patch(
     "/admin/documentos/{documento_id}/validar",
+    dependencies=[Depends(administrador_actual)],
     response_model=DocumentoTransportista,
     summary="Aprobar o rechazar un documento de transportista",
 )
@@ -144,6 +159,7 @@ def validar_documento_admin(documento_id: UUID, payload: ValidarDocumentoDTO):
 
 @router.get(
     "/admin/dadores",
+    dependencies=[Depends(administrador_actual)],
     response_model=list[DadorCarga],
     summary="Listar dadores de carga pendientes de validación tributaria",
 )
@@ -154,6 +170,7 @@ def listar_dadores_pendientes_admin():
 
 @router.patch(
     "/admin/dadores/{dador_id}/validar",
+    dependencies=[Depends(administrador_actual)],
     response_model=DadorCarga,
     summary="Aprobar o rechazar perfil de dador de carga",
 )

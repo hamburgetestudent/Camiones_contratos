@@ -1,0 +1,683 @@
+/* Sistema de diseño compartido — MansoViaje (SaaS Minimalista Neutro) */
+:root {
+  /* Superficies y estructura */
+  --fondo: #f8fafc;
+  --superficie: #ffffff;
+  --superficie-sutil: #f1f5f9;
+  --superficie-hover: #f8fafc;
+  --linea: #e2e8f0;
+  --linea-fuerte: #cbd5e1;
+  --borde-control: #cbd5e1;
+
+  /* Tipografía */
+  --texto: #0f172a;
+  --texto-secundario: #475569;
+  --texto-suave: #64748b;
+
+  /* Acento principal (azul pizarra discreto) */
+  --acento: #1d4ed8;
+  --acento-hover: #1e40af;
+  --acento-suave: #eff6ff;
+  --acento-borde: #bfdbfe;
+  --azul: var(--acento);
+  --azul-oscuro: var(--acento-hover);
+  --azul-suave: var(--acento-suave);
+
+  /* Estados semánticos */
+  --exito: #15803d;
+  --exito-hover: #166534;
+  --exito-fondo: #f0fdf4;
+  --exito-borde: #bbf7d0;
+
+  --aviso: #b45309;
+  --aviso-fondo: #fffbeb;
+  --aviso-borde: #fde68a;
+
+  --peligro: #b91c1c;
+  --peligro-hover: #991b1b;
+  --peligro-fondo: #fef2f2;
+  --peligro-borde: #fecaca;
+
+  --neutro: #475569;
+  --neutro-fondo: #f1f5f9;
+  --neutro-borde: #e2e8f0;
+
+  /* Radios y elevación */
+  --radio-xs: 6px;
+  --radio-sm: 8px;
+  --radio-md: 12px;
+  --radio-lg: 16px;
+  --radio-pill: 9999px;
+
+  --sombra-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --sombra-sm: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
+  --sombra-md: 0 8px 24px -4px rgba(15, 23, 42, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+  --sombra-modal: 0 20px 45px -12px rgba(15, 23, 42, 0.22);
+
+  /* Tipografía y renderizado */
+  --fuente-sans:
+    "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial,
+    sans-serif;
+  --fuente-mono: ui-monospace, "Cascadia Code", "SFMono-Regular", Menlo, Consolas, monospace;
+
+  color-scheme: light;
+  font-family: var(--fuente-sans);
+  color: var(--texto);
+  background: var(--fondo);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--texto);
+  background: var(--fondo);
+  line-height: 1.5;
+  font-size: 0.9375rem;
+}
+
+a {
+  color: var(--acento);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  color: var(--acento-hover);
+}
+
+:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
+.num-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.mv-icono {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+/* Isotipo de marca MansoViaje */
+.mv-isotipo {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+  color: #ffffff;
+  flex-shrink: 0;
+  box-shadow: var(--sombra-xs);
+}
+
+.mv-isotipo--sm {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
+.mv-isotipo--lg {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+}
+
+/* Badges semánticos con punto indicador */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--radio-pill);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.badge-aprobado {
+  background: var(--exito-fondo);
+  color: var(--exito);
+  border-color: var(--exito-borde);
+}
+
+.badge-pendiente {
+  background: var(--aviso-fondo);
+  color: var(--aviso);
+  border-color: var(--aviso-borde);
+}
+
+.badge-rechazado {
+  background: var(--peligro-fondo);
+  color: var(--peligro);
+  border-color: var(--peligro-borde);
+}
+
+.badge-info {
+  background: var(--acento-suave);
+  color: var(--acento);
+  border-color: var(--acento-borde);
+}
+
+.badge-neutro {
+  background: var(--neutro-fondo);
+  color: var(--neutro);
+  border-color: var(--neutro-borde);
+}
+
+/* Botones compartidos */
+.btn,
+.btn-primario,
+.btn-secundario,
+.btn-exito,
+.btn-peligro {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 7px 14px;
+  border-radius: var(--radio-sm);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid var(--linea-fuerte);
+  background: var(--superficie);
+  color: var(--texto);
+  box-shadow: var(--sombra-xs);
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.1s ease;
+}
+
+.btn:hover:not(:disabled),
+.btn-secundario:hover:not(:disabled) {
+  background: var(--superficie-sutil);
+  border-color: #94a3b8;
+  color: var(--texto);
+}
+
+.btn:active:not(:disabled),
+.btn-primario:active:not(:disabled),
+.btn-secundario:active:not(:disabled),
+.btn-exito:active:not(:disabled) {
+  transform: translateY(0.5px);
+}
+
+.btn-primario {
+  background: var(--acento);
+  color: #ffffff;
+  border-color: var(--acento);
+}
+
+.btn-primario:hover:not(:disabled) {
+  background: var(--acento-hover);
+  border-color: var(--acento-hover);
+  color: #ffffff;
+}
+
+.btn-exito {
+  background: var(--exito);
+  color: #ffffff;
+  border-color: var(--exito);
+}
+
+.btn-exito:hover:not(:disabled) {
+  background: var(--exito-hover);
+  border-color: var(--exito-hover);
+  color: #ffffff;
+}
+
+.peligro,
+.btn-peligro {
+  color: var(--peligro);
+  border-color: var(--peligro-borde);
+  background: var(--superficie);
+}
+
+.peligro:hover:not(:disabled),
+.btn-peligro:hover:not(:disabled) {
+  background: var(--peligro-fondo);
+  border-color: #f87171;
+  color: var(--peligro-hover);
+}
+
+.btn-peligro-solido {
+  background: var(--peligro);
+  border-color: var(--peligro);
+  color: #ffffff;
+}
+
+.btn-peligro-solido:hover:not(:disabled) {
+  background: var(--peligro-hover);
+  border-color: var(--peligro-hover);
+  color: #ffffff;
+}
+
+.btn-fantasma {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--texto-secundario);
+}
+
+.btn-fantasma:hover:not(:disabled) {
+  background: var(--superficie-sutil);
+  color: var(--texto);
+}
+
+.btn-sm {
+  min-height: 30px;
+  padding: 4px 10px;
+  font-size: 0.8125rem;
+}
+
+button:disabled,
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Controles de contraseña con toggle */
+.input-password-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-password-wrap input {
+  width: 100%;
+  padding-right: 40px;
+}
+
+.btn-toggle-pass {
+  position: absolute;
+  right: 6px;
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radio-xs);
+  background: transparent;
+  color: var(--texto-suave);
+  box-shadow: none;
+  min-height: 0;
+  cursor: pointer;
+}
+
+.btn-toggle-pass:hover {
+  background: var(--superficie-sutil);
+  color: var(--texto);
+}
+
+/* Validación inline en formularios */
+.campo-error,
+input.invalido,
+select.invalido,
+textarea.invalido {
+  border-color: var(--peligro) !important;
+  background: var(--peligro-fondo) !important;
+}
+
+.campo-error:focus,
+input.invalido:focus,
+select.invalido:focus,
+textarea.invalido:focus {
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.14) !important;
+}
+
+.error-inline {
+  margin: 2px 0 0;
+  color: var(--peligro);
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+/* Banners / Avisos semánticos */
+.aviso-exito {
+  background: var(--exito-fondo) !important;
+  color: var(--exito);
+  border: 1px solid var(--exito-borde);
+  border-radius: var(--radio-sm);
+}
+
+.aviso-error {
+  background: var(--peligro-fondo) !important;
+  color: var(--peligro);
+  border: 1px solid var(--peligro-borde);
+  border-radius: var(--radio-sm);
+}
+
+.aviso-info {
+  background: var(--aviso-fondo) !important;
+  color: var(--aviso);
+  border: 1px solid var(--aviso-borde);
+  border-radius: var(--radio-sm);
+}
+
+.aviso-banner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 14px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.aviso-banner-contenido {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.aviso-banner-contenido .mv-icono {
+  margin-top: 2px;
+}
+
+.aviso-cerrar {
+  flex-shrink: 0;
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  min-height: 0;
+  border: 0;
+  border-radius: var(--radio-xs);
+  background: transparent;
+  color: currentColor;
+  opacity: 0.7;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.aviso-cerrar:hover {
+  opacity: 1;
+  background: rgba(15, 23, 42, 0.06);
+}
+
+/* IDs monoespaciados truncados visualmente (conservando texto completo en DOM) */
+.celda-id {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.id-corto {
+  display: inline-block;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--fuente-mono);
+  font-size: 0.8rem;
+  color: var(--texto-secundario);
+  background: var(--superficie-sutil);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-xs);
+  padding: 2px 7px;
+  vertical-align: middle;
+}
+
+.btn-copiar {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  min-height: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radio-xs);
+  background: transparent;
+  color: var(--texto-suave);
+  box-shadow: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.btn-copiar:hover {
+  background: var(--superficie-sutil);
+  border-color: var(--linea);
+  color: var(--texto);
+}
+
+.btn-copiar.copiado {
+  color: var(--exito);
+  background: var(--exito-fondo);
+  border-color: var(--exito-borde);
+}
+
+/* Barra de filtros limpia */
+.barra-filtros {
+  background: var(--superficie);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-md);
+  padding: 16px;
+  margin: 0 0 18px;
+  box-shadow: var(--sombra-xs);
+}
+
+.barra-filtros-titulo {
+  margin: 0 0 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--texto-suave);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.barra-filtros-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.barra-filtros-acciones {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--linea);
+}
+
+.filtro-check {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 38px;
+  padding: 6px 10px;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-sm);
+  background: var(--fondo);
+  cursor: pointer;
+  font-weight: 500 !important;
+}
+
+.filtro-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--acento);
+}
+
+/* Estados vacíos guiados */
+.estado-vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+  padding: 40px 24px;
+  background: var(--superficie);
+  border: 1px dashed var(--linea-fuerte);
+  border-radius: var(--radio-md);
+  color: var(--texto-suave);
+}
+
+.estado-vacio-icono {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radio-md);
+  background: var(--superficie-sutil);
+  color: var(--texto-suave);
+}
+
+.estado-vacio p {
+  margin: 0;
+  max-width: 420px;
+  font-size: 0.9rem;
+  color: var(--texto-secundario);
+}
+
+/* Skeletons de carga */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #e2e8f0;
+  border-radius: var(--radio-xs);
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.65) 50%,
+    transparent 100%
+  );
+  animation: mv-shimmer 1.3s infinite;
+}
+
+@keyframes mv-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+  }
+}
+
+.skeleton-bloque {
+  display: grid;
+  gap: 16px;
+}
+
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+}
+
+.skeleton-card {
+  background: var(--superficie);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-md);
+  padding: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.skeleton-linea {
+  height: 12px;
+  width: 65%;
+}
+
+.skeleton-linea--corta {
+  width: 38%;
+}
+
+.skeleton-linea--grande {
+  height: 26px;
+  width: 48%;
+}
+
+.skeleton-linea--llena {
+  width: 100%;
+}
+
+/* Modales nativos <dialog> refinados */
+dialog {
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-lg);
+  padding: 24px;
+  background: var(--superficie);
+  color: var(--texto);
+  box-shadow: var(--sombra-modal);
+}
+
+dialog::backdrop {
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+.texto-suave {
+  color: var(--texto-suave);
+  font-size: 0.875rem;
+}
+
+.oculto {
+  display: none !important;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

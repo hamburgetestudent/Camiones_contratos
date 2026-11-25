@@ -1,0 +1,16 @@
+{
+  "id": "8a3e7456-ca01-4b82-990f-env-local-camiones",
+  "name": "Local (FastAPI 8000)",
+  "values": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000",
+      "type": "default",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment",
+  "_postman_exported_at": "2026-10-18T20:10:00.000Z",
+  "_postman_exported_using": "Postman/10.0.0"
+}
+

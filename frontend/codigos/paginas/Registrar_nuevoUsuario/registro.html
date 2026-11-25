@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Crear cuenta | MansoViaje</title>
+    <link rel="stylesheet" href="../comun/tema.css" />
+    <link rel="stylesheet" href="registro.css" />
+  </head>
+  <body>
+    <main class="registro-container">
+      <section class="registro-card">
+        <div class="registro-topbar">
+          <div class="marca-registro">
+            <span class="mv-isotipo" id="logoRegistro" aria-hidden="true"></span>
+            <div>
+              <strong class="marca-nombre">MansoViaje</strong>
+              <span class="marca-sub">Contratos de carga</span>
+            </div>
+          </div>
+          <a href="../Login/index.html" class="btn-fantasma btn btn-sm" id="linkTopVolver">
+            ← Volver a iniciar sesión
+          </a>
+        </div>
+
+        <header class="registro-header">
+          <h1>Crear cuenta</h1>
+          <p>Selecciona tu rol operativo y completa tus datos para comenzar en MansoViaje.</p>
+        </header>
+
+        <form id="registroForm" novalidate>
+          <fieldset class="grupo-rol">
+            <legend>Tipo de cuenta</legend>
+            <div class="tipo-grid">
+              <label class="tipo-option">
+                <input type="radio" name="rol_usuario" value="TRANSPORTISTA" checked />
+                <span class="tipo-content">
+                  <span class="tipo-icono" data-icono="camion"></span>
+                  <span>
+                    <strong>Transportista</strong>
+                    <small>
+                      Postula a cargas publicadas, gestiona tu documentación KYC y reporta
+                      despachos.
+                    </small>
+                  </span>
+                </span>
+              </label>
+
+              <label class="tipo-option">
+                <input type="radio" name="rol_usuario" value="DADOR_CARGA" />
+                <span class="tipo-content">
+                  <span class="tipo-icono" data-icono="empresa"></span>
+                  <span>
+                    <strong>Dador de carga</strong>
+                    <small>
+                      Publica contratos de transporte, evalúa ofertas y adjudica a transportistas
+                      verificados.
+                    </small>
+                  </span>
+                </span>
+              </label>
+            </div>
+          </fieldset>
+
+          <section class="form-section">
+            <h2>Datos personales</h2>
+            <div class="form-grid">
+              <div class="field">
+                <label for="nombre">Nombre <abbr title="Obligatorio">*</abbr></label>
+                <input
+                  id="nombre"
+                  name="nombre"
+                  type="text"
+                  autocomplete="given-name"
+                  placeholder="Ej. Juan"
+                  required
+                />
+                <p class="error-inline oculto" id="error-nombre"></p>
+              </div>
+
+              <div class="field">
+                <label for="apellido">Apellido <abbr title="Obligatorio">*</abbr></label>
+                <input
+                  id="apellido"
+                  name="apellido"
+                  type="text"
+                  autocomplete="family-name"
+                  placeholder="Ej. Pérez"
+                  required
+                />
+                <p class="error-inline oculto" id="error-apellido"></p>
+              </div>
+
+              <div class="field field-full">
+                <label for="email">Correo electrónico <abbr title="Obligatorio">*</abbr></label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autocomplete="email"
+                  placeholder="nombre@empresa.cl"
+                  required
+                />
+                <p class="error-inline oculto" id="error-email"></p>
+              </div>
+            </div>
+          </section>
+
+          <section id="empresaSection" class="form-section oculto">
+            <div class="seccion-cabecera">
+              <h2>Perfil tributario de la empresa</h2>
+              <p class="help">
+                Estos datos se enviarán para validación KYC de backoffice antes de emitir contratos.
+              </p>
+            </div>
+
+            <div class="form-grid">
+              <div class="field field-full">
+                <label for="razon_social">Razón social <abbr title="Obligatorio">*</abbr></label>
+                <input
+                  id="razon_social"
+                  name="razon_social"
+                  type="text"
+                  placeholder="Ej. Logística del Sur S.A."
+                />
+                <p class="error-inline oculto" id="error-razon_social"></p>
+              </div>
+
+              <div class="field">
+                <label for="rut_empresa">
+                  RUT de la empresa <abbr title="Obligatorio">*</abbr>
+                </label>
+                <input
+                  id="rut_empresa"
+                  name="rut_empresa"
+                  type="text"
+                  placeholder="Ej. 76.123.456-7"
+                />
+                <p class="error-inline oculto" id="error-rut_empresa"></p>
+              </div>
+
+              <div class="field">
+                <label for="correo_facturacion">Correo de facturación (opcional)</label>
+                <input
+                  id="correo_facturacion"
+                  name="correo_facturacion"
+                  type="email"
+                  placeholder="Si queda vacío, usará tu correo principal"
+                />
+                <p class="error-inline oculto" id="error-correo_facturacion"></p>
+              </div>
+
+              <div class="field field-full">
+                <label for="direccion_empresa">
+                  Dirección tributaria <abbr title="Obligatorio">*</abbr>
+                </label>
+                <input
+                  id="direccion_empresa"
+                  name="direccion_empresa"
+                  type="text"
+                  autocomplete="street-address"
+                  placeholder="Ej. Av. Principal 123, Santiago"
+                />
+                <p class="error-inline oculto" id="error-direccion_empresa"></p>
+              </div>
+            </div>
+          </section>
+
+          <section class="form-section">
+            <h2>Seguridad</h2>
+
+            <div class="form-grid">
+              <div class="field">
+                <label for="password">Contraseña <abbr title="Obligatorio">*</abbr></label>
+                <div class="input-password-wrap">
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    minlength="8"
+                    autocomplete="new-password"
+                    placeholder="Mínimo 8 caracteres"
+                    required
+                  />
+                  <button
+                    type="button"
+                    class="btn-toggle-pass"
+                    data-toggle-target="password"
+                    aria-label="Mostrar contraseña"
+                    aria-pressed="false"
+                  ></button>
+                </div>
+                <div class="fortaleza-wrap" aria-live="polite">
+                  <div class="fortaleza-barra"><span id="barraFortaleza"></span></div>
+                  <small id="textoFortaleza" class="help">Mínimo 8 caracteres.</small>
+                </div>
+                <p class="error-inline oculto" id="error-password"></p>
+              </div>
+
+              <div class="field">
+                <label for="confirm_password">
+                  Confirmar contraseña <abbr title="Obligatorio">*</abbr>
+                </label>
+                <div class="input-password-wrap">
+                  <input
+                    id="confirm_password"
+                    name="confirm_password"
+                    type="password"
+                    autocomplete="new-password"
+                    placeholder="Repite tu contraseña"
+                    required
+                  />
+                  <button
+                    type="button"
+                    class="btn-toggle-pass"
+                    data-toggle-target="confirm_password"
+                    aria-label="Mostrar confirmación de contraseña"
+                    aria-pressed="false"
+                  ></button>
+                </div>
+                <p class="error-inline oculto" id="error-confirm_password"></p>
+              </div>
+            </div>
+          </section>
+
+          <div class="terms-wrap">
+            <label class="terms">
+              <input id="aceptaTerminos" name="acepta_terminos" type="checkbox" required />
+              <span>Acepto los términos de uso y la política de privacidad de MansoViaje.</span>
+            </label>
+            <p class="error-inline oculto" id="error-aceptaTerminos"></p>
+          </div>
+
+          <div id="mensaje" class="mensaje oculto" role="alert" aria-live="polite"></div>
+
+          <button type="submit" id="btnSubmitRegistro" class="btn-primario btn-submit">
+            Crear cuenta
+          </button>
+
+          <div class="volver-login">
+            <span>¿Ya tienes cuenta?</span>
+            <a href="../Login/index.html" id="linkVolverLogin">Inicia sesión</a>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <script src="../comun/iconos.js"></script>
+    <script src="registro.js"></script>
+  </body>
+</html>

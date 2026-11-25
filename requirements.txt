@@ -1,12 +1,16 @@
 # Core Web Framework & Servidor
-fastapi>=0.109.0,<0.110.0
-uvicorn[standard]>=0.27.0,<0.28.0
-pydantic>=2.6.0,<2.7.0
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.6.0
 email-validator>=2.1.0
 
-# Base de Datos & ORM
-sqlalchemy>=2.0.25
-psycopg2-binary>=2.9.9
+# Persistencia: utiliza sqlite3 de la biblioteca estándar de Python
 
 # Configuración & Entorno
 python-dotenv>=1.0.0
+
+# Testing & Cobertura
+coverage>=7.0.0
+
+# Calidad de Código & Formateo
+ruff>=0.8.0
