@@ -45,3 +45,15 @@ class TestObtenerEstadoTransportista(BaseTestOnboarding):
             self.transportista_id
         )
         self.assertEqual(estado_dto.estado_global, EstadoValidacion.RECHAZADO)
+
+    def test_rechazo_prevalece_aunque_falten_documentos(self) -> None:
+        doc = self.onboarding_service.cargar_documento(
+            self.transportista_id, TipoDocumento.SEGURO_CARGA, "seguro.pdf"
+        )
+        self.onboarding_service.validar_documento(doc.id, EstadoValidacion.RECHAZADO)
+        estado = self.onboarding_service.obtener_estado_transportista(self.transportista_id)
+        self.assertEqual(estado.estado_global, EstadoValidacion.RECHAZADO)
+        self.assertEqual(estado.faltantes, [
+            TipoDocumento.LICENCIA_CONDUCIR, TipoDocumento.PADRON_VEHICULO,
+            TipoDocumento.REVISION_TECNICA, TipoDocumento.ANTECEDENTES,
+        ])

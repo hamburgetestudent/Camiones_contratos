@@ -11,7 +11,83 @@ from domain.modelos_usuario import (
     UsuarioModelo,
 )
 from services.onboarding_service import onboarding_service_instancia
-from services.security import crear_token_acceso
+from services.respuesta_login import construir_respuesta_login
+
+# ---------------------------------------------------------------------------
+# SQL: tabla ``usuarios`` (usa la base de datos por defecto de database.conexion)
+# ---------------------------------------------------------------------------
+
+_SELECT_USUARIO = "SELECT id, nombre, email, rol, password_hash, estado FROM usuarios"
+
+
+def _fila_a_usuario(fila: sqlite3.Row) -> UsuarioModelo:
+    """Convierte una fila de SQLite en una instancia de UsuarioModelo."""
+    return UsuarioModelo(
+        id=UUID(fila["id"]),
+        nombre=fila["nombre"],
+        email=fila["email"],
+        rol=RolUsuario(fila["rol"]),
+        password_hash=fila["password_hash"],
+        estado=EstadoUsuario(fila["estado"]),
+    )
+
+
+def buscar_usuario_por_id(
+    conn: sqlite3.Connection, usuario_id: UUID
+) -> UsuarioModelo | None:
+    """Obtiene un usuario por su UUID, o None si no existe."""
+    fila = conn.execute(
+        f"{_SELECT_USUARIO} WHERE id = ? AND eliminado = 0", (str(usuario_id),)
+    ).fetchone()
+    return _fila_a_usuario(fila) if fila else None
+
+
+def _normalizar_correo(email: str) -> str:
+    return email.strip().lower()
+
+
+def buscar_usuario_por_email(
+    conn: sqlite3.Connection, email: str
+) -> UsuarioModelo | None:
+    """Busca un usuario por correo (insensible a mayusculas y espacios extremos)."""
+    fila = conn.execute(
+        f"{_SELECT_USUARIO} WHERE lower(trim(email)) = ? AND eliminado = 0",
+        (_normalizar_correo(email),),
+    ).fetchone()
+    return _fila_a_usuario(fila) if fila else None
+
+
+def buscar_todos_los_usuarios(conn: sqlite3.Connection) -> list[UsuarioModelo]:
+    """Retorna todos los usuarios en orden de creacion."""
+    filas = conn.execute(
+        f"{_SELECT_USUARIO} WHERE eliminado = 0 ORDER BY created_at ASC, rowid ASC"
+    ).fetchall()
+    return [_fila_a_usuario(fila) for fila in filas]
+
+
+def guardar_usuario(conn: sqlite3.Connection, usuario: UsuarioModelo) -> UsuarioModelo:
+    """Inserta el usuario o, si su ID ya existe, actualiza sus campos. El correo se guarda en minusculas."""
+    conn.execute(
+        """
+        INSERT INTO usuarios (id, nombre, email, rol, password_hash, estado)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+            nombre = excluded.nombre,
+            email = excluded.email,
+            rol = excluded.rol,
+            password_hash = excluded.password_hash,
+            estado = excluded.estado
+        """,
+        (
+            str(usuario.id),
+            usuario.nombre,
+            _normalizar_correo(usuario.email),
+            RolUsuario(usuario.rol).value,
+            usuario.password_hash,
+            EstadoUsuario(usuario.estado).value,
+        ),
+    )
+    return usuario
 
 
 def hash_password(password: str) -> str:
@@ -103,8 +179,8 @@ class UsuarioService:
                 detail="Correo electrónico y contraseña requeridos",
             )
 
-        with UsuarioService.dao.conexion() as conn:
-            usuario = UsuarioService.dao.obtener_por_email(conn, email.strip())
+        with obtener_conexion() as conn:
+            usuario = buscar_usuario_por_email(conn, email)
         if not usuario:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -142,34 +218,7 @@ class UsuarioService:
             )
 
         usuario = UsuarioService.autenticar_usuario(email, password)
-        rol_valor = (
-            usuario.rol.value if hasattr(usuario.rol, "value") else str(usuario.rol)
-        )
-        estado_valor = (
-            usuario.estado.value
-            if hasattr(usuario.estado, "value")
-            else str(usuario.estado)
-        )
-
-        access_token = crear_token_acceso(
-            {
-                "sub": str(usuario.id),
-                "email": usuario.email,
-                "rol": rol_valor,
-            }
-        )
-
-        return RespuestaLogin(
-            access_token=access_token,
-            token_type="bearer",
-            rol=rol_valor,
-            mensaje="Inicio de sesión exitoso",
-            usuario=usuario.email,
-            id=str(usuario.id),
-            nombre=usuario.nombre,
-            email=usuario.email,
-            estado=estado_valor,
-        )
+        return construir_respuesta_login(usuario)
 
 
 class ValidadorUsuario:
