@@ -1,9 +1,3 @@
-const API_BASE_URL =
-  window.API_BASE_URL ||
-  (window.location.protocol.startsWith("http")
-    ? window.location.origin
-    : "http://127.0.0.1:8000");
-
 const registroForm = document.getElementById("registroForm");
 const empresaSection = document.getElementById("empresaSection");
 const mensaje = document.getElementById("mensaje");
@@ -114,12 +108,7 @@ function evaluarFortaleza(valor) {
 }
 
 function extraerMensajeError(datos) {
-  if (!datos) return "No se pudo completar el registro.";
-  if (typeof datos.detail === "string") return datos.detail;
-  if (Array.isArray(datos.detail) && datos.detail.length > 0) {
-    return datos.detail.map((item) => item.msg || JSON.stringify(item)).join(" | ");
-  }
-  return "Datos inválidos al registrar el usuario.";
+  return window.MVApi.extraerMensajeError(datos, "Datos inválidos al registrar el usuario.");
 }
 
 function validarFormulario() {
@@ -234,13 +223,10 @@ registroForm.addEventListener("submit", async (event) => {
   mostrarMensajeGeneral("Creando tu cuenta en MansoViaje...", "info");
 
   try {
-    const respuesta = await fetch(`${API_BASE_URL}/auth/registro`, {
+    const { respuesta, datos } = await window.MVApi.solicitarPublica("/auth/registro", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: payload,
     });
-
-    const datos = await respuesta.json().catch(() => ({}));
 
     if (!respuesta.ok) {
       mostrarMensajeGeneral(extraerMensajeError(datos), "error");
@@ -258,7 +244,7 @@ registroForm.addEventListener("submit", async (event) => {
   } catch (error) {
     console.error("Error al conectar con el backend:", error);
     mostrarMensajeGeneral(
-      `No se pudo conectar con el servidor (${API_BASE_URL}). Verifica que el backend esté en ejecución.`,
+      `No se pudo conectar con el servidor (${window.MVApi.obtenerBaseUrl()}). Verifica que el backend esté en ejecución.`,
       "error"
     );
   } finally {
