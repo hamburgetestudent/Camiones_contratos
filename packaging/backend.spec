@@ -6,8 +6,8 @@ from PyInstaller.utils.hooks import copy_metadata
 root = Path(SPECPATH).parent
 a = Analysis(
     [str(root / "packaging" / "desktop_backend.py")],
-    pathex=[str(root)],
-    datas=[(str(root / "database" / "schema.sql"), "database")]
+    pathex=[str(root / "backend")],
+    datas=[(str(root / "backend/app/db/schema.sql"), "app/db")]
           + copy_metadata("email-validator"),
     hiddenimports=["uvicorn.loops.asyncio", "uvicorn.protocols.http.h11_impl",
                    "uvicorn.lifespan.on"],

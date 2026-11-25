@@ -120,8 +120,12 @@ async function main() {
     [
       "-m",
       "uvicorn",
-      "main:app",
+      "app.main:app",
+      "--app-dir",
+      "backend",
       "--reload",
+      "--reload-dir",
+      "backend",
       "--reload-exclude",
       ".venv",
       "--reload-exclude",

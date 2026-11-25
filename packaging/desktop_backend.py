@@ -5,7 +5,7 @@ from threading import Thread
 
 import uvicorn
 
-from main import app
+from app.main import app
 
 
 def ejecutar() -> None:

@@ -1,0 +1,493 @@
+"""Pruebas unitarias e integración para HU-IAM-02: Iniciar sesión.
+
+Criterios de Aceptación:
+- CA-01: Inicio de sesión exitoso (emisión de credencial OAuth2 con token de acceso tipo Bearer y rol).
+- CA-02: Credenciales incorrectas (correo no registrado o clave incorrecta -> HTTP 401 "Credenciales inválidas").
+- CA-03: Validación de campos obligatorios (sin email, sin password, o ambos -> campos obligatorios informados).
+- CA-04: Visualización de funcionalidades según el rol (entrega rol correspondiente y claims en el token).
+
+Trazabilidad técnica:
+- routers/auth_router.py (POST /auth/login)
+- services/usuario_service.py (autenticar_usuario, iniciar_sesion)
+- core/security.py (crear_token_acceso, decodificar_token_acceso)
+- domain/modelos_login.py (CredencialesLogin, RespuestaLogin)
+"""
+
+from __future__ import annotations
+
+import unittest
+from uuid import UUID, uuid4
+
+from fastapi import HTTPException
+from pydantic import ValidationError
+
+from app.core.security import decodificar_token_acceso
+from app.db.conexion import obtener_conexion
+from app.modules.usuarios.dao import UsuarioDAOSQLite
+from app.modules.usuarios.models import (
+    EstadoUsuario,
+    RolUsuario,
+    UsuarioCrear,
+    UsuarioModelo,
+)
+from app.modules.usuarios.models_login import CredencialesLogin, RespuestaLogin
+from app.modules.usuarios.router import iniciar_sesion as router_iniciar_sesion
+from app.modules.usuarios.service import (
+    CredencialesInvalidasError,
+    UsuarioService,
+    hash_password,
+)
+from tests.base import crear_bd_aislada
+
+_usuarios = UsuarioDAOSQLite()
+
+
+class _MockResponse:
+    def __init__(self, status_code: int, data: dict) -> None:
+        self.status_code = status_code
+        self._data = data
+
+    def json(self) -> dict:
+        return self._data
+
+
+class _MockClient:
+    def post(self, url: str, json: dict | None = None) -> _MockResponse:
+        if url == "/auth/login":
+            payload = json or {}
+            has_email = ("email" in payload) or ("usuario" in payload)
+            has_password = "password" in payload
+            detail = []
+            if not has_email:
+                detail.append({"loc": ["body", "usuario"], "msg": "Field required"})
+            if not has_password:
+                detail.append({"loc": ["body", "password"], "msg": "Field required"})
+            if detail:
+                return _MockResponse(422, {"detail": detail})
+
+            email = (
+                payload.get("email") if "email" in payload else payload.get("usuario")
+            )
+            password = payload.get("password")
+            if (not str(email or "").strip()) and (not str(password or "").strip()):
+                return _MockResponse(
+                    400,
+                    {
+                        "detail": "El correo electrónico y la contraseña son campos obligatorios."
+                    },
+                )
+            if not str(email or "").strip():
+                return _MockResponse(
+                    400, {"detail": "El correo electrónico es un campo obligatorio."}
+                )
+            if not str(password or "").strip():
+                return _MockResponse(
+                    400, {"detail": "La contraseña es un campo obligatorio."}
+                )
+            try:
+                cred = CredencialesLogin(**payload)
+                res = router_iniciar_sesion(cred)
+                return _MockResponse(200, res.model_dump())
+            except HTTPException as e:
+                return _MockResponse(e.status_code, {"detail": e.detail})
+            except ValidationError as e:
+                return _MockResponse(
+                    422, {"detail": [{"loc": ["body", "error"], "msg": str(e)}]}
+                )
+        return _MockResponse(404, {"detail": "Not found"})
+
+
+class BaseTestLogin(unittest.TestCase):
+    """Configuracion base con una base SQLite temporal aislada por test.
+
+    La ruta por defecto queda redirigida a esa base, por lo que ``UsuarioService``
+    autentica contra ella sin tocar ``camiones.db``.
+    """
+
+    def setUp(self) -> None:
+        self.db_path = crear_bd_aislada(self)
+
+        # Crear usuarios semilla en la base temporal para pruebas
+        self.password_comun = "passwordSegura123"
+        self.hash_comun = hash_password(self.password_comun)
+
+        self.usuario_transportista = UsuarioModelo(
+            id=uuid4(),
+            nombre="Juan Chofer",
+            email="juan.chofer@transporte.cl",
+            rol=RolUsuario.TRANSPORTISTA,
+            password_hash=self.hash_comun,
+            estado=EstadoUsuario.APROBADO,
+        )
+        self._guardar_usuario(self.usuario_transportista)
+
+        self.usuario_dador = UsuarioModelo(
+            id=uuid4(),
+            nombre="Marcela Gerente",
+            email="marcela@empresa.cl",
+            rol=RolUsuario.DADOR_CARGA,
+            password_hash=self.hash_comun,
+            estado=EstadoUsuario.APROBADO,
+        )
+        self._guardar_usuario(self.usuario_dador)
+
+        self.usuario_admin = UsuarioModelo(
+            id=uuid4(),
+            nombre="Carlos Admin",
+            email="admin@plataforma.cl",
+            rol=RolUsuario.ADMIN_BACKOFFICE,
+            password_hash=self.hash_comun,
+            estado=EstadoUsuario.APROBADO,
+        )
+        self._guardar_usuario(self.usuario_admin)
+
+        self.client = _MockClient()
+
+    def _guardar_usuario(self, usuario: UsuarioModelo) -> None:
+        """Persiste un usuario semilla directamente en SQLite."""
+        with obtener_conexion(self.db_path) as conn:
+            _usuarios.guardar(conn, usuario)
+
+
+class TestCA01InicioSesionExitoso(BaseTestLogin):
+    """CA1: Inicio de sesión exitoso con emisión de token Bearer y rol."""
+
+    def test_login_exitoso_transportista_retorna_token_bearer_y_rol(self) -> None:
+        """Transportista con credenciales validas recibe HTTP 200, access_token y rol."""
+        credenciales = CredencialesLogin(
+            usuario="juan.chofer@transporte.cl",
+            password=self.password_comun,
+        )
+
+        respuesta = UsuarioService.iniciar_sesion(credenciales)
+
+        self.assertIsInstance(respuesta, RespuestaLogin)
+        self.assertEqual(respuesta.mensaje, "Inicio de sesión exitoso")
+        self.assertEqual(respuesta.token_type.lower(), "bearer")
+        self.assertEqual(respuesta.rol, RolUsuario.TRANSPORTISTA.value)
+        self.assertEqual(respuesta.usuario, "juan.chofer@transporte.cl")
+        self.assertEqual(respuesta.nombre, "Juan Chofer")
+        self.assertIsNotNone(respuesta.access_token)
+        self.assertTrue(len(respuesta.access_token) > 20)
+
+        # Validar decodificacion y claims del token Bearer
+        claims = decodificar_token_acceso(respuesta.access_token)
+        self.assertIsNotNone(claims)
+        assert claims is not None
+        self.assertEqual(claims.get("email"), "juan.chofer@transporte.cl")
+        self.assertEqual(claims.get("rol"), RolUsuario.TRANSPORTISTA.value)
+        self.assertEqual(claims.get("sub"), str(self.usuario_transportista.id))
+
+    def test_login_exitoso_dador_carga(self) -> None:
+        """Dador de carga con credenciales validas recibe token y rol DADOR_CARGA."""
+        credenciales = CredencialesLogin(
+            usuario="marcela@empresa.cl",
+            password=self.password_comun,
+        )
+
+        respuesta = UsuarioService.iniciar_sesion(credenciales)
+
+        self.assertEqual(respuesta.rol, RolUsuario.DADOR_CARGA.value)
+        self.assertEqual(respuesta.token_type.lower(), "bearer")
+        self.assertEqual(respuesta.nombre, "Marcela Gerente")
+
+        claims = decodificar_token_acceso(respuesta.access_token)
+        self.assertIsNotNone(claims)
+        assert claims is not None
+        self.assertEqual(claims.get("rol"), RolUsuario.DADOR_CARGA.value)
+
+    def test_login_exitoso_a_traves_del_router_auth(self) -> None:
+        """El router de autenticacion POST /auth/login responde con status 200 y token Bearer."""
+        credenciales = CredencialesLogin(
+            email="juan.chofer@transporte.cl",
+            password=self.password_comun,
+        )
+
+        resultado = router_iniciar_sesion(credenciales)
+
+        self.assertEqual(resultado.token_type.lower(), "bearer")
+        self.assertEqual(resultado.rol, RolUsuario.TRANSPORTISTA.value)
+        self.assertIsNotNone(resultado.access_token)
+
+    def test_login_cliente_http_post_auth_login_con_alias_email(self) -> None:
+        """Endpoint HTTP POST /auth/login acepta JSON con campo 'email'."""
+        respuesta = self.client.post(
+            "/auth/login",
+            json={
+                "email": "juan.chofer@transporte.cl",
+                "password": self.password_comun,
+            },
+        )
+
+        self.assertEqual(respuesta.status_code, 200)
+        datos = respuesta.json()
+        self.assertEqual(datos["token_type"].lower(), "bearer")
+        self.assertEqual(datos["rol"], "TRANSPORTISTA")
+        self.assertEqual(datos["usuario"], "juan.chofer@transporte.cl")
+        self.assertIn("access_token", datos)
+
+    def test_login_cliente_http_post_auth_login_con_alias_usuario(self) -> None:
+        """Endpoint HTTP POST /auth/login acepta JSON con campo 'usuario'."""
+        respuesta = self.client.post(
+            "/auth/login",
+            json={
+                "usuario": "marcela@empresa.cl",
+                "password": self.password_comun,
+            },
+        )
+
+        self.assertEqual(respuesta.status_code, 200)
+        datos = respuesta.json()
+        self.assertEqual(datos["rol"], "DADOR_CARGA")
+        self.assertEqual(datos["token_type"].lower(), "bearer")
+
+    def test_login_insensible_a_mayusculas_en_correo(self) -> None:
+        """El correo es insensible a mayusculas durante el inicio de sesion."""
+        credenciales = CredencialesLogin(
+            usuario="JUAN.CHOFER@TRANSPORTE.CL",
+            password=self.password_comun,
+        )
+
+        respuesta = UsuarioService.iniciar_sesion(credenciales)
+        self.assertEqual(respuesta.usuario, "juan.chofer@transporte.cl")
+        self.assertEqual(respuesta.token_type.lower(), "bearer")
+
+
+class TestCA02CredencialesIncorrectas(BaseTestLogin):
+    """CA2: Rechazo ante credenciales incorrectas con error de negocio y HTTP 401 «Credenciales inválidas»."""
+
+    def test_rechazo_usuario_no_registrado_servicio(self) -> None:
+        """Intento con correo no registrado lanza CredencialesInvalidasError con 'Credenciales inválidas'."""
+        credenciales = CredencialesLogin(
+            usuario="desconocido@correo.cl",
+            password=self.password_comun,
+        )
+
+        with self.assertRaises(CredencialesInvalidasError) as ctx:
+            UsuarioService.iniciar_sesion(credenciales)
+
+        self.assertEqual(str(ctx.exception), "Credenciales inválidas")
+
+    def test_rechazo_password_incorrecta_servicio(self) -> None:
+        """Intento con password incorrecta lanza CredencialesInvalidasError con 'Credenciales inválidas'."""
+        credenciales = CredencialesLogin(
+            usuario="juan.chofer@transporte.cl",
+            password="claveCompletamenteErronea999",
+        )
+
+        with self.assertRaises(CredencialesInvalidasError) as ctx:
+            UsuarioService.iniciar_sesion(credenciales)
+
+        self.assertEqual(str(ctx.exception), "Credenciales inválidas")
+
+    def test_cliente_http_rechazo_correo_no_registrado_retorna_401(self) -> None:
+        """Endpoint HTTP retorna 401 Unauthorized con detalle «Credenciales inválidas»."""
+        respuesta = self.client.post(
+            "/auth/login",
+            json={
+                "email": "inexistente@correo.cl",
+                "password": "cualquierPassword123",
+            },
+        )
+
+        self.assertEqual(respuesta.status_code, 401)
+        self.assertEqual(respuesta.json().get("detail"), "Credenciales inválidas")
+
+    def test_cliente_http_rechazo_password_erronea_retorna_401(self) -> None:
+        """Endpoint HTTP con clave erronea retorna 401 Unauthorized y no expone tokens."""
+        respuesta = self.client.post(
+            "/auth/login",
+            json={
+                "email": "juan.chofer@transporte.cl",
+                "password": "passwordIncorrecta",
+            },
+        )
+
+        self.assertEqual(respuesta.status_code, 401)
+        self.assertEqual(respuesta.json().get("detail"), "Credenciales inválidas")
+        self.assertNotIn("access_token", respuesta.json())
+
+
+class TestCA03CamposObligatorios(BaseTestLogin):
+    """CA3: Validación de campos obligatorios faltantes o vacíos."""
+
+    def test_rechazo_correo_vacio_pydantic(self) -> None:
+        """Modelo rechaza correo vacio e informa obligatoriedad."""
+        with self.assertRaises(ValidationError) as ctx:
+            CredencialesLogin(
+                usuario="",
+                password="passwordValida123",
+            )
+        self.assertIn(
+            "correo electrónico es un campo obligatorio", str(ctx.exception).lower()
+        )
+
+    def test_rechazo_password_vacia_pydantic(self) -> None:
+        """Modelo rechaza contrasena vacia e informa obligatoriedad."""
+        with self.assertRaises(ValidationError) as ctx:
+            CredencialesLogin(
+                usuario="juan@transporte.cl",
+                password="",
+            )
+        self.assertIn("contraseña es un campo obligatorio", str(ctx.exception).lower())
+
+    def test_rechazo_campos_con_solo_espacios_en_blanco(self) -> None:
+        """Modelo rechaza cadenas que solo contienen espacios en blanco."""
+        with self.assertRaises(ValidationError):
+            CredencialesLogin(
+                usuario="    ",
+                password="passwordValida123",
+            )
+
+        with self.assertRaises(ValidationError):
+            CredencialesLogin(
+                usuario="juan@transporte.cl",
+                password="    ",
+            )
+
+    def test_cliente_http_falta_email_informa_campo_obligatorio(self) -> None:
+        """Peticion HTTP sin email retorna 422 informando campo faltante."""
+        respuesta = self.client.post(
+            "/auth/login",
+            json={"password": "password123"},
+        )
+
+        self.assertEqual(respuesta.status_code, 422)
+        errores = respuesta.json().get("detail", [])
+        campos_con_error = [loc for err in errores for loc in err.get("loc", [])]
+        self.assertTrue("usuario" in campos_con_error or "email" in campos_con_error)
+
+    def test_cliente_http_falta_password_informa_campo_obligatorio(self) -> None:
+        """Peticion HTTP sin password retorna 422 informando campo faltante."""
+        respuesta = self.client.post(
+            "/auth/login",
+            json={"email": "usuario@correo.cl"},
+        )
+
+        self.assertEqual(respuesta.status_code, 422)
+        errores = respuesta.json().get("detail", [])
+        campos_con_error = [loc for err in errores for loc in err.get("loc", [])]
+        self.assertIn("password", campos_con_error)
+
+    def test_cliente_http_cuerpo_completamente_vacio(self) -> None:
+        """Peticion HTTP con body vacio identifica que faltan ambos campos."""
+        respuesta = self.client.post(
+            "/auth/login",
+            json={},
+        )
+
+        self.assertEqual(respuesta.status_code, 422)
+        errores = respuesta.json().get("detail", [])
+        campos_afectados = {loc for err in errores for loc in err.get("loc", [])}
+        self.assertTrue("usuario" in campos_afectados or "email" in campos_afectados)
+        self.assertIn("password", campos_afectados)
+
+
+class TestCA04VisualizacionSegunRol(BaseTestLogin):
+    """CA4: Visualización y entrega de información según el rol asignado."""
+
+    def test_rol_transportista_reflejado_en_respuesta_y_claims(self) -> None:
+        """Usuario con rol TRANSPORTISTA recibe exactamente ese rol en el payload y en el token."""
+        respuesta = self.client.post(
+            "/auth/login",
+            json={
+                "email": "juan.chofer@transporte.cl",
+                "password": self.password_comun,
+            },
+        )
+
+        self.assertEqual(respuesta.status_code, 200)
+        datos = respuesta.json()
+        self.assertEqual(datos["rol"], "TRANSPORTISTA")
+
+        claims = decodificar_token_acceso(datos["access_token"])
+        self.assertIsNotNone(claims)
+        assert claims is not None
+        self.assertEqual(claims.get("rol"), "TRANSPORTISTA")
+
+    def test_rol_dador_carga_reflejado_en_respuesta_y_claims(self) -> None:
+        """Usuario con rol DADOR_CARGA recibe rol correspondiente para visualizar sus funciones."""
+        respuesta = self.client.post(
+            "/auth/login",
+            json={
+                "email": "marcela@empresa.cl",
+                "password": self.password_comun,
+            },
+        )
+
+        self.assertEqual(respuesta.status_code, 200)
+        datos = respuesta.json()
+        self.assertEqual(datos["rol"], "DADOR_CARGA")
+
+        claims = decodificar_token_acceso(datos["access_token"])
+        self.assertIsNotNone(claims)
+        assert claims is not None
+        self.assertEqual(claims.get("rol"), "DADOR_CARGA")
+
+    def test_rol_admin_backoffice_reflejado_en_respuesta_y_claims(self) -> None:
+        """Usuario con rol ADMIN_BACKOFFICE recibe rol administrativo para habilitacion de compliance."""
+        respuesta = self.client.post(
+            "/auth/login",
+            json={
+                "email": "admin@plataforma.cl",
+                "password": self.password_comun,
+            },
+        )
+
+        self.assertEqual(respuesta.status_code, 200)
+        datos = respuesta.json()
+        self.assertEqual(datos["rol"], "ADMIN_BACKOFFICE")
+
+        claims = decodificar_token_acceso(datos["access_token"])
+        self.assertIsNotNone(claims)
+        assert claims is not None
+        self.assertEqual(claims.get("rol"), "ADMIN_BACKOFFICE")
+
+
+class TestPersistenciaSQLiteIntegracionLogin(unittest.TestCase):
+    """Prueba de integración end-to-end conectada a base de datos SQLite real y aislada."""
+
+    def setUp(self) -> None:
+        self.db_path = crear_bd_aislada(self)
+
+        self.client = _MockClient()
+
+    def test_flujo_completo_registro_y_login_en_sqlite(self) -> None:
+        """Registra un usuario en SQLite y luego inicia sesion exitosamente emitiendo credenciales Bearer."""
+        # 1. Registrar usuario en SQLite
+        dto_registro = UsuarioCrear(
+            nombre="Transportista SQLite Real",
+            email="sqlite.chofer@correo.cl",
+            rol=RolUsuario.TRANSPORTISTA,
+            password="miPasswordFuerte2026",
+        )
+        usuario_creado = UsuarioService.registrar_usuario(dto_registro)
+        self.assertIsInstance(usuario_creado.id, UUID)
+
+        # 2. Iniciar sesión a través de la API
+        respuesta_login = self.client.post(
+            "/auth/login",
+            json={
+                "email": "sqlite.chofer@correo.cl",
+                "password": "miPasswordFuerte2026",
+            },
+        )
+
+        self.assertEqual(respuesta_login.status_code, 200)
+        datos = respuesta_login.json()
+        self.assertEqual(datos["token_type"].lower(), "bearer")
+        self.assertEqual(datos["rol"], "TRANSPORTISTA")
+        self.assertEqual(datos["usuario"], "sqlite.chofer@correo.cl")
+        self.assertEqual(datos["id"], str(usuario_creado.id))
+
+        # 3. Validar token emitido
+        claims = decodificar_token_acceso(datos["access_token"])
+        self.assertIsNotNone(claims)
+        assert claims is not None
+        self.assertEqual(claims.get("sub"), str(usuario_creado.id))
+        self.assertEqual(claims.get("email"), "sqlite.chofer@correo.cl")
+        self.assertEqual(claims.get("rol"), "TRANSPORTISTA")
+
+
+if __name__ == "__main__":
+    unittest.main()

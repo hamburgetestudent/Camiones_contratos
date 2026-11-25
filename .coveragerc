@@ -1,12 +1,9 @@
 [run]
 branch = True
 source =
-    database
-    domain
-    routers
-    services
+    backend/app
 omit =
-    tests/*
+    backend/tests/*
     .venv/*
     frontend/*
 

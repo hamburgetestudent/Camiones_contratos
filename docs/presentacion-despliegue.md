@@ -32,7 +32,7 @@ sequenceDiagram
     E->>A: Al salir, cierra la entrada estándar
 ```
 
-Electron verifica la identidad del backend antes de mostrar Login. Esto importa si otro programa ocupa el puerto 8000. El esquema forma parte de la instalación, mientras que `camiones.db` se crea en una carpeta escribible del usuario. Al cerrar la aplicación se libera el puerto. Al volver a abrirla se recupera la misma base. [Proceso principal](../frontend/codigos/main.ts) · [Control del backend](../frontend/codigos/backend.ts)
+Electron verifica la identidad del backend antes de mostrar Login. Esto importa si otro programa ocupa el puerto 8000. El esquema forma parte de la instalación, mientras que `camiones.db` se crea en una carpeta escribible del usuario. Al cerrar la aplicación se libera el puerto. Al volver a abrirla se recupera la misma base. [Proceso principal](https://github.com/hamburgetestudent/Camiones_contratos/blob/v1.0.0/frontend/codigos/main.ts) · [Control del backend](https://github.com/hamburgetestudent/Camiones_contratos/blob/v1.0.0/frontend/codigos/backend.ts)
 
 ## 4. Demostración de una postulación · 2 min
 

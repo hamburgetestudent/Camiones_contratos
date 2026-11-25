@@ -66,10 +66,11 @@ def main() -> int:
 
     env = os.environ.copy()
     current_pythonpath = env.get("PYTHONPATH", "")
+    backend_dir = project_root / "backend"
     env["PYTHONPATH"] = (
-        str(project_root)
+        str(backend_dir)
         if not current_pythonpath
-        else f"{project_root}{os.pathsep}{current_pythonpath}"
+        else f"{backend_dir}{os.pathsep}{current_pythonpath}"
     )
 
     print("=" * 70)
@@ -86,9 +87,9 @@ def main() -> int:
         "unittest",
         "discover",
         "-t",
-        ".",
+        "backend",
         "-s",
-        "tests",
+        "backend/tests",
     ]
     test_result = subprocess.run(run_cmd, cwd=project_root, env=env)
 

@@ -24,7 +24,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(RAIZ))
+sys.path.insert(0, str(RAIZ / "backend"))
 
 _TMP = tempfile.TemporaryDirectory()
 RUTA_BD = Path(_TMP.name) / "integracion.db"
@@ -32,8 +32,8 @@ os.environ["SQLITE_DB_PATH"] = str(RUTA_BD)
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-from database.conexion import inicializar_bd  # noqa: E402
-from main import app  # noqa: E402
+from app.db.conexion import inicializar_bd  # noqa: E402
+from app.main import app  # noqa: E402
 
 REGISTRO: list[tuple[str, str, str, bool]] = []
 

@@ -4,21 +4,21 @@ Las tres intervenciones conservan el comportamiento de operaciones del backend: 
 
 ## 1. Decisión administrativa sobre documentos y perfiles
 
-**Prioridad alta.** En [OnboardingService.validar_documento y validar_dador](../services/onboarding_service.py), cada operación definía qué estados podía asignar el revisor. Una edición parcial permitiría resolver un perfil y un documento con criterios distintos. El esfuerzo era bajo porque ambos ya aplicaban la misma condición después de localizar el recurso.
+**Prioridad alta.** En [OnboardingService.validar_documento y validar_dador](../backend/app/modules/onboarding/service.py), cada operación definía qué estados podía asignar el revisor. Una edición parcial permitiría resolver un perfil y un documento con criterios distintos. El esfuerzo era bajo porque ambos ya aplicaban la misma condición después de localizar el recurso.
 
-Se extrajo una función privada que comprueba el estado solicitado. Los dos servicios siguen localizando el recurso antes de validar y persisten la decisión dentro de su transacción. Se conservan el error, su mensaje y el estado guardado cuando se intenta volver a PENDIENTE. [Cambio I1](https://github.com/hamburgetestudent/Camiones_contratos/commit/0f13942) · [Pruebas de documentos](../tests/onboarding/test_validar_documento.py) · [Pruebas de perfiles](../tests/onboarding/test_validar_perfil_dador.py).
+Se extrajo una función privada que comprueba el estado solicitado. Los dos servicios siguen localizando el recurso antes de validar y persisten la decisión dentro de su transacción. Se conservan el error, su mensaje y el estado guardado cuando se intenta volver a PENDIENTE. [Cambio I1](https://github.com/hamburgetestudent/Camiones_contratos/commit/0f13942) · [Pruebas de documentos](../backend/tests/onboarding/test_validar_documento.py) · [Pruebas de perfiles](../backend/tests/onboarding/test_validar_perfil_dador.py).
 
 ## 2. Estado global y documentos faltantes del transportista
 
-**Prioridad alta, segunda en el orden de ejecución.** En [OnboardingService.obtener_estado_transportista](../services/onboarding_service.py), el método comprobaba la presencia de los documentos requeridos y volvía a calcular esa información al construir la lista de faltantes. Si las comprobaciones evolucionaran por separado, la respuesta podría informar un estado incompatible con su propia lista. La modificación afecta una sola consulta, pero requiere verificar la precedencia del rechazo y el orden de los documentos.
+**Prioridad alta, segunda en el orden de ejecución.** En [OnboardingService.obtener_estado_transportista](../backend/app/modules/onboarding/service.py), el método comprobaba la presencia de los documentos requeridos y volvía a calcular esa información al construir la lista de faltantes. Si las comprobaciones evolucionaran por separado, la respuesta podría informar un estado incompatible con su propia lista. La modificación afecta una sola consulta, pero requiere verificar la precedencia del rechazo y el orden de los documentos.
 
-El método calcula los faltantes una vez. Un rechazo prevalece incluso si faltan documentos. La aprobación exige una lista vacía de faltantes y que todos los requeridos estén aprobados. La respuesta mantiene el orden de los tipos requeridos. [Cambio I2](https://github.com/hamburgetestudent/Camiones_contratos/commit/d2c77ed) · [Pruebas del estado y de la lista](../tests/onboarding/test_obtener_estado_transportista.py).
+El método calcula los faltantes una vez. Un rechazo prevalece incluso si faltan documentos. La aprobación exige una lista vacía de faltantes y que todos los requeridos estén aprobados. La respuesta mantiene el orden de los tipos requeridos. [Cambio I2](https://github.com/hamburgetestudent/Camiones_contratos/commit/d2c77ed) · [Pruebas del estado y de la lista](../backend/tests/onboarding/test_obtener_estado_transportista.py).
 
 ## 3. Normalización del correo en persistencia y acceso
 
-**Prioridad media.** En [guardar_usuario, buscar_usuario_por_email y autenticar_usuario](../services/usuario_service.py), la escritura y la búsqueda repetían el recorte y la conversión a minúsculas. Además, el acceso volvía a recortar el correo al delegar la búsqueda. Una divergencia entre escritura y lectura podría impedir que una persona encuentre su cuenta con el mismo correo. El esfuerzo era bajo y ya existían pruebas de persistencia.
+**Prioridad media.** En [guardar_usuario, buscar_usuario_por_email y autenticar_usuario](../backend/app/modules/usuarios/service.py), la escritura y la búsqueda repetían el recorte y la conversión a minúsculas. Además, el acceso volvía a recortar el correo al delegar la búsqueda. Una divergencia entre escritura y lectura podría impedir que una persona encuentre su cuenta con el mismo correo. El esfuerzo era bajo y ya existían pruebas de persistencia.
 
-Ambas operaciones llaman a la misma función privada. La autenticación conserva la validación de campos vacíos y delega la normalización del valor de búsqueda. La consulta SQL sigue admitiendo filas existentes con diferencias de formato. [Cambio I3](https://github.com/hamburgetestudent/Camiones_contratos/commit/e19568b) · [Pruebas de persistencia](../tests/persistencia/test_persistencia_usuarios.py) · [Pruebas de acceso](../tests/usuarios/test_autenticar_usuario.py).
+Ambas operaciones llaman a la misma función privada. La autenticación conserva la validación de campos vacíos y delega la normalización del valor de búsqueda. La consulta SQL sigue admitiendo filas existentes con diferencias de formato. [Cambio I3](https://github.com/hamburgetestudent/Camiones_contratos/commit/e19568b) · [Pruebas de persistencia](../backend/tests/persistencia/test_persistencia_usuarios.py) · [Pruebas de acceso](../backend/tests/usuarios/test_autenticar_usuario.py).
 
 ## Deuda técnica postergada
 
@@ -70,7 +70,7 @@ Desde la raíz, con el entorno Python activo:
 ```powershell
 python -m pip install -r requirements.txt httpx pytest
 python -m unittest tests.onboarding.test_validar_perfil_dador tests.onboarding.test_obtener_estado_transportista tests.usuarios.test_autenticar_usuario -v
-python -m unittest discover -s tests -t .
+python -m unittest discover -s backend/tests -t backend
 ```
 
 **Comprobación inicial por otro integrante.** El compañero ejecutó la revisión desde la cuenta local `f4cks`. La salida de Git compartida previamente situó la copia en `883b8d2`. La captura muestra los tres resultados esperados: APROBADO con cinco documentos aprobados, PENDIENTE cuando faltan documentos y RECHAZADO cuando al menos uno está rechazado. Resultado de unittest: `Ran 3 tests in 0.301s`, `OK`. [Ver captura de la ejecución](comprobacion-transportista.png).

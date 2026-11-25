@@ -10,7 +10,7 @@ UsuarioService.iniciar_sesion concentraba la validación de credenciales, la aut
 
 ## Modularización aplicada
 
-Se creó el módulo `services/respuesta_login.py`, responsable de construir la respuesta de un usuario autenticado.
+Se creó el módulo `backend/app/modules/usuarios/respuesta_login.py`, responsable de construir la respuesta de un usuario autenticado.
 
 UsuarioService conserva la validación y autenticación, delegando la construcción de la respuesta al nuevo módulo.
 
@@ -18,11 +18,11 @@ UsuarioService conserva la validación y autenticación, delegando la construcci
 
 | Módulo | Operación pública | Responsabilidad |
 |---|---|---|
-| routers/auth_router.py | iniciar_sesion(credenciales) | Recibe la solicitud HTTP |
-| services/usuario_service.py | iniciar_sesion(credenciales) | Valida, autentica y delega |
-| services/usuario_service.py | autenticar_usuario(email, password) | Verifica las credenciales |
-| services/respuesta_login.py | construir_respuesta_login(usuario) | Construye RespuestaLogin |
-| services/security.py | crear_token_acceso(claims) | Genera el token JWT |
+| backend/app/modules/usuarios/router.py | iniciar_sesion(credenciales) | Recibe la solicitud HTTP |
+| backend/app/modules/usuarios/service.py | iniciar_sesion(credenciales) | Valida, autentica y delega |
+| backend/app/modules/usuarios/service.py | autenticar_usuario(email, password) | Verifica las credenciales |
+| backend/app/modules/usuarios/respuesta_login.py | construir_respuesta_login(usuario) | Construye RespuestaLogin |
+| backend/app/backend/app/core/security.py | crear_token_acceso(claims) | Genera el token JWT |
 
 El nuevo módulo recibe un UsuarioModelo y devuelve una RespuestaLogin. Depende de los modelos de dominio y del módulo de seguridad, sin depender de UsuarioService.
 
@@ -60,26 +60,26 @@ Se verificó el inicio de sesión para transportistas, dadores de carga y admini
 
 ## Archivos relacionados
 
-- [Servicio de usuarios](../services/usuario_service.py)
-- [Constructor de respuesta](../services/respuesta_login.py)
-- [Seguridad](../services/security.py)
-- [Router de autenticación](../routers/auth_router.py)
-- [Pruebas](../tests/usuarios/test_iniciar_sesion.py)
+- [Servicio de usuarios](../backend/app/modules/usuarios/service.py)
+- [Constructor de respuesta](../backend/app/modules/usuarios/respuesta_login.py)
+- [Seguridad](../backend/app/backend/app/core/security.py)
+- [Router de autenticación](../backend/app/modules/usuarios/router.py)
+- [Pruebas](../backend/tests/usuarios/test_iniciar_sesion.py)
 
 ## Ubicación exacta de los cambios
 
 | Archivo | Operación | Líneas |
 |---|---|---|
-| routers/auth_router.py | iniciar_sesion | 46-48 |
-| services/usuario_service.py | iniciar_sesion | 193-215 |
-| services/respuesta_login.py | Dependencias | 3-5 |
-| services/respuesta_login.py | construir_respuesta_login | 8 |
-| services/respuesta_login.py | Solicitud del token | 19-25 |
-| services/respuesta_login.py | Construcción de respuesta | 27-37 |
-| services/security.py | crear_token_acceso | 36 |
-| tests/usuarios/test_iniciar_sesion.py | Prueba de caracterización | 33-61 |
-| tests/usuarios/test_iniciar_sesion.py | Prueba de colaboración | 63-98 |
-| tests/usuarios/test_iniciar_sesion.py | Credenciales inválidas | 100-117 |
+| backend/app/modules/usuarios/router.py | iniciar_sesion | 46-48 |
+| backend/app/modules/usuarios/service.py | iniciar_sesion | 193-215 |
+| backend/app/modules/usuarios/respuesta_login.py | Dependencias | 3-5 |
+| backend/app/modules/usuarios/respuesta_login.py | construir_respuesta_login | 8 |
+| backend/app/modules/usuarios/respuesta_login.py | Solicitud del token | 19-25 |
+| backend/app/modules/usuarios/respuesta_login.py | Construcción de respuesta | 27-37 |
+| backend/app/backend/app/core/security.py | crear_token_acceso | 36 |
+| backend/tests/usuarios/test_iniciar_sesion.py | Prueba de caracterización | 33-61 |
+| backend/tests/usuarios/test_iniciar_sesion.py | Prueba de colaboración | 63-98 |
+| backend/tests/usuarios/test_iniciar_sesion.py | Credenciales inválidas | 100-117 |
 
 Las líneas corresponden al commit c05f5e1.
 
@@ -101,7 +101,7 @@ def construir_respuesta_login(usuario: UsuarioModelo) -> RespuestaLogin:
 - Entrada: un UsuarioModelo previamente autenticado.
 - Salida: RespuestaLogin con los datos del usuario y token JWT.
 - Precondición: el usuario debe estar autenticado.
-- Dependencias: modelos de dominio y services.security.
+- Dependencias: modelos de dominio y app.core.security.
 - Consumidor: UsuarioService.iniciar_sesion.
 - Credenciales incorrectas: UsuarioService genera un error HTTP 401 sin invocar el constructor.
 - El constructor no valida contraseñas ni consulta la base de datos.
@@ -138,7 +138,7 @@ La modularización separa responsabilidades mediante operaciones públicas y dep
 ### 1. Código antes y después
 
 ```bash
-git --no-pager diff c3081be c05f5e1 -- services/usuario_service.py
+git --no-pager diff c3081be c05f5e1 -- backend/app/modules/usuarios/service.py
 ```
 
 ### 2. Activar entorno
@@ -192,7 +192,7 @@ python -m unittest -v tests.usuarios.test_iniciar_sesion
 ### 5. Pruebas de usuarios (26)
 
 ```bash
-python -m unittest discover -s tests/usuarios -t . -v
+python -m unittest discover -s backend/tests/usuarios -t . -v
 ```
 
 ### 6. Pruebas generales (213)

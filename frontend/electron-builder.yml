@@ -5,6 +5,7 @@ directories:
   output: ../release
 files:
   - dist/**/*
+  - src/**/*
   - "!dist/**/*.map"
 extraResources:
   - from: ../build/backend/mansoviaje-api
