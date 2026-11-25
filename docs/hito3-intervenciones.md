@@ -20,6 +20,14 @@ El método calcula los faltantes una vez. Un rechazo prevalece incluso si faltan
 
 Ambas operaciones llaman a la misma función privada. La autenticación conserva la validación de campos vacíos y delega la normalización del valor de búsqueda. La consulta SQL sigue admitiendo filas existentes con diferencias de formato. [Cambio I3](https://github.com/hamburgetestudent/Camiones_contratos/commit/e19568b) · [Pruebas de persistencia](../tests/persistencia/test_persistencia_usuarios.py) · [Pruebas de acceso](../tests/usuarios/test_autenticar_usuario.py).
 
+## Deuda técnica postergada
+
+**Validación duplicada de las extensiones de archivo.** En [los modelos de onboarding](../domain/modelos_onboarding.py), `CargarDocumentoDTO.validar_archivo` y `DocumentoTransportistaBase.validar_archivo` declaran por separado las mismas cuatro extensiones y el mismo mensaje de error. Agregar un formato exige editar ambos validadores. Si solo se actualiza uno, la solicitud de carga puede aceptar un archivo que el modelo del documento rechace.
+
+**Motivo de la postergación y prioridad.** La prioridad es baja porque hoy ambas listas coinciden. El riesgo aparece al cambiar los formatos admitidos. Unificar los validadores requiere comprobar los dos modelos Pydantic por separado y conservar el valor de archivo que devuelve cada uno. Esa tarea queda para una intervención posterior a las tres verificadas en este hito.
+
+**Responsable de seguimiento:** santiagosanchezgarcia10-byte (RamaSS). **Fecha propuesta de revisión:** 2 de diciembre de 2026. En esa revisión se comprobará que ambos modelos acepten un nombre como `licencia.PDF`, rechacen `licencia.exe` con el mismo mensaje y conserven el nombre original. Esos casos servirán para verificar la extracción de una regla común.
+
 ## Medición reproducible
 
 Se comparó cada commit con su padre. Los conteos son estáticos y abarcan únicamente las operaciones y las funciones extraídas que se describen arriba. Para revisar las dos versiones, ejecutar `git show <commit> -- <archivo>`.
