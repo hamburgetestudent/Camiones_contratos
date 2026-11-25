@@ -49,3 +49,19 @@ htmlcov/
 dist/
 herramientas/node/
 herramientas/node.zip
+
+# Cachés, reportes y logs de desarrollo
+.ruff_cache/
+.pytest_cache/
+coverage.xml
+*.tsbuildinfo
+*.log
+
+# Carpetas y archivos de desarrollo no necesarios para despliegue
+Smells/
+Cosas_que_se_suben/
+docs_clases/
+thunder-tests/
+frontend/codigos/prueba_coneccion/
+2.ts
+tarea2-2_tabla_3.md

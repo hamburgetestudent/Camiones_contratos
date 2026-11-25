@@ -8,13 +8,18 @@ Plataforma integral multiplataforma orientada a la centralización y digitalizac
 =======
 La arquitectura separa claramente las responsabilidades entre cliente y servidor:
 
-* **Frontend (`frontend/`):** Aplicación de escritorio desarrollada con **Electron** y **TypeScript**, con vistas por rol para autenticación, registro y operación comercial.
-* **Backend (`main.py`, `routers/`, `services/`, `domain/`, `database/`):** API REST modular construida con **FastAPI** y **Pydantic**, lógica de negocio gobernada por una máquina de estados finitos y persistencia directa en **SQLite** (`camiones.db`).
+* **Frontend (`frontend/`):** Aplicación de escritorio desarrollada con **Electron** y **TypeScript**, con vistas por rol para autenticación, registro y operación comercial, y utilidades compartidas en `frontend/codigos/paginas/comun/`.
+* **Backend (`main.py`, `routers/`, `services/`, `domain/`, `dao/`, `database/`):** API REST modular en capas construida con **FastAPI** y **Pydantic**, lógica de negocio gobernada por una máquina de estados finitos y persistencia en **SQLite** (`camiones.db`) encapsulada en la capa `dao/`.
 
 ### Enlaces Rápidos
 
+* [Hito 3 · Diagnóstico, tres refactorizaciones y pruebas (criterios 1 y 2)](docs/hito3-intervenciones.md)
+* [Hito 3 · Modularización de estructura y responsabilidades (criterio 3)](docs/modularizacion.md)
+* [Hito 3 · Modularización de interfaces y dependencias (criterio 4)](docs/criterio-4-modularizacion.md)
+* [Hito 3 · Postulación de un transportista a una carga publicada (criterio 6)](docs/integracion-postulacion.md)
+
 * **Modelado UML (Entrega 3):** [`docs/modelado/`](docs/modelado/) *(y carpeta de trabajo del equipo [`docs/modelados/`](docs/modelados/))*
-* **Panel de administración:** [Panel de administración: navegación, bajas lógicas, auditoría y pruebas](docs/panel-administracion.md)
+* **Panel de administración:** [Navegación, bajas lógicas, auditoría y pruebas](docs/panel-administracion.md)
 * **Reglas de Negocio:** [`REGLAS_DE_NEGOCIO.md`](REGLAS_DE_NEGOCIO.md)
 * **Documento de Arquitectura:** [`docs_clases/Arquitectura.md`](docs_clases/Arquitectura.md)
 * **Guía de Pruebas y Cobertura:** [`tests/README.md`](tests/README.md)
@@ -184,7 +189,7 @@ Para más detalle sobre filtros por módulo y estructura de pruebas, consulta [`
 
 ## Arquitectura del Sistema
 
-El backend sigue una arquitectura en capas con persistencia directa en SQLite (sin capa DAO intermedia):
+El backend sigue una arquitectura en capas con persistencia en SQLite encapsulada en `dao/`, mientras el frontend adopta una organización combinada por vistas/funcionalidades más código compartido en `paginas/comun/` (ver detalle en [`docs/modularizacion.md`](docs/modularizacion.md)):
 
 ```text
 Camiones_contratos/
@@ -196,18 +201,28 @@ Camiones_contratos/
 │   ├── modelos_usuario.py
 │   ├── postulacion.py
 │   └── reglas.py
+├── dao/                          # Acceso a datos SQLite por entidad y auditoría
+│   ├── admin_dao.py
+│   ├── base_dao.py
+│   ├── contrato_dao.py
+│   ├── onboarding_dao.py
+│   ├── postulacion_dao.py
+│   ├── sesion_dao.py
+│   └── usuario_dao.py
 ├── database/                     # Conexión SQLite, esquema idempotente y datos semilla
 │   ├── conexion.py
 │   └── schema.sql
-├── services/                     # Lógica de negocio y transacciones SQLite
+├── services/                     # Lógica de negocio, seguridad y orquestación (sin SQL directo)
 │   ├── admin_service.py
 │   ├── contrato_service.py
 │   ├── dependencies.py
 │   ├── onboarding_service.py
+│   ├── respuesta_login.py
 │   ├── security.py
+│   ├── sesion_service.py
 │   ├── subasta_service.py
 │   └── usuario_service.py
-├── routers/                      # Endpoints HTTP FastAPI y validación de sesión JWT
+├── routers/                      # Endpoints HTTP FastAPI y guardias Bearer (sin SQL directo)
 │   ├── admin_router.py
 │   ├── auth_router.py
 │   ├── comun.py
@@ -220,17 +235,17 @@ Camiones_contratos/
 │   ├── codigos/
 │   │   ├── main.ts
 │   │   ├── imagenes/
-│   │   ├── paginas/
-│   │   │   ├── Login/
-│   │   │   ├── Principal/
-│   │   │   ├── Registrar_nuevoUsuario/
-│   │   │   ├── panel/
-│   │   │   └── panel_funciones/
-│   │   └── prueba_coneccion/
+│   │   └── paginas/
+│   │       ├── comun/            # api.js (cliente HTTP/sesión), iconos.js, tema.css
+│   │       ├── Crear_contrato/
+│   │       ├── Login/
+│   │       ├── Principal/
+│   │       ├── Registrar_nuevoUsuario/
+│   │       └── panel/            # panel.js, roles.js, administracion.js, dador.js, transportista.js
 │   ├── package.json
 │   └── tsconfig.json
 ├── tests/                        # Suite de pruebas unitarias y de integración
-├── docs/                         # Diagramas UML y documentación de modelado
+├── docs/                         # Diagramas UML y evidencias del Hito 3
 ├── main.py                       # Punto de entrada FastAPI y montaje de routers
 ├── run_tests.py                  # Runner oficial de pruebas y cobertura
 ├── run_tests.ps1                 # Envoltorio PowerShell para run_tests.py
@@ -405,4 +420,15 @@ mindmap
 | Santiago Sanchez | Backend | 1.2, 2.1, 2.2 |
 | Fabian Ahumada | Backend | 1.1, 2.4 |
 | Gabriel Alvares | Frontend | 2.3, 2.4 |
+<<<<<<< HEAD
+>>>>>>> origin/main
+=======
+
+## Evidencia del Hito 3
+
+- [Criterio 1 y 2: Diagnóstico, refactorizaciones y pruebas](docs/hito3-intervenciones.md)
+- [Criterio 3: Modularización de la estructura y las responsabilidades](docs/modularizacion.md)
+- [Criterio 4: Modularización de las interfaces y dependencias](docs/criterio-4-modularizacion.md)
+- [Criterio 5: Interfaz reutilizable y revisión de dependencia externa](docs/contrato-usuario-service.md)
+- [Criterio 6: Integración y verificación del flujo principal](docs/integracion-postulacion.md)
 >>>>>>> origin/main
