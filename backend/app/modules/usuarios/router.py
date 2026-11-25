@@ -1,12 +1,19 @@
 """Router HTTP para Autenticacion y Registro de Usuarios."""
 
+from collections.abc import Callable
+from typing import TypeVar
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.modules.usuarios.models import UsuarioCrear, UsuarioModelo
 from app.modules.usuarios.models_login import CredencialesLogin, RespuestaLogin
-from app.modules.usuarios.service import UsuarioService
+from app.modules.usuarios.service import (
+    CorreoYaRegistradoError,
+    CredencialesInvalidasError,
+    UsuarioNoEncontradoError,
+    UsuarioService,
+)
 from app.modules.usuarios.sesion import (
     Bearer,
     UsuarioActual,
@@ -16,6 +23,25 @@ from app.modules.usuarios.sesion import (
 )
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
+_T = TypeVar("_T")
+
+
+def _ejecutar_usuario_http(operacion: Callable[[], _T]) -> _T:
+    """Traduce errores de negocio de UsuarioService a respuestas HTTP."""
+    try:
+        return operacion()
+    except UsuarioNoEncontradoError as error:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(error)
+        ) from error
+    except CredencialesInvalidasError as error:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail=str(error)
+        ) from error
+    except (CorreoYaRegistradoError, ValueError) as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)
+        ) from error
 
 
 @router.get("/sesion")
@@ -45,7 +71,7 @@ def salir(bearer: Bearer):
 )
 def iniciar_sesion(credenciales: CredencialesLogin) -> RespuestaLogin:
     """Autentica a un usuario registrado mediante correo electronico y contrasena, emitiendo token Bearer."""
-    return UsuarioService.iniciar_sesion(credenciales)
+    return _ejecutar_usuario_http(lambda: UsuarioService.iniciar_sesion(credenciales))
 
 
 @router.post(
@@ -56,7 +82,7 @@ def iniciar_sesion(credenciales: CredencialesLogin) -> RespuestaLogin:
 )
 def registrar_usuario(usuario: UsuarioCrear) -> UsuarioModelo:
     """Registra un nuevo usuario en la base de datos SQLite."""
-    return UsuarioService.registrar_usuario(usuario)
+    return _ejecutar_usuario_http(lambda: UsuarioService.registrar_usuario(usuario))
 
 
 @router.get(
@@ -80,4 +106,4 @@ def listar_usuarios() -> list[UsuarioModelo]:
 )
 def obtener_usuario(usuario_id: UUID) -> UsuarioModelo:
     """Busca un usuario específico por su identificador único."""
-    return UsuarioService.obtener_usuario(usuario_id)
+    return _ejecutar_usuario_http(lambda: UsuarioService.obtener_usuario(usuario_id))

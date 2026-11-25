@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 from app.modules.usuarios.models import EstadoUsuario, RolUsuario
-from app.modules.usuarios.service import UsuarioService, hash_password
+from app.modules.usuarios.service import (
+    CorreoYaRegistradoError,
+    UsuarioService,
+    hash_password,
+)
 from tests.usuarios.base import BaseTestUsuarios
 
 
@@ -43,5 +47,6 @@ class TestRegistrarUsuario(BaseTestUsuarios):
         # Intento de registrar correo ya existente (juan.chofer@transporte.cl)
         dto = self.crear_dto_transportista_valido(email="juan.chofer@transporte.cl")
 
-        with self.assertHttpException(400, "el email ya está registrado"):
+        with self.assertRaises(CorreoYaRegistradoError) as ctx:
             UsuarioService.registrar_usuario(dto)
+        self.assertEqual(str(ctx.exception), "El email ya está registrado")

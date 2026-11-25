@@ -100,7 +100,7 @@ class TestIniciarSesion(BaseTestUsuarios):
     def test_credenciales_invalidas_no_construyen_respuesta(self) -> None:
         from unittest.mock import patch
 
-        from fastapi import HTTPException
+        from app.modules.usuarios.service import CredencialesInvalidasError
 
         credenciales = CredencialesLogin(
             usuario=self.usuario_transportista.email,
@@ -110,8 +110,8 @@ class TestIniciarSesion(BaseTestUsuarios):
         with patch(
             "app.modules.usuarios.service.construir_respuesta_login"
         ) as constructor:
-            with self.assertRaises(HTTPException) as error:
+            with self.assertRaises(CredencialesInvalidasError) as error:
                 UsuarioService.iniciar_sesion(credenciales)
 
-            self.assertEqual(error.exception.status_code, 401)
+            self.assertEqual(str(error.exception), "Credenciales inválidas")
             constructor.assert_not_called()
