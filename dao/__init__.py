@@ -9,6 +9,7 @@ from dao.onboarding_dao import (
     DocumentoDAOSQLite,
 )
 from dao.postulacion_dao import PostulacionDAO, PostulacionDAOSQLite
+from dao.sesion_dao import SesionDAO, SesionDAOSQLite
 from dao.usuario_dao import UsuarioDAO, UsuarioDAOSQLite
 
 __all__ = [
@@ -22,6 +23,8 @@ __all__ = [
     "DocumentoDAOSQLite",
     "PostulacionDAO",
     "PostulacionDAOSQLite",
+    "SesionDAO",
+    "SesionDAOSQLite",
     "UsuarioDAO",
     "UsuarioDAOSQLite",
 ]

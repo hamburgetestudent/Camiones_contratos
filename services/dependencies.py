@@ -13,7 +13,9 @@ from dao.onboarding_dao import (
     DocumentoDAOSQLite,
 )
 from dao.postulacion_dao import PostulacionDAO, PostulacionDAOSQLite
+from dao.sesion_dao import SesionDAO, SesionDAOSQLite
 from dao.usuario_dao import UsuarioDAO, UsuarioDAOSQLite
+from services import sesion_service
 from services.contrato_service import ServicioContrato
 from services.onboarding_service import OnboardingService
 from services.subasta_service import ServicioSubasta
@@ -25,9 +27,11 @@ postulacion_dao: PostulacionDAO = PostulacionDAOSQLite()
 usuario_dao: UsuarioDAO = UsuarioDAOSQLite()
 documento_dao: DocumentoDAO = DocumentoDAOSQLite()
 dador_dao: DadorCargaDAO = DadorCargaDAOSQLite()
+sesion_dao: SesionDAO = SesionDAOSQLite()
 
-# Usuarios y onboarding usan los mismos DAO compartidos
+# Usuarios, sesiones y onboarding usan los mismos DAO compartidos
 UsuarioService.dao = usuario_dao
+sesion_service.sesion_dao = sesion_dao
 servicio_onboarding = OnboardingService(
     documento_dao=documento_dao, dador_dao=dador_dao
 )
