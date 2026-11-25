@@ -4,20 +4,19 @@ Plataforma integral multiplataforma orientada a la centralización y digitalizac
 
 La arquitectura separa claramente las responsabilidades entre cliente y servidor:
 
-* **Frontend (`frontend/`):** Aplicación de escritorio desarrollada con **Electron** y **TypeScript**, con vistas por rol para autenticación, registro y operación comercial, y utilidades compartidas en `frontend/codigos/paginas/comun/`.
-* **Backend (`main.py`, `routers/`, `services/`, `domain/`, `dao/`, `database/`):** API REST modular en capas construida con **FastAPI** y **Pydantic**, lógica de negocio gobernada por una máquina de estados finitos y persistencia en **SQLite** (`camiones.db`) encapsulada en la capa `dao/`.
+* **Frontend (`frontend/`):** Aplicación de escritorio desarrollada con **Electron** y **TypeScript**, con vistas por rol para autenticación, registro y operación comercial.
+* **Backend (`main.py`, `routers/`, `services/`, `domain/`, `database/`):** API REST modular construida con **FastAPI** y **Pydantic**, lógica de negocio gobernada por una máquina de estados finitos y persistencia directa en **SQLite** (`camiones.db`).
 
 ### Enlaces Rápidos
 
-* [Hito 3 · Diagnóstico, tres refactorizaciones y pruebas (criterios 1 y 2)](docs/hito3-intervenciones.md)
-* [Hito 3 · Modularización de estructura y responsabilidades (criterio 3)](docs/modularizacion.md)
-* [Hito 3 · Modularización de interfaces y dependencias (criterio 4)](docs/criterio-4-modularizacion.md)
-* [Hito 3 · Postulación de un transportista a una carga publicada (criterio 6)](docs/integracion-postulacion.md)
-
+* **Hito 3 · Intervenciones:** [Diagnóstico, tres refactorizaciones y pruebas (criterios 1 y 2)](docs/hito3-intervenciones.md)
+* **Hito 3 · Modularización:** [Criterio 4: modularización de interfaces y dependencias](docs/criterio-4-modularizacion.md)
+* **Hito 3 · Punto 6 (dependencia externa):** [Revisión de `email-validator`: utilidad, mantenimiento, licencia, riesgo y mitigación](docs/revision-dependencia-email-validator.md)
 * **Modelado UML (Entrega 3):** [`docs/modelado/`](docs/modelado/) *(y carpeta de trabajo del equipo [`docs/modelados/`](docs/modelados/))*
 * **Panel de administración:** [Navegación, bajas lógicas, auditoría y pruebas](docs/panel-administracion.md)
 * **Reglas de Negocio:** [`REGLAS_DE_NEGOCIO.md`](REGLAS_DE_NEGOCIO.md)
 * **Documento de Arquitectura:** [`docs_clases/Arquitectura.md`](docs_clases/Arquitectura.md)
+* **Changelog, verificación del flujo y cierre de la entrega:** [`CHANGELOG.md`](CHANGELOG.md)
 * **Guía de Pruebas y Cobertura:** [`tests/README.md`](tests/README.md)
 * **Prototipo UI (Figma):** [Contratos camioneros centralizados](https://www.figma.com/design/leoA2Ejoi6cJi13esWBsXQ/Contratos_camioneros_centralizados?node-id=0-1&t=v76XFzFL7hSGl8TY-1)
 * **Cronología de cambios e informes:** [Documento en Google Docs](https://docs.google.com/document/d/1p95pKZ2zpQuFnw19-MtfZ5WIhdKAEz30nYLUg9G9B-U/edit?tab=t.0)
@@ -165,13 +164,35 @@ cd frontend
 npx tsc --noEmit
 ```
 
+### Verificación del flujo integrado
+
+```bash
+python scripts/verificar_flujo_integrado.py
+```
+
+Ejecuta tres casos (datos válidos, datos inválidos y recurso ausente) sobre la API real y una base temporal. Los resultados esperados y obtenidos están en [`CHANGELOG.md`](CHANGELOG.md).
+
 Para más detalle sobre filtros por módulo y estructura de pruebas, consulta [`tests/README.md`](tests/README.md).
+
+---
+
+## Cómo extender el proyecto
+
+Para agregar una capacidad nueva (por ejemplo, un endpoint o una entidad) sigue el mismo recorrido de capas:
+
+1. **Dominio (`domain/`):** define el modelo Pydantic y sus validadores. Si cambia el ciclo de vida de un contrato, agrega el estado y las transiciones en `maquina_estados.py`.
+2. **Esquema (`database/schema.sql`):** agrega la tabla o columna de forma idempotente (`CREATE TABLE IF NOT EXISTS`). Para columnas en una base ya instalada, sigue el patrón de `_asegurar_esquema` en `database/conexion.py`.
+3. **DAO (`dao/`):** crea una clase que herede de `BaseDAO` con el SQL de la entidad.
+4. **Servicio (`services/`):** escribe la regla de negocio recibiendo el DAO por inyección (`services/dependencies.py`) y documenta Precondiciones, Postcondiciones e Invariantes en el docstring.
+5. **Router (`routers/`):** expón el endpoint, protégelo con las dependencias de `routers/sesion.py` y registra el router en `main.py`.
+6. **Pruebas (`tests/`):** agrega pruebas en la carpeta del módulo, ejecuta `python run_tests.py` y `ruff check .`.
+7. **Verificación del flujo:** si el cambio afecta el flujo principal, extiende los casos de `scripts/verificar_flujo_integrado.py` y registra el resultado en [`CHANGELOG.md`](CHANGELOG.md).
 
 ---
 
 ## Arquitectura del Sistema
 
-El backend sigue una arquitectura en capas con persistencia en SQLite encapsulada en `dao/`, mientras el frontend adopta una organización combinada por vistas/funcionalidades más código compartido en `paginas/comun/` (ver detalle en [`docs/modularizacion.md`](docs/modularizacion.md)):
+El backend sigue una arquitectura en capas con persistencia en SQLite a través de una capa DAO (`dao/`) que encapsula el SQL y se inyecta en los servicios:
 
 ```text
 Camiones_contratos/
@@ -183,28 +204,19 @@ Camiones_contratos/
 │   ├── modelos_usuario.py
 │   ├── postulacion.py
 │   └── reglas.py
-├── dao/                          # Acceso a datos SQLite por entidad y auditoría
-│   ├── admin_dao.py
-│   ├── base_dao.py
-│   ├── contrato_dao.py
-│   ├── onboarding_dao.py
-│   ├── postulacion_dao.py
-│   ├── sesion_dao.py
-│   └── usuario_dao.py
 ├── database/                     # Conexión SQLite, esquema idempotente y datos semilla
 │   ├── conexion.py
 │   └── schema.sql
-├── services/                     # Lógica de negocio, seguridad y orquestación (sin SQL directo)
+├── dao/                          # Acceso a datos SQLite (un DAO por entidad, conexión inyectada)
+├── services/                     # Lógica de negocio y transacciones SQLite
 │   ├── admin_service.py
 │   ├── contrato_service.py
 │   ├── dependencies.py
 │   ├── onboarding_service.py
-│   ├── respuesta_login.py
 │   ├── security.py
-│   ├── sesion_service.py
 │   ├── subasta_service.py
 │   └── usuario_service.py
-├── routers/                      # Endpoints HTTP FastAPI y guardias Bearer (sin SQL directo)
+├── routers/                      # Endpoints HTTP FastAPI y validación de sesión JWT
 │   ├── admin_router.py
 │   ├── auth_router.py
 │   ├── comun.py
@@ -217,17 +229,17 @@ Camiones_contratos/
 │   ├── codigos/
 │   │   ├── main.ts
 │   │   ├── imagenes/
-│   │   └── paginas/
-│   │       ├── comun/            # api.js (cliente HTTP/sesión), iconos.js, tema.css
-│   │       ├── Crear_contrato/
-│   │       ├── Login/
-│   │       ├── Principal/
-│   │       ├── Registrar_nuevoUsuario/
-│   │       └── panel/            # panel.js, roles.js, administracion.js, dador.js, transportista.js
+│   │   ├── paginas/
+│   │   │   ├── Login/
+│   │   │   ├── Principal/
+│   │   │   ├── Registrar_nuevoUsuario/
+│   │   │   ├── panel/
+│   │   │   └── panel_funciones/
+│   │   └── prueba_coneccion/
 │   ├── package.json
 │   └── tsconfig.json
 ├── tests/                        # Suite de pruebas unitarias y de integración
-├── docs/                         # Diagramas UML y evidencias del Hito 3
+├── docs/                         # Diagramas UML y documentación de modelado
 ├── main.py                       # Punto de entrada FastAPI y montaje de routers
 ├── run_tests.py                  # Runner oficial de pruebas y cobertura
 ├── run_tests.ps1                 # Envoltorio PowerShell para run_tests.py
@@ -248,6 +260,7 @@ Camiones_contratos/
 * **Capa de Base de Datos (`database/`):**
   * `conexion.py`: Gestiona conexiones y transacciones exclusivas (`obtener_conexion`, `transaccion_exclusiva`), inicializa el esquema y carga los datos semilla.
   * `schema.sql`: Definición idempotente de tablas e índices SQLite (`usuarios`, `dadores_carga`, `documentos_transportista`, `contratos`, `postulaciones` y tablas operativas de soporte).
+* **Capa DAO (`dao/`):** `base_dao.py` define la interfaz `BaseDAO`; `usuario_dao.py`, `onboarding_dao.py`, `contrato_dao.py` y `postulacion_dao.py` concentran el SQL de cada entidad. Reciben una conexión abierta, de modo que un servicio puede combinar varios DAO en una sola transacción.
 * **Capa de Servicios (`services/`):**
   * `usuario_service.py`: Registro, hash SHA-256, autenticación y emisión de tokens JWT.
   * `onboarding_service.py`: Carga documental de transportistas, perfil tributario de dadores y aprobación/rechazo administrativo.
@@ -330,83 +343,3 @@ Las reglas de uso de las operaciones principales están documentadas en el docst
 | Configuración de reglas de negocio | [`domain/reglas.py`](domain/reglas.py) · `ReglasNegocio.actualizar_configuracion` (línea 48) | `PATCH /configuracion` | Pre: IVA entre 0 y 1, tolerancia y anticipación no negativas. Post: configuración vigente retornada. |
 
 Las pruebas que verifican estos contratos están en `tests/contratos/`, `tests/subastas/`, `tests/onboarding/`, `tests/usuarios/` y `tests/configuracion/`. Las pruebas de regresión de la adjudicación son `test_regresion_adjudicar_con_transicion_invalida_no_deja_estado_a_medias` ([`tests/subastas/test_adjudicar_subasta.py`](tests/subastas/test_adjudicar_subasta.py)) y `test_rechazo_carga_en_borrador` ([`tests/subastas/test_postular_a_carga.py`](tests/subastas/test_postular_a_carga.py)).
-
----
-
-## Contexto del Proyecto (Hito 1 y Equipo)
-
-### Actores y Arquetipos
-
-* **Dador de Carga (Generador/Cliente):** Empresas consolidadas, PYMEs, brokers o particulares que publican necesidades de transporte (origen, destino, tipo de carga, fechas y requerimientos técnicos), evalúan postulaciones y adjudican el contrato.
-* **Transportista (Oferente):** Conductores independientes o empresas de transporte que cargan su documentación de habilitación (KYC) y postulan con tarifas competitivas a las cargas publicadas.
-* **Administrador Backoffice:** Revisa y aprueba/rechaza perfiles tributarios de dadores, valida documentos de transportistas y gestiona bajas lógicas e indicadores en el panel administrativo.
-
-### Historias de Usuario Principales
-
-| ID | Nombre | Issue |
-|---|---|---|
-| `HU-IAM-01` | Registro de Usuarios por Rol | #50 |
-| `HU-IAM-02` | Inicio de Sesión y Emisión de Credenciales | #51 |
-| `HU-IAM-03` | Interfaz de Inicio de Sesión y Autenticación Federada (UI) | #52 |
-| `HU-ONB-01` | Carga y Reemplazo de Documentos del Transportista | #53 |
-| `HU-UI-01` | Configuración y Empaquetado de la Aplicación Electron | #54 |
-| `HU-ONB-02` | Consulta de Estado Global de Habilitación del Transportista | #55 |
-| `HU-CFG-02` | Modificación en Caliente de Políticas del Negocio | #56 |
-| `HU-ONB-03` | Registro y Actualización del Perfil Tributario del Dador de Carga | #57 |
-| `HU-ONB-04` | Panel Backoffice de Revisión y Validación Documental | #58 |
-| `HU-CFG-01` | Consulta de Configuración de Negocio Vigente | #59 |
-
-### Mapa de Épicas del Dominio
-
-```mermaid
-mindmap
-  root((Plataforma Camiones))
-    EP-01: Autenticación, Identidad y Accesos (IAM)
-      Registro por rol
-      Inicio de sesión y tokens
-      Sesión vigente y cierre
-    EP-02: Onboarding y Cumplimiento Legal (KYC & Fleet Compliance)
-      Carga documental transportista
-      Verificación tributaria dador
-      Panel backoffice de aprobación
-      Gating de seguridad y bloqueos
-    EP-03: Gestión y Ciclo de Vida del Contrato de Carga
-      Publicación y especificaciones
-      Validación de carga y capacidades
-      Cálculo financiero e IVA
-      Máquina de estados del contrato
-    EP-04: Motor de Postulaciones y Subasta de Fletes
-      Buscador de cargas disponibles
-      Postulación de transportistas
-      Revisión y adjudicación
-    EP-05: Seguimiento Operacional, Entrega y Disputas
-      Confirmación de tránsito
-      Constancia de entrega
-      Gestión y resolución de disputas
-    EP-06: Configuración Global y Reglas de Negocio
-      Parámetros tributarios y tolerancias
-      Tiempos de anticipación
-      Auditoría de configuraciones
-    EP-07: Experiencia de Usuario y Cliente de Escritorio (Desktop Electron)
-      Interfaz Electron modular
-      Dashboards por rol
-      Panel administrativo
-```
-
-### Responsabilidades del Equipo
-
-| Integrante | Rol | Ítems de la rúbrica a cargo |
-|---|---|---|
-| Benjamín Ponce | PM | 1.2 |
-| Cristian Palma | Backend | 1.2, Issue del profesor |
-| Santiago Sanchez | Backend | 1.2, 2.1, 2.2 |
-| Fabian Ahumada | Backend | 1.1, 2.4 |
-| Gabriel Alvares | Frontend | 2.3, 2.4 |
-
-## Evidencia del Hito 3
-
-- [Criterio 1 y 2: Diagnóstico, refactorizaciones y pruebas](docs/hito3-intervenciones.md)
-- [Criterio 3: Modularización de la estructura y las responsabilidades](docs/modularizacion.md)
-- [Criterio 4: Modularización de las interfaces y dependencias](docs/criterio-4-modularizacion.md)
-- [Criterio 5: Interfaz reutilizable y revisión de dependencia externa](docs/contrato-usuario-service.md)
-- [Criterio 6: Integración y verificación del flujo principal](docs/integracion-postulacion.md)
