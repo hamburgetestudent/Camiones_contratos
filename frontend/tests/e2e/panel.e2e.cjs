@@ -19,7 +19,7 @@ async function iniciarApi() {
     [
       "-u",
       "-c",
-      "import socket,uvicorn; s=socket.socket(); s.bind(('127.0.0.1',0)); print(s.getsockname()[1],flush=True); uvicorn.Server(uvicorn.Config('main:app',log_level='error')).run(sockets=[s])",
+      "import socket,uvicorn; s=socket.socket(); s.bind(('127.0.0.1',0)); print(s.getsockname()[1],flush=True); uvicorn.Server(uvicorn.Config('app.main:app',app_dir='backend',log_level='error')).run(sockets=[s])",
     ],
     {
       cwd: raiz,

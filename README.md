@@ -5,7 +5,7 @@ Plataforma integral multiplataforma orientada a la centralización y digitalizac
 La arquitectura separa claramente las responsabilidades entre cliente y servidor:
 
 * **Frontend (`frontend/`):** Aplicación de escritorio desarrollada con **Electron** y **TypeScript**, con vistas por rol para autenticación, registro y operación comercial.
-* **Backend (`main.py`, `routers/`, `services/`, `domain/`, `database/`):** API REST modular construida con **FastAPI** y **Pydantic**, lógica de negocio gobernada por una máquina de estados finitos y persistencia directa en **SQLite** (`camiones.db`).
+* **Backend (`backend/app/`, organizado por módulos de dominio):** API REST modular construida con **FastAPI** y **Pydantic**, lógica de negocio gobernada por una máquina de estados finitos y persistencia directa en **SQLite** (`camiones.db`).
 
 ### Enlaces Rápidos
 
@@ -16,7 +16,7 @@ La arquitectura separa claramente las responsabilidades entre cliente y servidor
 * **Panel de administración:** [Navegación, bajas lógicas, auditoría y pruebas](docs/panel-administracion.md)
 * **Reglas de Negocio:** [`REGLAS_DE_NEGOCIO.md`](REGLAS_DE_NEGOCIO.md)
 * **Changelog, verificación del flujo y cierre de la entrega:** [`CHANGELOG.md`](CHANGELOG.md)
-* **Guía de Pruebas y Cobertura:** [`tests/README.md`](tests/README.md)
+* **Guía de Pruebas y Cobertura:** [`backend/tests/README.md`](backend/tests/README.md)
 * **Prototipo UI (Figma):** [Contratos camioneros centralizados](https://www.figma.com/design/leoA2Ejoi6cJi13esWBsXQ/Contratos_camioneros_centralizados?node-id=0-1&t=v76XFzFL7hSGl8TY-1)
 * **Cronología de cambios e informes:** [Documento en Google Docs](https://docs.google.com/document/d/1p95pKZ2zpQuFnw19-MtfZ5WIhdKAEz30nYLUg9G9B-U/edit?tab=t.0)
 
@@ -77,13 +77,13 @@ cd Camiones_contratos
 
    ```bash
    # Opción recomendada (con recarga automática durante desarrollo):
-   uvicorn main:app --reload --host 127.0.0.1 --port 8000
+   uvicorn app.main:app --app-dir backend --reload --host 127.0.0.1 --port 8000
 
    # Alternativa directa:
-   python main.py
+   cd backend && python -m app.main
    ```
 
-> Al arrancar por primera vez, el servidor crea e inicializa automáticamente `camiones.db` usando [`database/schema.sql`](database/schema.sql) y carga las cuentas semilla iniciales. La documentación interactiva queda disponible en `http://127.0.0.1:8000/docs`.
+> Al arrancar por primera vez, el servidor crea e inicializa automáticamente `camiones.db` usando [`backend/app/db/schema.sql`](backend/app/db/schema.sql) y carga las cuentas semilla iniciales. La documentación interactiva queda disponible en `http://127.0.0.1:8000/docs`.
 
 ### Paso 3 — Instalar e iniciar el Frontend de Escritorio (Terminal 2)
 
@@ -100,17 +100,17 @@ npm start
 
 ### Paso 4 — Verificar la instalación y cuentas de prueba
 
-1. Abre `http://127.0.0.1:8000/docs` en tu navegador y confirma los **6 routers activos** cargados por [`main.py`](main.py):
+1. Abre `http://127.0.0.1:8000/docs` en tu navegador y confirma los **6 routers activos** cargados por [`backend/app/main.py`](backend/app/main.py):
    * `/auth`: Registro, inicio de sesión y consulta de usuarios.
    * `/admin`: Panel administrativo, resumen y bajas lógicas.
    * `/configuracion`: Consulta y actualización de reglas de negocio globales.
    * `/contratos`: Creación, listado y transiciones de estado de contratos.
    * `/onboarding`: Carga documental de transportistas, perfil tributario de dadores y validación KYC.
    * `/subastas`: Exploración de cargas, postulación y adjudicación de ofertas.
-2. Las rutas de negocio (`/configuracion`, `/contratos`, `/onboarding`, `/subastas`) y las rutas de `/admin` están protegidas mediante token **JWT Bearer** validado en [`routers/sesion.py`](routers/sesion.py):
+2. Las rutas de negocio (`/configuracion`, `/contratos`, `/onboarding`, `/subastas`) y las rutas de `/admin` están protegidas mediante token **JWT Bearer** validado en [`backend/app/modules/usuarios/sesion.py`](backend/app/modules/usuarios/sesion.py):
    * Para probarlas en **Swagger UI**, ejecuta primero `POST /auth/login` con una cuenta válida, copia el campo `access_token` de la respuesta y pégalo en el botón **Authorize** de Swagger.
    * Desde la aplicación de **Electron**, basta con iniciar sesión en la pantalla de Login.
-3. **Cuentas semilla precargadas** (definidas en [`database/conexion.py`](database/conexion.py)):
+3. **Cuentas semilla precargadas** (definidas en [`backend/app/db/conexion.py`](backend/app/db/conexion.py)):
 
 | Rol | Correo electrónico | Contraseña | Estado inicial |
 |---|---|---|---|
@@ -171,7 +171,7 @@ python scripts/verificar_flujo_integrado.py
 
 Ejecuta tres casos (datos válidos, datos inválidos y recurso ausente) sobre la API real y una base temporal. Los resultados esperados y obtenidos están en [`CHANGELOG.md`](CHANGELOG.md).
 
-Para más detalle sobre filtros por módulo y estructura de pruebas, consulta [`tests/README.md`](tests/README.md).
+Para más detalle sobre filtros por módulo y estructura de pruebas, consulta [`backend/tests/README.md`](backend/tests/README.md).
 
 ---
 
@@ -179,93 +179,63 @@ Para más detalle sobre filtros por módulo y estructura de pruebas, consulta [`
 
 Para agregar una capacidad nueva (por ejemplo, un endpoint o una entidad) sigue el mismo recorrido de capas:
 
-1. **Dominio (`domain/`):** define el modelo Pydantic y sus validadores. Si cambia el ciclo de vida de un contrato, agrega el estado y las transiciones en `maquina_estados.py`.
-2. **Esquema (`database/schema.sql`):** agrega la tabla o columna de forma idempotente (`CREATE TABLE IF NOT EXISTS`). Para columnas en una base ya instalada, sigue el patrón de `_asegurar_esquema` en `database/conexion.py`.
-3. **DAO (`dao/`):** crea una clase que herede de `BaseDAO` con el SQL de la entidad.
-4. **Servicio (`services/`):** escribe la regla de negocio recibiendo el DAO por inyección (`core/dependencies.py`) y documenta Precondiciones, Postcondiciones e Invariantes en el docstring.
-5. **Router (`routers/`):** expón el endpoint, protégelo con las dependencias de `routers/sesion.py` y registra el router en `main.py`.
-6. **Pruebas (`tests/`):** agrega pruebas en la carpeta del módulo, ejecuta `python run_tests.py` y `ruff check .`.
+1. **Modelos (`modules/<dominio>/models.py`):** define el modelo Pydantic y sus validadores. Si cambia el ciclo de vida de un contrato, agrega el estado y las transiciones en `maquina_estados.py`.
+2. **Esquema (`backend/app/db/schema.sql`):** agrega la tabla o columna de forma idempotente (`CREATE TABLE IF NOT EXISTS`). Para columnas en una base ya instalada, sigue el patrón de `_asegurar_esquema` en `backend/app/db/conexion.py`.
+3. **DAO (`modules/<dominio>/dao.py`):** crea una clase que herede de `BaseDAO` con el SQL de la entidad.
+4. **Servicio (`modules/<dominio>/service.py`):** escribe la regla de negocio recibiendo el DAO por inyección (`backend/app/core/dependencies.py`) y documenta Precondiciones, Postcondiciones e Invariantes en el docstring.
+5. **Router (`modules/<dominio>/router.py`):** expón el endpoint, protégelo con las dependencias de `backend/app/modules/usuarios/sesion.py` y registra el router en `backend/app/main.py`.
+6. **Pruebas (`backend/tests/<dominio>/`):** agrega pruebas en la carpeta del módulo, ejecuta `python run_tests.py` y `ruff check .`.
 7. **Verificación del flujo:** si el cambio afecta el flujo principal, extiende los casos de `scripts/verificar_flujo_integrado.py` y registra el resultado en [`CHANGELOG.md`](CHANGELOG.md).
 
 ---
 
 ## Arquitectura del Sistema
 
-El backend sigue una arquitectura en capas con persistencia en SQLite a través de una capa DAO (`dao/`) que encapsula el SQL y se inyecta en los servicios:
+El backend se organiza **por dominio** (`backend/app/modules/<dominio>/`). Dentro de cada módulo se conserva la separación en capas `router → service → dao → modelos`, y lo transversal vive en `core/` y `db/`:
 
 ```text
 Camiones_contratos/
-├── domain/                       # Entidades Pydantic, validadores, máquina de estados y reglas
-│   ├── maquina_estados.py
-│   ├── modelos.py
-│   ├── modelos_login.py
-│   ├── modelos_onboarding.py
-│   ├── modelos_usuario.py
-│   ├── postulacion.py
-│   └── reglas.py
-├── database/                     # Conexión SQLite, esquema idempotente y datos semilla
-│   ├── conexion.py
-│   └── schema.sql
-├── dao/                          # Acceso a datos SQLite (un DAO por entidad, conexión inyectada)
-├── services/                     # Lógica de negocio y transacciones SQLite
-│   ├── admin_service.py
-│   ├── contrato_service.py
-│   ├── dependencies.py
-│   ├── onboarding_service.py
-│   ├── security.py
-│   ├── subasta_service.py
-│   └── usuario_service.py
-├── routers/                      # Endpoints HTTP FastAPI y validación de sesión JWT
-│   ├── admin_router.py
-│   ├── auth_router.py
-│   ├── comun.py
-│   ├── config_router.py
-│   ├── contratos_router.py
-│   ├── onboarding_router.py
-│   ├── sesion.py
-│   └── subasta_router.py
-├── frontend/                     # Cliente de escritorio Electron + TypeScript
-│   ├── electron/             # Proceso principal de Electron (main.ts)
+├── backend/
+│   ├── app/
+│   │   ├── main.py                   # Punto de entrada FastAPI y montaje de routers
+│   │   ├── core/                     # Transversal: security.py (hash/JWT), dependencies.py (instancias compartidas), http.py (errores HTTP)
+│   │   ├── db/                       # conexion.py (SQLite, esquema, semilla), schema.sql y base_dao.py
+│   │   └── modules/
+│   │       ├── usuarios/             # router, service, dao, models, models_login, respuesta_login, sesion
+│   │       ├── contratos/            # router, service, dao, models, maquina_estados
+│   │       ├── onboarding/           # router, service, dao, models
+│   │       ├── subastas/             # router, service, dao, models (postulaciones)
+│   │       ├── configuracion/        # router, reglas (ReglasNegocio)
+│   │       └── admin/                # router, service
+│   └── tests/                        # Suite por módulo (admin, usuarios, contratos, ...)
+├── frontend/                         # Cliente de escritorio Electron + TypeScript
+│   ├── electron/                     # Proceso principal de Electron (main.ts)
 │   ├── src/
-│   │   ├── paginas/          # login, registro, catalogo-contratos, crear-contrato, panel (+ vistas/)
-│   │   ├── compartido/       # css/tema.css, js/{iconos,sesion,api}.js
+│   │   ├── paginas/                  # login, registro, catalogo-contratos, crear-contrato, panel (+ vistas/)
+│   │   ├── compartido/               # css/tema.css, js/{iconos,sesion,api}.js
 │   │   └── recursos/imagenes/
-│   ├── tests/e2e/            # Pruebas end-to-end del panel
+│   ├── tests/e2e/                    # Pruebas end-to-end del panel
 │   ├── package.json
 │   └── tsconfig.json
-├── tests/                        # Suite de pruebas unitarias y de integración
-├── docs/                         # Diagramas UML y documentación de modelado
-├── main.py                       # Punto de entrada FastAPI y montaje de routers
-├── run_tests.py                  # Runner oficial de pruebas y cobertura
-├── run_tests.ps1                 # Envoltorio PowerShell para run_tests.py
-├── pyproject.toml                # Configuración de Ruff y herramientas Python
-└── requirements.txt              # Dependencias del backend
+├── api/index.py                      # Entrypoint para Vercel
+├── docs/                             # Diagramas UML y documentación de modelado
+├── scripts/                          # Utilidades de desarrollo y verificación
+├── run_tests.py                      # Runner oficial de pruebas y cobertura
+├── pyproject.toml                    # Ruff, pytest y herramientas Python
+└── requirements.txt                  # Dependencias del backend
 ```
 
 ### Descripción de Módulos y Capas
 
-* **Capa de Dominio (`domain/`):**
-  * `modelos.py`: Modelos Pydantic de contratos (`ContratoBase`, `ContratoCrear`, `ContratoModelo`), `TipoCarga`, `Moneda` y validadores de fechas, capacidad, requerimientos especiales y cuadratura financiera.
-  * `modelos_usuario.py`: Modelos de usuarios (`UsuarioBase`, `UsuarioCrear`, `UsuarioModelo`), roles (`RolUsuario`) y estados (`EstadoUsuario`).
-  * `modelos_login.py`: Esquemas HTTP de inicio de sesión (`CredencialesLogin`, `LoginEsquema`, `RespuestaLogin`).
-  * `modelos_onboarding.py`: Entidades y DTOs de cumplimiento KYC (`DadorCarga`, `DatosFacturacion`, `DocumentoTransportista`, `TipoDocumento`, `EstadoValidacion`).
-  * `postulacion.py`: Modelos de ofertas (`PostulacionBase`, `PostulacionCrear`, `PostulacionModelo`), `EstadoPostulacion` y `MaquinaEstadoPostulacion`.
-  * `maquina_estados.py`: Clase base genérica `MaquinaEstadosBase` y `MaquinaEstadosContrato` para validar el ciclo de vida del contrato.
-  * `reglas.py`: Singleton `ReglasNegocio` con parámetros globales configurables en ejecución (`IVA_PORCENTAJE`, `TOLERANCIA_MAX`, `ANTICIPACION_MIN_H`).
-* **Capa de Base de Datos (`database/`):**
-  * `conexion.py`: Gestiona conexiones y transacciones exclusivas (`obtener_conexion`, `transaccion_exclusiva`), inicializa el esquema y carga los datos semilla.
-  * `schema.sql`: Definición idempotente de tablas e índices SQLite (`usuarios`, `dadores_carga`, `documentos_transportista`, `contratos`, `postulaciones` y tablas operativas de soporte).
-* **Capa DAO (`dao/`):** `base_dao.py` define la interfaz `BaseDAO`; `usuario_dao.py`, `onboarding_dao.py`, `contrato_dao.py` y `postulacion_dao.py` concentran el SQL de cada entidad. Reciben una conexión abierta, de modo que un servicio puede combinar varios DAO en una sola transacción.
-* **Capa de Servicios (`services/`):**
-  * `usuario_service.py`: Registro, hash SHA-256, autenticación y emisión de tokens JWT.
-  * `onboarding_service.py`: Carga documental de transportistas, perfil tributario de dadores y aprobación/rechazo administrativo.
-  * `contrato_service.py`: Creación, lectura y transiciones de estado de contratos en SQLite.
-  * `subasta_service.py`: Exploración de cargas disponibles, postulaciones y adjudicación atómica ("todo o nada").
-  * `admin_service.py`: Consultas administrativas, resúmenes y bajas lógicas.
-  * `security.py`: Generación y verificación de tokens JWT Bearer (`HS256`).
-  * `dependencies.py`: Instancias compartidas e inyección de dependencias de servicios.
-* **Capa de Routers API REST (`routers/`):**
-  * `auth_router.py`, `admin_router.py`, `config_router.py`, `contratos_router.py`, `onboarding_router.py`, `subasta_router.py`, junto con `sesion.py` (guardia Bearer y revocación de sesión) y `comun.py` (manejo uniforme de errores HTTP).
+Cada módulo de `backend/app/modules/` agrupa sus capas:
+
+* **Modelos (`models.py`):** entidades Pydantic y validadores. `contratos/models.py` (`ContratoBase`, `ContratoCrear`, `ContratoModelo`, `TipoCarga`, `Moneda`), `usuarios/models.py` (`UsuarioModelo`, `RolUsuario`, `EstadoUsuario`), `usuarios/models_login.py` (`CredencialesLogin`, `RespuestaLogin`), `onboarding/models.py` (`DadorCarga`, `DocumentoTransportista`, `TipoDocumento`, `EstadoValidacion`) y `subastas/models.py` (`PostulacionModelo`, `EstadoPostulacion`, `MaquinaEstadoPostulacion`).
+* **Reglas y estados:** `contratos/maquina_estados.py` (`MaquinaEstadosBase` genérica y `MaquinaEstadosContrato`) y `configuracion/reglas.py` (singleton `ReglasNegocio` con `IVA_PORCENTAJE`, `TOLERANCIA_MAX`, `ANTICIPACION_MIN_H`).
+* **DAO (`dao.py`):** `db/base_dao.py` define `BaseDAO`; cada módulo concentra el SQL de su entidad y recibe una conexión abierta, de modo que un servicio puede combinar varios DAO en una sola transacción.
+* **Servicios (`service.py`):** `usuarios` (registro, hash SHA-256, autenticación, emisión de JWT), `onboarding` (carga documental, perfil tributario, aprobación/rechazo), `contratos` (creación, lectura y transiciones), `subastas` (exploración, postulaciones y adjudicación atómica "todo o nada") y `admin` (consultas administrativas, resúmenes y bajas lógicas).
+* **Routers (`router.py`):** exponen los endpoints HTTP de cada módulo. `usuarios/sesion.py` es la guardia Bearer con revocación de sesión.
+* **Base de datos (`db/`):** `conexion.py` gestiona conexiones y transacciones exclusivas (`obtener_conexion`, `transaccion_exclusiva`), inicializa el esquema y carga los datos semilla; `schema.sql` define tablas e índices de forma idempotente.
+* **Núcleo (`core/`):** `security.py` (tokens JWT Bearer `HS256`), `dependencies.py` (instancias compartidas e inyección) y `http.py` (manejo uniforme de errores HTTP).
 * **Capa de Frontend (`frontend/`):**
   * `electron/main.ts`: Proceso principal de Electron que inicia la ventana y carga `src/paginas/login/login.html`.
   * `src/paginas/`: Una carpeta por pantalla (HTML/CSS/JS) para login, registro, catálogo de contratos, creación de contratos y panel por rol.
@@ -273,7 +243,7 @@ Camiones_contratos/
 
 ### Ciclo de Vida del Contrato (Máquina de Estados)
 
-Las transiciones son validadas por `domain.maquina_estados.MaquinaEstadosContrato`:
+Las transiciones son validadas por `app.modules.contratos.maquina_estados.MaquinaEstadosContrato`:
 
 * Flujo principal: `BORRADOR` ➔ `PUBLICADO` / `EN_SUBASTA` ➔ `EN_POSTULACION` ➔ `ADJUDICADO` ➔ `EN_TRANSITO` ➔ `ENTREGADO` ➔ `FINALIZADO`
 * Flujos alternativos:
@@ -290,34 +260,34 @@ flowchart TD
     end
 
     subgraph API["Capa de Enrutamiento (FastAPI)"]
-        B & C --> D["main.py (FastAPI App)"]
-        D --> SSEC["routers/sesion.py (JWT Bearer)"]
-        D --> R1["routers/auth_router.py"]
-        D --> R2["routers/admin_router.py"]
-        D --> R3["routers/contratos_router.py"]
-        D --> R4["routers/subasta_router.py"]
-        D --> R5["routers/onboarding_router.py"]
-        D --> R6["routers/config_router.py"]
+        B & C --> D["backend/app/main.py (FastAPI App)"]
+        D --> SSEC["backend/app/modules/usuarios/sesion.py (JWT Bearer)"]
+        D --> R1["backend/app/modules/usuarios/router.py"]
+        D --> R2["backend/app/modules/admin/router.py"]
+        D --> R3["backend/app/modules/contratos/router.py"]
+        D --> R4["backend/app/modules/subastas/router.py"]
+        D --> R5["backend/app/modules/onboarding/router.py"]
+        D --> R6["backend/app/modules/configuracion/router.py"]
     end
 
     subgraph SERVICES["Capa de Servicios de Negocio"]
-        R1 & SSEC --> S1["services/usuario_service.py & security.py"]
-        R2 --> S5["services/admin_service.py"]
-        R3 --> S2["services/contrato_service.py"]
-        R4 --> S3["services/subasta_service.py"]
-        R5 --> S4["services/onboarding_service.py"]
+        R1 & SSEC --> S1["backend/app/modules/usuarios/service.py & security.py"]
+        R2 --> S5["backend/app/modules/admin/service.py"]
+        R3 --> S2["backend/app/modules/contratos/service.py"]
+        R4 --> S3["backend/app/modules/subastas/service.py"]
+        R5 --> S4["backend/app/modules/onboarding/service.py"]
     end
 
     subgraph DOMAIN["Capa de Dominio & Reglas"]
-        R6 --> M3["domain/reglas.py (ReglasNegocio)"]
-        S2 & S3 --> M1["domain/maquina_estados.py"]
-        S1 & S2 & S3 & S4 --> M2["domain/modelos*.py & postulacion.py"]
+        R6 --> M3["backend/app/modules/configuracion/reglas.py (ReglasNegocio)"]
+        S2 & S3 --> M1["backend/app/modules/contratos/maquina_estados.py"]
+        S1 & S2 & S3 & S4 --> M2["modules/*/models.py"]
         M2 --> M3
     end
 
     subgraph PERSISTENCE["Capa de Persistencia (SQLite)"]
-        S1 & S2 & S3 & S4 & S5 --> DBCON["database/conexion.py"]
-        DBCON --> SQLITE[("camiones.db<br/>database/schema.sql")]
+        S1 & S2 & S3 & S4 & S5 --> DBCON["backend/app/db/conexion.py"]
+        DBCON --> SQLITE[("camiones.db<br/>backend/app/db/schema.sql")]
     end
 ```
 
@@ -329,13 +299,13 @@ Las reglas de uso de las operaciones principales están documentadas en el docst
 
 | Operación | Dónde está el contrato | Endpoint para probarlo | Qué se puede mostrar |
 |---|---|---|---|
-| Cambio de estado de contrato (máquina de estados) | [`domain/maquina_estados.py`](domain/maquina_estados.py) · `MaquinaEstadosContrato.cambiar_estado` (línea 100) | `PATCH /contratos/{contrato_id}/estado` | Pre: transición permitida y `id_transportista` al adjudicar. Post: `estado` actualizado. Inv: `CANCELADO`/`FINALIZADO` son terminales. |
-| Validación de un contrato | [`domain/modelos.py`](domain/modelos.py) · `ContratoBase.validar_reglas_de_negocio` (línea 209) | `POST /contratos` | Invariantes: fechas, capacidad del camión, requisitos por tipo de carga, coherencia neto + IVA = total. |
-| Creación de contrato | [`services/contrato_service.py`](services/contrato_service.py) · `crear_contrato` (línea 209) | `POST /contratos` | Pre: dador de carga con KYC `APROBADO`. Post: contrato persistido en `BORRADOR`. |
-| Postulación a una carga | [`services/subasta_service.py`](services/subasta_service.py) · `postular_a_carga` (línea 233) | `POST /subastas/postular` | Pre: onboarding aprobado, carga existente y en estado disponible. Post: postulación `POSTULADA` y contrato en `EN_POSTULACION`. |
-| Adjudicación de subasta | [`services/subasta_service.py`](services/subasta_service.py) · `adjudicar_subasta` (línea 296) | `POST /subastas/adjudicar` | Post "todo o nada": una oferta `SELECCIONADA`, las demás `RECHAZADA`, contrato `ADJUDICADO`. Si falla, nada cambia. |
-| Validación de documentos KYC | [`services/onboarding_service.py`](services/onboarding_service.py) · `validar_documento` (línea 356) | `PATCH /onboarding/admin/documentos/{documento_id}/validar` | Pre: documento existente y estado `APROBADO` o `RECHAZADO`. Post: estado persistido. |
-| Registro de usuario | [`services/usuario_service.py`](services/usuario_service.py) · `registrar_usuario` (línea 98) | `POST /auth/registro` | Pre: email único, password de al menos 6 caracteres. Post: se guarda el hash, nunca la clave en claro. |
-| Configuración de reglas de negocio | [`domain/reglas.py`](domain/reglas.py) · `ReglasNegocio.actualizar_configuracion` (línea 48) | `PATCH /configuracion` | Pre: IVA entre 0 y 1, tolerancia y anticipación no negativas. Post: configuración vigente retornada. |
+| Cambio de estado de contrato (máquina de estados) | [`backend/app/modules/contratos/maquina_estados.py`](backend/app/modules/contratos/maquina_estados.py) · `MaquinaEstadosContrato.cambiar_estado` (línea 100) | `PATCH /contratos/{contrato_id}/estado` | Pre: transición permitida y `id_transportista` al adjudicar. Post: `estado` actualizado. Inv: `CANCELADO`/`FINALIZADO` son terminales. |
+| Validación de un contrato | [`backend/app/modules/contratos/models.py`](backend/app/modules/contratos/models.py) · `ContratoBase.validar_reglas_de_negocio` (línea 209) | `POST /contratos` | Invariantes: fechas, capacidad del camión, requisitos por tipo de carga, coherencia neto + IVA = total. |
+| Creación de contrato | [`backend/app/modules/contratos/service.py`](backend/app/modules/contratos/service.py) · `crear_contrato` (línea 209) | `POST /contratos` | Pre: dador de carga con KYC `APROBADO`. Post: contrato persistido en `BORRADOR`. |
+| Postulación a una carga | [`backend/app/modules/subastas/service.py`](backend/app/modules/subastas/service.py) · `postular_a_carga` (línea 233) | `POST /subastas/postular` | Pre: onboarding aprobado, carga existente y en estado disponible. Post: postulación `POSTULADA` y contrato en `EN_POSTULACION`. |
+| Adjudicación de subasta | [`backend/app/modules/subastas/service.py`](backend/app/modules/subastas/service.py) · `adjudicar_subasta` (línea 296) | `POST /subastas/adjudicar` | Post "todo o nada": una oferta `SELECCIONADA`, las demás `RECHAZADA`, contrato `ADJUDICADO`. Si falla, nada cambia. |
+| Validación de documentos KYC | [`backend/app/modules/onboarding/service.py`](backend/app/modules/onboarding/service.py) · `validar_documento` (línea 356) | `PATCH /onboarding/admin/documentos/{documento_id}/validar` | Pre: documento existente y estado `APROBADO` o `RECHAZADO`. Post: estado persistido. |
+| Registro de usuario | [`backend/app/modules/usuarios/service.py`](backend/app/modules/usuarios/service.py) · `registrar_usuario` (línea 98) | `POST /auth/registro` | Pre: email único, password de al menos 6 caracteres. Post: se guarda el hash, nunca la clave en claro. |
+| Configuración de reglas de negocio | [`backend/app/modules/configuracion/reglas.py`](backend/app/modules/configuracion/reglas.py) · `ReglasNegocio.actualizar_configuracion` (línea 48) | `PATCH /configuracion` | Pre: IVA entre 0 y 1, tolerancia y anticipación no negativas. Post: configuración vigente retornada. |
 
-Las pruebas que verifican estos contratos están en `tests/contratos/`, `tests/subastas/`, `tests/onboarding/`, `tests/usuarios/` y `tests/configuracion/`. Las pruebas de regresión de la adjudicación son `test_regresion_adjudicar_con_transicion_invalida_no_deja_estado_a_medias` ([`tests/subastas/test_adjudicar_subasta.py`](tests/subastas/test_adjudicar_subasta.py)) y `test_rechazo_carga_en_borrador` ([`tests/subastas/test_postular_a_carga.py`](tests/subastas/test_postular_a_carga.py)).
+Las pruebas que verifican estos contratos están en `backend/tests/contratos/`, `backend/tests/subastas/`, `backend/tests/onboarding/`, `backend/tests/usuarios/` y `backend/tests/configuracion/`. Las pruebas de regresión de la adjudicación son `test_regresion_adjudicar_con_transicion_invalida_no_deja_estado_a_medias` ([`backend/tests/subastas/test_adjudicar_subasta.py`](backend/tests/subastas/test_adjudicar_subasta.py)) y `test_rechazo_carga_en_borrador` ([`backend/tests/subastas/test_postular_a_carga.py`](backend/tests/subastas/test_postular_a_carga.py)).

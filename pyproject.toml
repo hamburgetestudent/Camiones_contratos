@@ -27,7 +27,7 @@ ignore = [
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
-known-first-party = ["core", "database", "domain", "routers", "services"]
+known-first-party = ["app", "tests"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -35,3 +35,6 @@ indent-style = "space"
 line-ending = "auto"
 skip-magic-trailing-comma = false
 
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+pythonpath = ["backend"]

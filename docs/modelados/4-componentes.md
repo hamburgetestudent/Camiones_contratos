@@ -19,8 +19,8 @@ En cada enlace, el semicírculo pertenece al componente que requiere la interfaz
 
 | Interfaz del diagrama | Evidencia en la implementación |
 | --- | --- |
-| API REST | [Cliente de login](../../frontend/src/paginas/login/login.js) y [registro de routers](../../main.py). |
-| ServicioContrato.crear_contrato | [El router recibe ContratoCrear y delega la creación](../../routers/contratos_router.py). |
-| Modelo y transiciones (ContratoModelo y MaquinaEstadosContrato) | [El servicio trabaja con el modelo y la máquina de estados](../../services/contrato_service.py). |
-| obtener_conexion() | [El servicio importa el acceso a datos](../../services/contrato_service.py). |
-| sqlite3 | [Apertura de la base, inicialización del esquema y ruta por defecto](../../database/conexion.py). |
+| API REST | [Cliente de login](../../frontend/src/paginas/login/login.js) y [registro de routers](../../backend/app/main.py). |
+| ServicioContrato.crear_contrato | [El router recibe ContratoCrear y delega la creación](../../backend/app/modules/contratos/router.py). |
+| Modelo y transiciones (ContratoModelo y MaquinaEstadosContrato) | [El servicio trabaja con el modelo y la máquina de estados](../../backend/app/modules/contratos/service.py). |
+| obtener_conexion() | [El servicio importa el acceso a datos](../../backend/app/modules/contratos/service.py). |
+| sqlite3 | [Apertura de la base, inicialización del esquema y ruta por defecto](../../backend/app/db/conexion.py). |

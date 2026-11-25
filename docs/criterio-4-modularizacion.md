@@ -16,7 +16,7 @@ Versión base: commit c3081be, sincronizado con Dev.
 
 ## Modularización aplicada
 
-Se creó el módulo services/respuesta_login.py, responsable
+Se creó el módulo backend/app/modules/usuarios/respuesta_login.py, responsable
 de construir la respuesta de un usuario autenticado.
 
 UsuarioService conserva la validación y autenticación,
@@ -26,11 +26,11 @@ delegando la construcción de la respuesta al nuevo módulo.
 
 | Módulo | Operación pública | Responsabilidad |
 |---|---|---|
-| routers/auth_router.py | iniciar_sesion(credenciales) | Recibe la solicitud HTTP |
-| services/usuario_service.py | iniciar_sesion(credenciales) | Valida, autentica y delega |
-| services/usuario_service.py | autenticar_usuario(email, password) | Verifica las credenciales |
-| services/respuesta_login.py | construir_respuesta_login(usuario) | Construye RespuestaLogin |
-| core/security.py | crear_token_acceso(claims) | Genera el token JWT |
+| backend/app/modules/usuarios/router.py | iniciar_sesion(credenciales) | Recibe la solicitud HTTP |
+| backend/app/modules/usuarios/service.py | iniciar_sesion(credenciales) | Valida, autentica y delega |
+| backend/app/modules/usuarios/service.py | autenticar_usuario(email, password) | Verifica las credenciales |
+| backend/app/modules/usuarios/respuesta_login.py | construir_respuesta_login(usuario) | Construye RespuestaLogin |
+| backend/app/core/security.py | crear_token_acceso(claims) | Genera el token JWT |
 
 El nuevo módulo recibe un UsuarioModelo y devuelve una
 RespuestaLogin. Depende de los modelos de dominio y del
@@ -78,16 +78,16 @@ Desde la raíz del repositorio:
 ```bash
 source venv/bin/activate
 python -m unittest -v tests.usuarios.test_iniciar_sesion
-python -m unittest discover -s tests/usuarios -t . -v
+python -m unittest discover -s backend/tests/usuarios -t backend -v
 ```
 
 ## Archivos relacionados
 
-- [Servicio de usuarios](../services/usuario_service.py)
-- [Constructor de respuesta](../services/respuesta_login.py)
-- [Seguridad](../core/security.py)
-- [Router de autenticación](../routers/auth_router.py)
-- [Pruebas](../tests/usuarios/test_iniciar_sesion.py)
+- [Servicio de usuarios](../backend/app/modules/usuarios/service.py)
+- [Constructor de respuesta](../backend/app/modules/usuarios/respuesta_login.py)
+- [Seguridad](../backend/app/core/security.py)
+- [Router de autenticación](../backend/app/modules/usuarios/router.py)
+- [Pruebas](../backend/tests/usuarios/test_iniciar_sesion.py)
 
 ## Conclusión
 
@@ -100,11 +100,11 @@ correctamente y conservan el comportamiento evaluado.
 
 | Archivo | Operacion que se debe revisar |
 |---|---|
-| services/usuario_service.py | UsuarioService.iniciar_sesion |
-| services/respuesta_login.py | construir_respuesta_login |
-| core/security.py | crear_token_acceso |
-| routers/auth_router.py | iniciar_sesion |
-| tests/usuarios/test_iniciar_sesion.py | TestIniciarSesion |
+| backend/app/modules/usuarios/service.py | UsuarioService.iniciar_sesion |
+| backend/app/modules/usuarios/respuesta_login.py | construir_respuesta_login |
+| backend/app/core/security.py | crear_token_acceso |
+| backend/app/modules/usuarios/router.py | iniciar_sesion |
+| backend/tests/usuarios/test_iniciar_sesion.py | TestIniciarSesion |
 
 ### Fragmento principal de la modularizacion
 
@@ -125,7 +125,7 @@ def construir_respuesta_login(usuario: UsuarioModelo) -> RespuestaLogin:
 - Entrada: un UsuarioModelo previamente autenticado.
 - Salida: RespuestaLogin con los datos del usuario y token JWT.
 - Precondicion: el usuario debe estar autenticado.
-- Dependencias: modelos de dominio y core.security.
+- Dependencias: modelos de dominio y app.core.security.
 - Consumidor: UsuarioService.iniciar_sesion.
 - Credenciales incorrectas: UsuarioService retorna HTTP 401
   sin invocar el constructor.
@@ -155,7 +155,7 @@ modificar el contrato observable del inicio de sesion.
 ## Verificacion general
 
 ```bash
-python -m unittest discover -s tests -t . -v
+python -m unittest discover -s backend/tests -t backend -v
 ```
 
 Resultado registrado: 213 pruebas exitosas, sin errores.

@@ -8,11 +8,11 @@ import sys
 from importlib.metadata import version
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 
 from pydantic import ValidationError  # noqa: E402
 
-from domain.modelos_usuario import UsuarioBase  # noqa: E402
+from app.modules.usuarios.models import UsuarioBase  # noqa: E402
 
 CASOS = ["ana@empresa.cl", "ana@@empresa.cl", "ana@empresa", "ana perez@empresa.cl", "a..b@empresa.cl"]
 

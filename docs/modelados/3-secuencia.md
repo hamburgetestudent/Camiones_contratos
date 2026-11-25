@@ -42,7 +42,7 @@ En la ruta aprobada, `ContratoModelo` asigna el identificador y el estado inicia
 
 ## Referencias en el repositorio
 
-- [Entrada HTTP y respuestas 201 y 403](../../routers/contratos_router.py)
-- [Creación y persistencia del contrato](../../services/contrato_service.py)
-- [Consulta del perfil y criterio de aprobación](../../services/onboarding_service.py)
-- [Valores iniciales de ContratoModelo](../../domain/modelos.py) y [confirmación de la transacción](../../database/conexion.py)
+- [Entrada HTTP y respuestas 201 y 403](../../backend/app/modules/contratos/router.py)
+- [Creación y persistencia del contrato](../../backend/app/modules/contratos/service.py)
+- [Consulta del perfil y criterio de aprobación](../../backend/app/modules/onboarding/service.py)
+- [Valores iniciales de ContratoModelo](../../backend/app/modules/contratos/models.py) y [confirmación de la transacción](../../backend/app/db/conexion.py)

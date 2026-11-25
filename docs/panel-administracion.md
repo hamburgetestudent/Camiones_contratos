@@ -14,7 +14,7 @@ Una cuenta en revisión puede iniciar sesión en el modelo actual. Por eso el co
 
 ## Datos y concurrencia
 
-Al abrir una base existente, `database/conexion.py` agrega de forma idempotente la columna `eliminado` a contratos y usuarios, con valor inicial 0. El esquema agrega `acciones_admin` y `sesiones_cerradas`. Los datos existentes y sus claves siguen en sus tablas originales.
+Al abrir una base existente, `backend/app/db/conexion.py` agrega de forma idempotente la columna `eliminado` a contratos y usuarios, con valor inicial 0. El esquema agrega `acciones_admin` y `sesiones_cerradas`. Los datos existentes y sus claves siguen en sus tablas originales.
 
 El servicio reserva la escritura en SQLite con `BEGIN IMMEDIATE` antes de comprobar el rol y releer el estado del elemento. Si otro proceso adjudica el contrato primero, la baja se rechaza. Si la baja ocurre primero, la carga desaparece de las consultas operativas que usan contratos y subastas. Una segunda confirmación registra un rechazo y genera una sola baja efectiva.
 
@@ -29,10 +29,10 @@ La identidad del responsable se obtiene de la sesión y de la cuenta vigente. Un
 | `frontend/src/paginas/login/` | Autenticación y entrada al panel. |
 | `frontend/src/paginas/panel/roles.js` y `panel.js` | Opciones por rol, navegación con teclado, barra colapsable y sesión. |
 | `frontend/src/paginas/panel/vistas/administracion.js` | Resumen, listados, confirmaciones y consultas al historial. |
-| `routers/admin_router.py` y `routers/sesion.py` | API del panel, permisos y verificación de sesiones. |
-| `services/admin_service.py` | Consultas, bajas y registro dentro de una transacción. |
-| `services/contrato_service.py`, `subasta_service.py` y `usuario_service.py` | Aplicación de la baja en los flujos operativos habituales. |
-| `database/schema.sql` y `database/conexion.py` | Esquema y actualización automática de bases existentes. |
+| `backend/app/modules/admin/router.py` y `backend/app/modules/usuarios/sesion.py` | API del panel, permisos y verificación de sesiones. |
+| `backend/app/modules/admin/service.py` | Consultas, bajas y registro dentro de una transacción. |
+| `backend/app/modules/contratos/service.py`, `subasta_service.py` y `usuario_service.py` | Aplicación de la baja en los flujos operativos habituales. |
+| `backend/app/db/schema.sql` y `backend/app/db/conexion.py` | Esquema y actualización automática de bases existentes. |
 
 | Método y ruta | Uso |
 |---|---|
@@ -49,7 +49,7 @@ Las llamadas a las rutas de negocio requieren el encabezado `Authorization: Bear
 Desde la raíz, con las dependencias del proyecto y pytest instalados, ejecuta los siguientes comandos.
 
 ```powershell
-python -m pytest tests/admin/test_panel_admin.py -v
+python -m pytest backend/tests/admin/test_panel_admin.py -v
 python -m pytest -q
 ```
 

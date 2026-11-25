@@ -11,7 +11,7 @@
 ## 1. Utilidad y mantenimiento
 
 - **Necesidad que resuelve:** validar la sintaxis de correos según las reglas reales (RFC 5321/5322 y IDNA), con mensajes de error claros.
-- **Dónde se usa:** [domain/modelos_usuario.py](../domain/modelos_usuario.py), validador `UsuarioBase._validar_email`. Lo hereda `UsuarioCrear` (registro de usuarios). Antes el campo usaba la regex `^[\w\.-]+@[\w\.-]+\.\w+$`, que aceptaba `a..b@x.cl` o `.a@x.cl`. Además es la librería que Pydantic exige para `EmailStr`, por lo que ya viajaba en `requirements.txt` sin ser usada directamente.
+- **Dónde se usa:** [backend/app/modules/usuarios/models.py](../backend/app/modules/usuarios/models.py), validador `UsuarioBase._validar_email`. Lo hereda `UsuarioCrear` (registro de usuarios). Antes el campo usaba la regex `^[\w\.-]+@[\w\.-]+\.\w+$`, que aceptaba `a..b@x.cl` o `.a@x.cl`. Además es la librería que Pydantic exige para `EmailStr`, por lo que ya viajaba en `requirements.txt` sin ser usada directamente.
 - **Evidencia de mantenimiento (enlaces abiertos y verificados el 2026-11-24):**
   - PyPI muestra como última versión la **2.4.0**, publicada el **2026-11-14** (requiere Python 3.10+). La versión instalada en el proyecto es la 2.3.0 (2025-08-26); el rango `>=2.2.0,<3` permite actualizar a la 2.4.0.
   - El repositorio oficial tiene un commit en `main` de hace 2 días (*"Set mx to None when the deliverability check cannot be completed (#200)"*) y el `CHANGELOG.md` incluye la 2.4.0. La pestaña *Releases* de GitHub llega solo hasta v2.3.0; la 2.4.0 figura en PyPI y en el CHANGELOG pero no tiene release creado allí.
@@ -34,7 +34,7 @@
 - **Cómo se comprueba:**
   1. `PYTHONPATH=. python scripts/ejemplo_email_validator.py` imprime la versión y el resultado para casos válidos e inválidos.
   2. `python -m unittest tests.usuarios.test_dependencia_email_validator` verifica versión mayor ≥ 2, que `requirements.txt` contenga el rango acotado, aceptación de un correo válido y rechazo de `ana@@empresa.cl`, `ana@empresa`, correos con espacios y puntos consecutivos.
-  3. Suite completa (`python -m unittest discover -s tests -t .`): 216 pruebas OK tras el cambio. Si una actualización rompe las reglas, estos tests fallan en CI.
+  3. Suite completa (`python -m unittest discover -s backend/tests -t backend`): 216 pruebas OK tras el cambio. Si una actualización rompe las reglas, estos tests fallan en CI.
 
 ## Cómo ejecutar el test
 
@@ -49,7 +49,7 @@ Resultado esperado: `Ran 4 tests ... OK` (versión fijada, rango acotado en `req
 Con `pytest` (como en el CI):
 
 ```bash
-python -m pytest tests/usuarios/test_dependencia_email_validator.py -v
+python -m pytest backend/tests/usuarios/test_dependencia_email_validator.py -v
 ```
 
 ## Ejemplo ejecutable
@@ -58,9 +58,9 @@ python -m pytest tests/usuarios/test_dependencia_email_validator.py -v
 
 ## Cambios realizados
 
-- `domain/modelos_usuario.py`: se reemplaza el `pattern` regex de `email` por un `field_validator` que usa `email_validator.validate_email`. El valor se conserva tal cual (no se normaliza), así el comportamiento con mayúsculas no cambia.
+- `backend/app/modules/usuarios/models.py`: se reemplaza el `pattern` regex de `email` por un `field_validator` que usa `email_validator.validate_email`. El valor se conserva tal cual (no se normaliza), así el comportamiento con mayúsculas no cambia.
 - `scripts/ejemplo_email_validator.py`: ejemplo ejecutable (nuevo).
-- `tests/usuarios/test_dependencia_email_validator.py`: pruebas de integración (nuevo).
+- `backend/tests/usuarios/test_dependencia_email_validator.py`: pruebas de integración (nuevo).
 - `requirements.txt`: rango `>=2.2.0,<3`.
 - `docs/revision-dependencia-email-validator.md`: este documento.
 
