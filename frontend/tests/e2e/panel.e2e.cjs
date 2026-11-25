@@ -51,9 +51,7 @@ async function probar() {
   await pagina.addInitScript((url) => {
     window.API_BASE_URL = url;
   }, api);
-  await pagina.goto(
-    pathToFileURL(path.join(raiz, "frontend/src/paginas/login/login.html")).href
-  );
+  await pagina.goto(pathToFileURL(path.join(raiz, "frontend/src/paginas/login/login.html")).href);
   async function login(correo, clave) {
     await pagina.locator("#email").fill(correo);
     await pagina.locator("#password").fill(clave);
