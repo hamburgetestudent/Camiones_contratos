@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Crear contrato | MansoViaje</title>
+    <link rel="stylesheet" href="../../compartido/css/tema.css" />
+    <link rel="stylesheet" href="crear-contrato.css" />
+  </head>
+  <body>
+    <div class="aplicacion">
+      <header class="barra-superior">
+        <div class="marca">
+          <span class="mv-isotipo" id="logo-crear" aria-hidden="true"></span>
+          <div>
+            <h1>MansoViaje</h1>
+            <p>Creación de contrato de carga</p>
+          </div>
+        </div>
+
+        <div class="acciones-barra">
+          <button id="boton-volver" class="btn-secundario btn-sm" type="button">
+            ← Volver a contratos
+          </button>
+          <a href="../panel/panel.html" class="btn-secundario btn-sm enlace-panel">Ir al panel</a>
+        </div>
+      </header>
+
+      <main class="contenido-principal">
+        <div class="encabezado-contenido">
+          <div>
+            <h2>Nuevo contrato de carga</h2>
+            <p id="subtitulo-usuario">
+              Completa las especificaciones de ruta, carga y tarifa para registrar el contrato.
+            </p>
+          </div>
+          <span id="etiqueta-kyc" class="badge oculto"></span>
+        </div>
+
+        <div id="alerta-general" class="alerta oculto" role="alert" aria-live="polite"></div>
+
+        <div class="disposicion-creacion">
+          <form id="form-contrato" class="formulario-contrato" novalidate>
+            <fieldset class="seccion-form">
+              <legend>1. Ruta y programación</legend>
+              <div class="grid-2">
+                <label>
+                  <span>Origen <abbr title="Obligatorio">*</abbr></span>
+                  <input
+                    id="origen"
+                    name="origen"
+                    type="text"
+                    minlength="3"
+                    required
+                    placeholder="Ej: Puerto de Valparaíso, Valparaíso"
+                    autocomplete="off"
+                  />
+                  <small class="ayuda">Mínimo 3 caracteres. Se normalizará en mayúsculas.</small>
+                  <p class="error-inline oculto" id="error-origen"></p>
+                </label>
+
+                <label>
+                  <span>Destino <abbr title="Obligatorio">*</abbr></span>
+                  <input
+                    id="destino"
+                    name="destino"
+                    type="text"
+                    minlength="3"
+                    required
+                    placeholder="Ej: Centro logístico, Santiago"
+                    autocomplete="off"
+                  />
+                  <small class="ayuda">Debe ser distinto al origen.</small>
+                  <p class="error-inline oculto" id="error-destino"></p>
+                </label>
+              </div>
+
+              <div class="grid-3">
+                <label>
+                  <span>Cierre de postulaciones <abbr title="Obligatorio">*</abbr></span>
+                  <input
+                    id="f_cierre_postulaciones"
+                    name="f_cierre_postulaciones"
+                    type="datetime-local"
+                    required
+                  />
+                  <small class="ayuda">Debe ser anterior o igual a la salida.</small>
+                  <p class="error-inline oculto" id="error-f_cierre_postulaciones"></p>
+                </label>
+
+                <label>
+                  <span>Salida estimada <abbr title="Obligatorio">*</abbr></span>
+                  <input
+                    id="f_estimada_salida"
+                    name="f_estimada_salida"
+                    type="datetime-local"
+                    required
+                  />
+                  <small id="ayuda-anticipacion" class="ayuda">
+                    Mínimo 2 horas de anticipación.
+                  </small>
+                  <p class="error-inline oculto" id="error-f_estimada_salida"></p>
+                </label>
+
+                <label>
+                  <span>Llegada estimada <abbr title="Obligatorio">*</abbr></span>
+                  <input
+                    id="f_estimada_llegada"
+                    name="f_estimada_llegada"
+                    type="datetime-local"
+                    required
+                  />
+                  <small class="ayuda">Posterior a la fecha de salida.</small>
+                  <p class="error-inline oculto" id="error-f_estimada_llegada"></p>
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset class="seccion-form">
+              <legend>2. Carga y capacidad del camión</legend>
+              <div class="grid-3">
+                <label>
+                  <span>Tipo de carga <abbr title="Obligatorio">*</abbr></span>
+                  <select id="tipo_carga" name="tipo_carga" required>
+                    <option value="GENERAL">General</option>
+                    <option value="REFRIGERADA">Refrigerada</option>
+                    <option value="PERECEDERA">Perecedera</option>
+                    <option value="PELIGROSA">Peligrosa</option>
+                    <option value="FRAGIL">Frágil</option>
+                    <option value="VALORES">Valores</option>
+                    <option value="GRANEL_LIQUIDO">Granel líquido</option>
+                    <option value="GRANEL_SOLIDO">Granel sólido</option>
+                    <option value="SOBREDIMENSIONADA">Sobredimensionada</option>
+                    <option value="VIVA">Carga viva</option>
+                    <option value="VEHICULAR">Vehicular</option>
+                  </select>
+                </label>
+
+                <label>
+                  <span>Capacidad camión (KG) <abbr title="Obligatorio">*</abbr></span>
+                  <input
+                    id="input_camionKG"
+                    name="input_camionKG"
+                    type="number"
+                    min="1"
+                    step="any"
+                    required
+                    placeholder="Ej: 15000"
+                  />
+                  <p class="error-inline oculto" id="error-input_camionKG"></p>
+                </label>
+
+                <label>
+                  <span>Peso total carga (KG) <abbr title="Obligatorio">*</abbr></span>
+                  <input
+                    id="peso_total"
+                    name="peso_total"
+                    type="number"
+                    min="1"
+                    step="any"
+                    required
+                    placeholder="Ej: 8500"
+                  />
+                  <small class="ayuda">No puede superar la capacidad del camión.</small>
+                  <p class="error-inline oculto" id="error-peso_total"></p>
+                </label>
+              </div>
+
+              <div id="ocupacion-wrap" class="ocupacion-box oculto" aria-live="polite">
+                <div class="ocupacion-cabecera">
+                  <span>Ocupación estimada del camión</span>
+                  <strong id="texto-capacidad" class="num-tabular">0%</strong>
+                </div>
+                <div class="ocupacion-barra"><span id="barra-capacidad"></span></div>
+              </div>
+
+              <div class="grid-2">
+                <label>
+                  <span>Volumen estimado (m³)</span>
+                  <input
+                    id="volumen_m3"
+                    name="volumen_m3"
+                    type="number"
+                    min="0.01"
+                    step="any"
+                    placeholder="Opcional (ej: 32)"
+                  />
+                </label>
+
+                <label>
+                  <span>Distancia estimada (KM)</span>
+                  <input
+                    id="distancia_km"
+                    name="distancia_km"
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="Opcional (ej: 120)"
+                  />
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset class="seccion-form">
+              <legend>3. Requerimientos especiales</legend>
+              <p id="nota-requisitos" class="nota-seccion">
+                Selecciona condiciones adicionales según el tipo de carga.
+              </p>
+
+              <div class="checks-fila">
+                <label class="check-card" id="wrap-termo">
+                  <input id="requiere_termo" name="requiere_termo" type="checkbox" />
+                  <span>
+                    <strong>Requiere equipo termo / refrigeración</strong>
+                    <small>Obligatorio para carga refrigerada o perecedera.</small>
+                  </span>
+                </label>
+
+                <label class="check-card" id="wrap-blindaje">
+                  <input id="req_blindaje" name="req_blindaje" type="checkbox" />
+                  <span>
+                    <strong>Requiere camión blindado</strong>
+                    <small>Obligatorio para transporte de valores.</small>
+                  </span>
+                </label>
+              </div>
+              <p class="error-inline oculto" id="error-checks"></p>
+
+              <div class="grid-2">
+                <label id="wrap-onu">
+                  <span>Número ONU (carga peligrosa)</span>
+                  <input
+                    id="numero_onu"
+                    name="numero_onu"
+                    type="text"
+                    placeholder="Ej: UN1203 o 1203"
+                    autocomplete="off"
+                  />
+                  <small class="ayuda">
+                    4 dígitos (ej. 1234 o UN1234). Obligatorio en carga peligrosa.
+                  </small>
+                  <p class="error-inline oculto" id="error-numero_onu"></p>
+                </label>
+
+                <label id="wrap-embalaje">
+                  <span>Especificación de embalaje</span>
+                  <textarea
+                    id="req_embalaje"
+                    name="req_embalaje"
+                    rows="2"
+                    minlength="10"
+                    placeholder="Describe cómo debe embalarse y asegurarse la carga (mín. 10 caracteres)"
+                  ></textarea>
+                  <small class="ayuda">Obligatorio para carga frágil (mínimo 10 caracteres).</small>
+                  <p class="error-inline oculto" id="error-req_embalaje"></p>
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset class="seccion-form">
+              <legend>4. Condiciones económicas</legend>
+              <div class="grid-2">
+                <label>
+                  <span>Moneda <abbr title="Obligatorio">*</abbr></span>
+                  <select id="moneda" name="moneda" required>
+                    <option value="CLP">CLP (Peso chileno)</option>
+                    <option value="UF">UF</option>
+                    <option value="UTM">UTM</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="CNY">CNY</option>
+                    <option value="BRL">BRL</option>
+                  </select>
+                </label>
+
+                <label>
+                  <span>Monto neto <abbr title="Obligatorio">*</abbr></span>
+                  <input
+                    id="monto_neto"
+                    name="monto_neto"
+                    type="number"
+                    min="1"
+                    step="any"
+                    required
+                    placeholder="Ej: 250000"
+                    class="num-tabular"
+                  />
+                  <p class="error-inline oculto" id="error-monto_neto"></p>
+                </label>
+
+                <label>
+                  <span id="etiqueta-iva">IVA (19%) <abbr title="Obligatorio">*</abbr></span>
+                  <input
+                    id="monto_iva"
+                    name="monto_iva"
+                    type="number"
+                    min="0"
+                    step="any"
+                    required
+                    placeholder="Calculado automáticamente"
+                    class="num-tabular"
+                  />
+                  <small id="ayuda-iva" class="ayuda">
+                    En CLP debe corresponder al 19% del neto.
+                  </small>
+                  <p class="error-inline oculto" id="error-monto_iva"></p>
+                </label>
+
+                <label>
+                  <span>Monto total <abbr title="Obligatorio">*</abbr></span>
+                  <input
+                    id="monto_total"
+                    name="monto_total"
+                    type="number"
+                    min="1"
+                    step="any"
+                    required
+                    readonly
+                    class="num-tabular"
+                  />
+                  <small class="ayuda">Neto + IVA.</small>
+                  <p class="error-inline oculto" id="error-monto_total"></p>
+                </label>
+              </div>
+            </fieldset>
+
+            <div class="acciones-formulario">
+              <button
+                id="btn-guardar-borrador"
+                class="btn-secundario"
+                type="submit"
+                data-modo="BORRADOR"
+              >
+                Guardar como borrador
+              </button>
+              <button
+                id="btn-crear-publicar"
+                class="btn-primario"
+                type="submit"
+                data-modo="PUBLICADO"
+              >
+                Crear y publicar contrato
+              </button>
+            </div>
+          </form>
+
+          <aside class="panel-resumen" aria-label="Resumen del contrato">
+            <h3>Resumen previo</h3>
+
+            <div class="resumen-ruta-visual">
+              <div class="resumen-nodo">
+                <span class="punto-origen"></span>
+                <span id="resumen-origen">Origen sin definir</span>
+              </div>
+              <div class="resumen-conector"></div>
+              <div class="resumen-nodo">
+                <span class="punto-destino"></span>
+                <span id="resumen-destino">Destino sin definir</span>
+              </div>
+            </div>
+
+            <dl class="lista-resumen">
+              <dt>Empresa generadora</dt>
+              <dd id="resumen-empresa">—</dd>
+
+              <dt>Salida estimada</dt>
+              <dd id="resumen-salida" class="num-tabular">—</dd>
+
+              <dt>Tipo de carga</dt>
+              <dd id="resumen-carga">GENERAL</dd>
+
+              <dt>Peso / Capacidad</dt>
+              <dd id="resumen-capacidad" class="num-tabular">—</dd>
+
+              <dt>Requisitos activos</dt>
+              <dd id="resumen-requisitos" class="chips-resumen">Ninguno</dd>
+
+              <dt>Total contrato</dt>
+              <dd id="resumen-total" class="resumen-monto num-tabular">$0</dd>
+            </dl>
+
+            <div id="resultado-creacion" class="resultado-creacion oculto" aria-live="polite">
+              <h4 id="resultado-titulo">Contrato creado</h4>
+              <p id="resultado-detalle"></p>
+              <div class="resultado-acciones">
+                <button id="btn-nuevo-contrato" class="btn-secundario" type="button">
+                  Crear otro contrato
+                </button>
+                <a
+                  id="enlace-resultado-volver"
+                  href="../panel/panel.html#contratos"
+                  class="btn-primario enlace-volver"
+                >
+                  Volver al listado
+                </a>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </main>
+
+      <footer class="pie-pagina">
+        <span>MansoViaje · Contratos de carga</span>
+        <span>Módulo de creación de contratos</span>
+      </footer>
+    </div>
+
+    <script type="module" src="crear-contrato.js"></script>
+  </body>
+</html>

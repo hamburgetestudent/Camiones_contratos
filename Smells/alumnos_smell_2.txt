@@ -1,4 +1,0 @@
-Juan,5,aprobado
-Maria,3,reprobado
-Ana,6,aprobado
-Luis,4,aprobado

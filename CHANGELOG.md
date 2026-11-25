@@ -26,6 +26,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 ### Cambiado
 
 - Tres refactorizaciones con comportamiento conservado: decisión administrativa unificada, estado y faltantes del transportista, normalización del correo ([diagnóstico y mediciones](docs/hito3-intervenciones.md)).
+- Reorganización estructural sin cambios de comportamiento: backend por módulos de dominio en `backend/app/modules/<dominio>/` con `core/` y `db/` (la máquina de estados genérica pasa a `core/maquina_estados.py`), tests en `backend/tests/` y frontend con módulos ES (`<script type="module">`), vistas del panel partidas por pantalla y estado compartido en `estado.js`/`ui.js`. Los comandos de las tablas siguientes corresponden a la estructura anterior: ahora son `python run_tests.py` o `pytest`, y `uvicorn app.main:app --app-dir backend`.
 - Validación de correo: de una regex a `email-validator.validate_email` con `check_deliverability=False` (rechaza `a..b@x.cl` o `.a@x.cl`, que la regex aceptaba).
 
 ### Pruebas, cobertura e integración continua (esta entrega)

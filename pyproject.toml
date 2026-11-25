@@ -25,13 +25,9 @@ ignore = [
     "E501",  # Dejar que el formateador maneje el salto de línea sin advertencia estricta del linter
 ]
 
-[tool.ruff.lint.per-file-ignores]
-# Smells/ contiene código con malos olores a propósito (taller de fundamentos)
-"Smells/*" = ["E", "F", "W", "I"]
-
 [tool.ruff.lint.isort]
 combine-as-imports = true
-known-first-party = ["database", "domain", "routers", "services"]
+known-first-party = ["app", "tests"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -39,3 +35,6 @@ indent-style = "space"
 line-ending = "auto"
 skip-magic-trailing-comma = false
 
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+pythonpath = ["backend"]
