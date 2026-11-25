@@ -143,7 +143,7 @@ cd frontend && npx tsc --noEmit
 
 ### Resultados comparados
 
-| Indicador / Verificación | Antes (`7a34c32`, `Dev`) | Después (`feat/criterio3-modularizacion`) |
+| Indicador / Verificación | Antes (`7a34c32`, `Dev`) | Después (`Dev`, `00a4a1a`) |
 |---|---:|---:|
 | Consultas SQL directas (`conn.execute` / `obtener_conexion`) en `routers/` | `3` (`routers/sesion.py`) | `0` |
 | Consultas SQL directas (`conn.execute` / `obtener_conexion` / `transaccion_exclusiva`) en `services/` | `9` (`services/admin_service.py`) | `0` |
@@ -160,7 +160,7 @@ cd frontend && npx tsc --noEmit
 
 ## 6. Cambios realizados (trazabilidad de commits)
 
-Todos los cambios se aplicaron en pasos pequeños sobre la rama `feat/criterio3-modularizacion` creada desde `Dev` (`7a34c32`), ejecutando las pruebas tras cada transformación:
+Todos los cambios se aplicaron en pasos pequeños sobre la rama `feat/criterio3-modularizacion` (integrada en `Dev` vía **PR #129**, merge `a4056c2`) y se completaron con el desacoplamiento HTTP de `UsuarioService`, ejecutando las pruebas tras cada transformación:
 
 | Commit | Mensaje | Alcance |
 |---|---|---|
@@ -171,6 +171,7 @@ Todos los cambios se aplicaron en pasos pequeños sobre la rama `feat/criterio3-
 | `4ea0782` | `refactor(frontend-auth): conectar vistas de Login y Registro al módulo comun/api.js` | Conecta `Login/` y `Registrar_nuevoUsuario/` al cliente compartido `window.MVApi`. |
 | `8c8a7b3` | `refactor(frontend-vistas): centralizar llamadas autenticadas de Catálogo, Crear contrato y Panel en comun/api.js` | Conecta `Principal/`, `Crear_contrato/` y `panel/` a `window.MVApi`. |
 | `454781b` | `chore(limpieza): eliminar archivo de ejercicio 2.ts y vistas obsoletas del frontend` | Elimina `2.ts`, `frontend/codigos/paginas/panel_funciones/` y `frontend/codigos/prueba_coneccion/`. |
-| `9ffd1fa` | `docs(criterio-3): registrar modularización de estructura, responsabilidades y trazabilidad en docs y README` | Agrega este documento y actualiza la arquitectura y enlaces del Hito 3 en [`README.md`](../README.md). |
-| `refactor(usuarios)` | `refactor(usuarios): desacoplar errores de negocio de UsuarioService de las respuestas HTTP en auth_router` | Elimina `HTTPException` de `services/usuario_service.py`, traduce errores en `routers/auth_router.py` y verifica servicio + endpoints HTTP. |
-| Commit de documentación | `docs(usuarios): actualizar contrato de UsuarioService y evidencias de modularización` | Actualiza `docs/contrato-usuario-service.md` y este registro de modularización. |
+| `9ffd1fa` | `docs(criterio-3): registrar modularización de estructura, responsabilidades y trazabilidad en docs y README` | Agrega este documento y actualiza la arquitectura y enlaces del Hito 3 en [`README.md`](../README.md) (merge PR #129 en `a4056c2`). |
+| `a213093` | `refactor(usuarios): desacoplar errores de negocio de UsuarioService de las respuestas HTTP en auth_router` | Elimina `HTTPException` de `services/usuario_service.py`, traduce errores en `routers/auth_router.py` y verifica servicio + endpoints HTTP. |
+| `7f967e9` | `docs(usuarios): actualizar contrato de UsuarioService y evidencias de modularización` | Actualiza `docs/contrato-usuario-service.md` y este registro de modularización. |
+| `00a4a1a` | `test(usuarios): verificar endpoints HTTP sin httpx usando urllib y uvicorn` | Verifica los códigos HTTP `200`/`201`/`400`/`401`/`404` de `routers/auth_router.py` levantando `uvicorn` real con librería estándar (`urllib`). |

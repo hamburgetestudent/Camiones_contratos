@@ -8,36 +8,36 @@ Un dador publica una carga y un transportista habilitado envía una oferta desde
 sequenceDiagram
     actor D as Dador
     actor T as Transportista
-    participant P as Panel de transportista
-    participant A as FastAPI y routers
-    participant S as ServicioSubasta y dominio
-    participant B as SQLite
+    participant P as Panel Frontend (transportista.js + comun/api.js)
+    participant A as FastAPI y Routers (sesion.py + subasta_router.py + comun.py)
+    participant S as ServicioSubasta y Dominio (MaquinaEstadosContrato)
+    participant B as DAO y SQLite (SQLITE_DB_PATH)
     D->>A: Login, crear contrato y publicar por ID
     A->>B: Guardar contrato y estado PUBLICADO
     T->>P: Iniciar sesión y abrir Subastas y Cargas
-    P->>A: Token de sesión, consulta de cargas y estado KYC
+    P->>A: Token Bearer (MVApi), consulta de cargas y estado KYC
     A-->>P: Cargas disponibles y habilitación del transportista
     T->>P: Elegir carga e ingresar tarifa y horas
     alt Tarifa inferior a 5000 CLP en el panel
-        P-->>T: El formulario indica el mínimo y bloquea el envío
+        P-->>T: El formulario indica el mínimo (rangeUnderflow) y bloquea el envío
     else Formulario válido
-        P->>A: POST /subastas/postular con token, aprobación KYC y oferta JSON
-        A->>S: PostulacionCrear con IDs, precio, horas y comentario
-        S->>B: Abrir transacción y buscar contrato por ID
+        P->>A: POST /subastas/postular con Bearer JWT, aprobación KYC y oferta JSON
+        A->>S: PostulacionCrear (validado por Pydantic) con IDs, precio, horas y comentario
+        S->>B: Abrir transacción exclusiva (ContratoDAO/PostulacionDAO) y buscar contrato por ID
         alt Carga disponible y plazo vigente
-            S->>B: Insertar POSTULADA y actualizar contrato en una transacción
+            S->>B: Insertar POSTULADA y actualizar contrato a EN_POSTULACION en una transacción
             A-->>P: 201 con oferta, ID y estado
             P-->>T: Postulación enviada correctamente
             D->>A: Consultar contrato y sus postulaciones
             A-->>D: EN_POSTULACION y oferta registrada
         else Carga inexistente
-            S-->>A: Error de dominio y reversión de la transacción
-            A-->>P: 404 con detalle que identifica la carga
+            S-->>A: ValueError de dominio y reversión de la transacción
+            A-->>P: 404 (routers/comun.py) con detalle que identifica la carga
         end
     end
 ```
 
-El [panel](../frontend/codigos/paginas/panel/transportista.js) obtiene el estado de onboarding y envía el indicador de aprobación en la consulta. FastAPI comprueba la sesión y Pydantic valida el cuerpo antes de llamar al [router](../routers/subasta_router.py). El [servicio](../services/subasta_service.py) comprueba la disponibilidad y el plazo. La [conexión SQLite](../database/conexion.py) confirma o revierte las escrituras juntas. El [adaptador de errores](../routers/comun.py) convierte una carga inexistente en HTTP 404. El panel muestra el detalle recibido si falla el envío.
+El [panel](../frontend/codigos/paginas/panel/transportista.js) consulta el estado de onboarding y envía las solicitudes autenticadas mediante el cliente compartido [`comun/api.js`](../frontend/codigos/paginas/comun/api.js) (`window.MVApi`), incluyendo el indicador de aprobación en la consulta. FastAPI comprueba el token Bearer en [`routers/sesion.py`](../routers/sesion.py) (delegando en [`services/sesion_service.py`](../services/sesion_service.py)) y Pydantic valida el cuerpo antes de llamar al [router](../routers/subasta_router.py). El [servicio](../services/subasta_service.py) comprueba la disponibilidad y el plazo operando sobre [`dao/contrato_dao.py`](../dao/contrato_dao.py) y [`dao/postulacion_dao.py`](../dao/postulacion_dao.py). La [conexión SQLite](../database/conexion.py) (`SQLITE_DB_PATH`) confirma o revierte ambas escrituras juntas. El [adaptador de errores](../routers/comun.py) convierte una carga inexistente en HTTP 404 y el resto de errores de negocio en HTTP 400. El panel muestra el detalle recibido si falla el envío y redirige a Login si recibe HTTP 401.
 
 ## Registro de ejecución
 
@@ -68,8 +68,7 @@ El panel imprime un resultado por caso y termina con código 0 si se cumplen tod
 
 ### Alcance de cobertura, suite actual y ejecución de CI
 
-* **Carpetas medidas por Coverage.py ([`.coveragerc`](../.coveragerc)):** `database/`, `domain/`, `routers/` y `services/` con medición de ramas (`branch = True`). Se omiten `tests/`, `.venv/` y `frontend/` (el frontend se verifica de extremo a extremo con `npm run test:panel`); la carpeta `dao/` queda fuera de la medición de `.coveragerc` y se prueba mediante la suite de persistencia e integración.
-* **Suite verificada sobre `Dev` (revisión `00a4a1a`):** `pytest -q` registró **229 pruebas y 76 subpruebas aprobadas** (`unittest` y `ruff check .` sin errores).
-* **Pendiente al hacer push / cierre final:** dado que `coverage` se ejecuta en GitHub Actions (en este entorno local no está instalado en `venv`), tras subir `Dev` / integrar en `main`:
-  1. Actualizar [el reporte por módulo](cobertura-criterio-6.txt) con la salida de `coverage report -m` de la corrida final.
-  2. Reemplazar el enlace histórico (última corrida registrada sobre `c091544`: [ejecución #45510972035](https://github.com/hamburgetestudent/Camiones_contratos/actions/runs/45510972035), con 216 pruebas y 93,9 % de cobertura) por el enlace a la ejecución verde de CI y el porcentaje exacto de la revisión entregada.
+* **Carpetas medidas por Coverage.py ([`.coveragerc`](../.coveragerc)):** `database/`, `domain/`, `routers/` y `services/` con medición de ramas (`branch = True`). Se omiten `tests/`, `.venv/` y `frontend/` (el frontend se verifica de extremo a extremo con `npm run test:panel`); la carpeta `dao/` queda fuera de `source` en `.coveragerc` y se verifica mediante la suite de persistencia e integración (`tests/persistencia/`, `tests/test_panel_admin.py` y `tests/seguridad/test_sesion_service.py`).
+* **Suite verificada sobre `Dev`:** `pytest -q` registra **229 pruebas y 76 subpruebas aprobadas**, con `ruff check .` y `npx tsc --noEmit` sin errores.
+* **Integración continua (GitHub Actions):** El flujo [`.github/workflows/tests.yml`](../.github/workflows/tests.yml) ejecuta ambos jobs (`backend` con `ruff`, `pytest` y `coverage`, más `frontend` con `tsc --noEmit` y `npm run test:panel`) automáticamente en cada `push` a `main`, `Dev` y `RamaSS` y en cada `pull_request`.
+* **Reporte de cobertura registrado:** [cobertura-criterio-6.txt](cobertura-criterio-6.txt) conserva el detalle por módulo de la corrida verde de CI ([ejecución #45510972035](https://github.com/hamburgetestudent/Camiones_contratos/actions/runs/45510972035) sobre `c091544`: 216 pruebas y **93,9 %** de cobertura). Las corridas posteriores en `Dev` y `main` publican el artefacto actualizado `cobertura` (`coverage.xml`) y el reporte en consola del job `backend`.

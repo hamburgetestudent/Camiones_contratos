@@ -245,22 +245,28 @@ Camiones_contratos/
   * `postulacion.py`: Modelos de ofertas (`PostulacionBase`, `PostulacionCrear`, `PostulacionModelo`), `EstadoPostulacion` y `MaquinaEstadoPostulacion`.
   * `maquina_estados.py`: Clase base genérica `MaquinaEstadosBase` y `MaquinaEstadosContrato` para validar el ciclo de vida del contrato.
   * `reglas.py`: Singleton `ReglasNegocio` con parámetros globales configurables en ejecución (`IVA_PORCENTAJE`, `TOLERANCIA_MAX`, `ANTICIPACION_MIN_H`).
+* **Capa de Acceso a Datos (`dao/`):**
+  * `base_dao.py`: Clase base `DAOSQLite` para apertura de conexiones y transacciones exclusivas.
+  * `usuario_dao.py`, `onboarding_dao.py`, `contrato_dao.py`, `postulacion_dao.py`, `sesion_dao.py`, `admin_dao.py`: Contratos abstractos (`ABC`) e implementaciones SQLite que concentran el 100 % del SQL del proyecto por entidad/área.
 * **Capa de Base de Datos (`database/`):**
   * `conexion.py`: Gestiona conexiones y transacciones exclusivas (`obtener_conexion`, `transaccion_exclusiva`), inicializa el esquema y carga los datos semilla.
-  * `schema.sql`: Definición idempotente de tablas e índices SQLite (`usuarios`, `dadores_carga`, `documentos_transportista`, `contratos`, `postulaciones` y tablas operativas de soporte).
+  * `schema.sql`: Definición idempotente de tablas e índices SQLite (`usuarios`, `dadores_carga`, `documentos_transportista`, `contratos`, `postulaciones`, `sesiones_cerradas`, `acciones_admin`).
 * **Capa de Servicios (`services/`):**
-  * `usuario_service.py`: Registro, hash SHA-256, autenticación y emisión de tokens JWT.
+  * `usuario_service.py`: Registro, hash SHA-256, autenticación y errores de negocio desacoplados de HTTP.
+  * `respuesta_login.py`: Construcción independiente de `RespuestaLogin` con token JWT.
+  * `sesion_service.py`: Vigencia, huella SHA-256 y revocación persistente de sesiones JWT.
   * `onboarding_service.py`: Carga documental de transportistas, perfil tributario de dadores y aprobación/rechazo administrativo.
-  * `contrato_service.py`: Creación, lectura y transiciones de estado de contratos en SQLite.
+  * `contrato_service.py`: Creación, lectura y transiciones de estado de contratos delegadas a `ContratoDAO`.
   * `subasta_service.py`: Exploración de cargas disponibles, postulaciones y adjudicación atómica ("todo o nada").
-  * `admin_service.py`: Consultas administrativas, resúmenes y bajas lógicas.
+  * `admin_service.py`: Reglas administrativas, resúmenes, bajas lógicas y auditoría delegadas a `AdminDAO`.
   * `security.py`: Generación y verificación de tokens JWT Bearer (`HS256`).
-  * `dependencies.py`: Instancias compartidas e inyección de dependencias de servicios.
+  * `dependencies.py`: Punto único de construcción e inyección de todos los DAOs y servicios.
 * **Capa de Routers API REST (`routers/`):**
-  * `auth_router.py`, `admin_router.py`, `config_router.py`, `contratos_router.py`, `onboarding_router.py`, `subasta_router.py`, junto con `sesion.py` (guardia Bearer y revocación de sesión) y `comun.py` (manejo uniforme de errores HTTP).
+  * `auth_router.py`, `admin_router.py`, `config_router.py`, `contratos_router.py`, `onboarding_router.py`, `subasta_router.py`, junto con `sesion.py` (guardia Bearer y delegación de revocación) y `comun.py` (traducción uniforme de errores de negocio a códigos HTTP).
 * **Capa de Frontend (`frontend/`):**
   * `codigos/main.ts`: Proceso principal de Electron que inicia la ventana y carga `codigos/paginas/Login/index.html`.
-  * `codigos/paginas/`: Vistas HTML/CSS/JS para login, registro, vista principal y paneles operativos.
+  * `codigos/paginas/comun/`: Módulo compartido con cliente HTTP y sesión (`api.js` / `window.MVApi`), iconografía (`iconos.js`) y estilos (`tema.css`).
+  * `codigos/paginas/{Login,Registrar_nuevoUsuario,Principal,Crear_contrato,panel}/`: Vistas por funcionalidad y subvistas por rol (`administracion.js`, `dador.js`, `transportista.js`, `roles.js`).
 
 ### Ciclo de Vida del Contrato (Máquina de Estados)
 
@@ -276,12 +282,13 @@ Las transiciones son validadas por `domain.maquina_estados.MaquinaEstadosContrat
 ```mermaid
 flowchart TD
     subgraph UI["Capa de Presentación"]
-        A["Usuario"] --> B["Frontend Desktop<br/>Electron + TypeScript (frontend/)"]
+        A["Usuario"] --> B["Frontend Desktop<br/>Electron + Vistas por rol (frontend/codigos/paginas/)"]
+        B --> FEAPI["Cliente HTTP y Sesión Compartido<br/>paginas/comun/api.js (window.MVApi)"]
         A --> C["Swagger UI / Cliente HTTP<br/>http://127.0.0.1:8000/docs"]
     end
 
-    subgraph API["Capa de Enrutamiento (FastAPI)"]
-        B & C --> D["main.py (FastAPI App)"]
+    subgraph API["Capa de Enrutamiento HTTP (routers/)"]
+        FEAPI & C --> D["main.py (FastAPI App)"]
         D --> SSEC["routers/sesion.py (JWT Bearer)"]
         D --> R1["routers/auth_router.py"]
         D --> R2["routers/admin_router.py"]
@@ -291,23 +298,33 @@ flowchart TD
         D --> R6["routers/config_router.py"]
     end
 
-    subgraph SERVICES["Capa de Servicios de Negocio"]
-        R1 & SSEC --> S1["services/usuario_service.py & security.py"]
+    subgraph SERVICES["Capa de Servicios de Aplicación (services/)"]
+        SSEC --> S0["services/sesion_service.py & security.py"]
+        R1 --> S1["services/usuario_service.py & respuesta_login.py"]
         R2 --> S5["services/admin_service.py"]
         R3 --> S2["services/contrato_service.py"]
         R4 --> S3["services/subasta_service.py"]
         R5 --> S4["services/onboarding_service.py"]
     end
 
-    subgraph DOMAIN["Capa de Dominio & Reglas"]
+    subgraph DOMAIN["Capa de Dominio & Reglas (domain/)"]
         R6 --> M3["domain/reglas.py (ReglasNegocio)"]
-        S2 & S3 --> M1["domain/maquina_estados.py"]
-        S1 & S2 & S3 & S4 --> M2["domain/modelos*.py & postulacion.py"]
+        S2 & S3 & S5 --> M1["domain/maquina_estados.py"]
+        S0 & S1 & S2 & S3 & S4 --> M2["domain/modelos*.py & postulacion.py"]
         M2 --> M3
     end
 
-    subgraph PERSISTENCE["Capa de Persistencia (SQLite)"]
-        S1 & S2 & S3 & S4 & S5 --> DBCON["database/conexion.py"]
+    subgraph DAO["Capa de Acceso a Datos (dao/)"]
+        S0 --> D0["dao/sesion_dao.py & usuario_dao.py"]
+        S1 --> D1["dao/usuario_dao.py"]
+        S2 --> D2["dao/contrato_dao.py"]
+        S3 --> D3["dao/contrato_dao.py & postulacion_dao.py"]
+        S4 --> D4["dao/onboarding_dao.py"]
+        S5 --> D5["dao/admin_dao.py & contrato_dao.py"]
+    end
+
+    subgraph PERSISTENCE["Capa de Base de Datos (database/)"]
+        D0 & D1 & D2 & D3 & D4 & D5 --> DBCON["database/conexion.py"]
         DBCON --> SQLITE[("camiones.db<br/>database/schema.sql")]
     end
 ```
