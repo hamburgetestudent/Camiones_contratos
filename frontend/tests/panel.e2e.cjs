@@ -217,9 +217,53 @@ async function probar() {
     await pagina.getByText(extraTexto).first().waitFor();
     await nav.getByRole("link", { name: new RegExp(acceso) }).click();
     if (correo === "juan.perez@rutanorte.cl") {
-      await pagina.getByRole("link", { name: "Ver detalle y postular" }).first().click();
-      await pagina.getByRole("button", { name: "Enviar postulación" }).click();
+      await pagina.locator('a[href*="' + contratoSubasta.id + '"]').click();
+      const tarifa = pagina.getByLabel(/Tarifa ofertada/);
+      const enviar = pagina.getByRole("button", { name: "Enviar postulación" });
+      const urlContrato = api + "/contratos/" + contratoSubasta.id;
+      const urlOfertas = api + "/subastas/cargas/" + contratoSubasta.id + "/postulaciones";
+      async function leer(url) {
+        const respuesta = await pagina.request.get(url, { headers });
+        assert.equal(respuesta.status(), 200);
+        return respuesta.json();
+      }
+      const antes = await leer(urlContrato);
+      assert.equal(antes.estado, "PUBLICADO");
+      assert.deepEqual(await leer(urlOfertas), []);
+      await tarifa.fill("4900");
+      await enviar.click();
+      assert.equal(await tarifa.evaluate((input) => input.validity.rangeUnderflow), true);
+      assert.deepEqual(await leer(urlContrato), antes);
+      assert.deepEqual(await leer(urlOfertas), []);
+      console.log("Inválido: 4900 CLP rechazados por el formulario, carga intacta y cero ofertas.");
+
+      await tarifa.fill("180000");
+      const enviada = pagina.waitForResponse((r) => r.url().includes("/subastas/postular?"));
+      await enviar.click();
       await pagina.getByText("¡Postulación enviada correctamente!").waitFor();
+      const respuesta = await enviada;
+      assert.equal(respuesta.status(), 201);
+      const oferta = await respuesta.json();
+      assert.equal(oferta.carga_id, contratoSubasta.id);
+      assert.equal(oferta.precio_oferta, 180000);
+      assert.equal(oferta.estado, "POSTULADA");
+      const despues = await leer(urlContrato);
+      assert.equal(despues.estado, "EN_POSTULACION");
+      assert.deepEqual(await leer(urlOfertas), [oferta]);
+      console.log("Válido: HTTP 201, oferta POSTULADA por 180000 CLP y contrato EN_POSTULACION.");
+
+      const solicitud = respuesta.request();
+      const datos = solicitud.postDataJSON();
+      const autorizacion = await solicitud.headerValue("authorization");
+      const ausente = await pagina.request.post(solicitud.url(), {
+        headers: { Authorization: autorizacion },
+        data: { ...datos, carga_id: require("node:crypto").randomUUID() },
+      });
+      assert.equal(ausente.status(), 404);
+      assert.match((await ausente.json()).detail, /no existe/i);
+      assert.deepEqual(await leer(urlContrato), despues);
+      assert.deepEqual(await leer(urlOfertas), [oferta]);
+      console.log("Ausente: HTTP 404, la carga de control conserva su estado y su única oferta.");
       await pagina.getByRole("link", { name: "← Volver a cargas disponibles" }).click();
     }
     await pagina.locator('main a[href="../Principal/principal.html"]').click();

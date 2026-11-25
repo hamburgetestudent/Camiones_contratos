@@ -3,8 +3,6 @@
 // Redirige al panel según el rol entregado por el backend.
 // =============================================
 
-const API_BASE_URL = window.API_BASE_URL || "http://127.0.0.1:8000";
-
 const loginForm = document.getElementById("loginForm");
 const btnLogin = document.getElementById("btnLogin");
 const emailInput = document.getElementById("email");
@@ -67,17 +65,13 @@ async function ejecutarLogin(evento) {
   mostrarMensajeLogin("Verificando credenciales...", "info");
 
   try {
-    const respuesta = await fetch(`${API_BASE_URL}/auth/login`, {
+    const { respuesta, datos } = await window.MVApi.solicitarPublica("/auth/login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: { email, password },
     });
 
-    const datos = await respuesta.json().catch(() => ({}));
-
     if (!respuesta.ok) {
-      const detalle =
-        typeof datos.detail === "string" ? datos.detail : "Usuario o contraseña incorrectos.";
+      const detalle = window.MVApi.extraerMensajeError(datos, "Usuario o contraseña incorrectos.");
       mostrarMensajeLogin(detalle, "error");
       return;
     }
@@ -87,16 +81,14 @@ async function ejecutarLogin(evento) {
       return;
     }
 
-    localStorage.setItem("usuario_actual", JSON.stringify(datos));
-    localStorage.setItem("access_token", datos.access_token);
-    localStorage.setItem("usuario_rol", datos.rol);
+    window.MVApi.guardarSesion(datos);
 
     mostrarMensajeLogin("Inicio de sesión exitoso. Abriendo tu panel...", "success");
     window.location.replace("../panel/index.html");
   } catch (error) {
     console.error("Error al conectar con el backend:", error);
     mostrarMensajeLogin(
-      "No se pudo conectar con el servidor (http://127.0.0.1:8000). Verifica que el backend esté en ejecución.",
+      `No se pudo conectar con el servidor (${window.MVApi.obtenerBaseUrl()}). Verifica que el backend esté en ejecución.`,
       "error"
     );
   } finally {
@@ -144,6 +136,6 @@ if (recuperarContraseña) {
 
 inicializarIconosLogin();
 
-if (localStorage.getItem("access_token")) {
+if (window.MVApi.obtenerToken()) {
   window.location.replace("../panel/index.html");
 }
