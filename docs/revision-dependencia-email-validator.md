@@ -36,6 +36,22 @@
   2. `python -m unittest tests.usuarios.test_dependencia_email_validator` verifica versión mayor ≥ 2, que `requirements.txt` contenga el rango acotado, aceptación de un correo válido y rechazo de `ana@@empresa.cl`, `ana@empresa`, correos con espacios y puntos consecutivos.
   3. Suite completa (`python -m unittest discover -s tests -t .`): 216 pruebas OK tras el cambio. Si una actualización rompe las reglas, estos tests fallan en CI.
 
+## Cómo ejecutar el test
+
+Desde la raíz del proyecto, con el entorno virtual activo:
+
+```bash
+python -m unittest tests.usuarios.test_dependencia_email_validator -v
+```
+
+Resultado esperado: `Ran 4 tests ... OK` (versión fijada, rango acotado en `requirements.txt`, correo válido aceptado y formatos inválidos rechazados).
+
+Con `pytest` (como en el CI):
+
+```bash
+python -m pytest tests/usuarios/test_dependencia_email_validator.py -v
+```
+
 ## Ejemplo ejecutable
 
 [scripts/ejemplo_email_validator.py](../scripts/ejemplo_email_validator.py) construye `UsuarioBase` con distintos correos y muestra cuáles acepta o rechaza.
