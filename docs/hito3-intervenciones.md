@@ -34,6 +34,12 @@ Ambas operaciones llaman a la misma función privada. La autenticación conserva
 
 **Responsable de seguimiento:** santiagosanchezgarcia10-byte (RamaSS). **Fecha propuesta de revisión:** 2 de diciembre de 2026. En esa revisión se comprobará que ambos modelos acepten un nombre como `licencia.PDF`, rechacen `licencia.exe` con el mismo mensaje y conserven el nombre original. Esos casos servirán para verificar la extracción de una regla común.
 
+**Estimación fija de distancia al explorar cargas.** Cuando un contrato carece de distancia registrada, [el servicio de subastas](../services/subasta_service.py) asigna 150 km a cualquier trayecto entre dos localidades distintas. Por ejemplo, con un máximo de 100 km el filtro excluye todas esas cargas, incluso si alguna ruta real es más corta. Una [prueba de distancia](../tests/subastas/test_estimar_distancia.py) documenta la estimación actual para Santiago y Concepción.
+
+**Prioridad media.** La aproximación afecta la selección de cargas cuando se filtra por distancia y el contrato carece de kilometraje. Se posterga el cambio porque el equipo debe acordar cómo tratar una distancia desconocida antes de alterar los resultados que recibe el transportista.
+
+**Seguimiento.** Se propone que santiagosanchezgarcia10-byte revise esta decisión el **2 de diciembre de 2026**. Para esa revisión se compararán dos cargas con el mismo filtro, una con kilometraje registrado y otra sin él, y se acordará el resultado esperado para ambas.
+
 ## Medición reproducible
 
 Se comparó cada commit con su padre. Los conteos son estáticos y abarcan únicamente las operaciones y las funciones extraídas que se describen arriba. Para revisar las dos versiones, ejecutar `git show <commit> -- <archivo>`.
