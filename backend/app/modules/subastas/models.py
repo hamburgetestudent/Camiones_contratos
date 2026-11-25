@@ -8,7 +8,7 @@ from uuid import UUID, uuid4
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
-from app.modules.contratos.maquina_estados import MaquinaEstadosBase
+from app.core.maquina_estados import MaquinaEstadosBase
 
 TARIFA_MINIMA_POSTULACION_CLP: float = 5000.0
 

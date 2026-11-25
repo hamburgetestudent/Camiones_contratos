@@ -34,7 +34,7 @@ La regla central de la Entrega 3 exige que **las clases del diagrama usen los mi
 | 10 | `PostulacionBase` | Clase base de validación | `Camiones_contratos/backend/app/modules/subastas/models.py` (L45–64) | — (heredada) |
 | 11 | `PostulacionModelo` | Entidad persistida | `Camiones_contratos/backend/app/modules/subastas/models.py` (L73–84) | `postulaciones` (`schema.sql` L89–99) |
 | 12 | `ReglasNegocio` | `«singleton»` de reglas | `Camiones_contratos/backend/app/modules/configuracion/reglas.py` (L10–89) | — (en memoria, thread-safe) |
-| 13 | `MaquinaEstadosBase<S: StrEnum>` | `«abstract»` genérica | `Camiones_contratos/backend/app/modules/contratos/maquina_estados.py` (L14–37) | — (comportamiento) |
+| 13 | `MaquinaEstadosBase<S: StrEnum>` | `«abstract»` genérica | `Camiones_contratos/backend/app/core/maquina_estados.py` (L10–33) | — (comportamiento) |
 | 14 | `MaquinaEstadosContrato` | Máquina de estados (State) | `Camiones_contratos/backend/app/modules/contratos/maquina_estados.py` (L55–150) | Gobierna `contratos.estado` |
 | 15 | `MaquinaEstadoPostulacion` | Máquina de estados (State) | `Camiones_contratos/backend/app/modules/subastas/models.py` (L25–42) | Gobierna `postulaciones.estado` |
 

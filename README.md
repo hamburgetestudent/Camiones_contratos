@@ -230,12 +230,12 @@ Camiones_contratos/
 Cada módulo de `backend/app/modules/` agrupa sus capas:
 
 * **Modelos (`models.py`):** entidades Pydantic y validadores. `contratos/models.py` (`ContratoBase`, `ContratoCrear`, `ContratoModelo`, `TipoCarga`, `Moneda`), `usuarios/models.py` (`UsuarioModelo`, `RolUsuario`, `EstadoUsuario`), `usuarios/models_login.py` (`CredencialesLogin`, `RespuestaLogin`), `onboarding/models.py` (`DadorCarga`, `DocumentoTransportista`, `TipoDocumento`, `EstadoValidacion`) y `subastas/models.py` (`PostulacionModelo`, `EstadoPostulacion`, `MaquinaEstadoPostulacion`).
-* **Reglas y estados:** `contratos/maquina_estados.py` (`MaquinaEstadosBase` genérica y `MaquinaEstadosContrato`) y `configuracion/reglas.py` (singleton `ReglasNegocio` con `IVA_PORCENTAJE`, `TOLERANCIA_MAX`, `ANTICIPACION_MIN_H`).
+* **Reglas y estados:** `core/maquina_estados.py` (`MaquinaEstadosBase` genérica) y `contratos/maquina_estados.py` (`EstadoContrato` y `MaquinaEstadosContrato`) y `configuracion/reglas.py` (singleton `ReglasNegocio` con `IVA_PORCENTAJE`, `TOLERANCIA_MAX`, `ANTICIPACION_MIN_H`).
 * **DAO (`dao.py`):** `db/base_dao.py` define `BaseDAO`; cada módulo concentra el SQL de su entidad y recibe una conexión abierta, de modo que un servicio puede combinar varios DAO en una sola transacción.
 * **Servicios (`service.py`):** `usuarios` (registro, hash SHA-256, autenticación, emisión de JWT), `onboarding` (carga documental, perfil tributario, aprobación/rechazo), `contratos` (creación, lectura y transiciones), `subastas` (exploración, postulaciones y adjudicación atómica "todo o nada") y `admin` (consultas administrativas, resúmenes y bajas lógicas).
 * **Routers (`router.py`):** exponen los endpoints HTTP de cada módulo. `usuarios/sesion.py` es la guardia Bearer con revocación de sesión.
 * **Base de datos (`db/`):** `conexion.py` gestiona conexiones y transacciones exclusivas (`obtener_conexion`, `transaccion_exclusiva`), inicializa el esquema y carga los datos semilla; `schema.sql` define tablas e índices de forma idempotente.
-* **Núcleo (`core/`):** `security.py` (tokens JWT Bearer `HS256`), `dependencies.py` (instancias compartidas e inyección) y `http.py` (manejo uniforme de errores HTTP).
+* **Núcleo (`core/`):** `maquina_estados.py` (base genérica), `security.py` (tokens JWT Bearer `HS256`), `dependencies.py` (instancias compartidas e inyección) y `http.py` (manejo uniforme de errores HTTP).
 * **Capa de Frontend (`frontend/`):**
   * `electron/main.ts`: Proceso principal de Electron que inicia la ventana y carga `src/paginas/login/login.html`.
   * `src/paginas/`: Una carpeta por pantalla (HTML/CSS/JS) para login, registro, catálogo de contratos, creación de contratos y panel por rol.
