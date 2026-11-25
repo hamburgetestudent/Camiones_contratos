@@ -2,25 +2,17 @@
 
 ## Objetivo
 
-Separar la autenticación del usuario de la construcción de
-la respuesta de inicio de sesión, manteniendo el comportamiento
-funcional del sistema.
+Separar la autenticación del usuario de la construcción de la respuesta de inicio de sesión, manteniendo el comportamiento funcional del sistema.
 
 ## Situación anterior
 
-UsuarioService.iniciar_sesion concentraba la validación de
-credenciales, la autenticación, la preparación de los datos
-del usuario y la construcción de la respuesta con el token JWT.
-
-Versión base: commit c3081be, sincronizado con Dev.
+UsuarioService.iniciar_sesion concentraba la validación de credenciales, la autenticación, la preparación de los datos del usuario y la construcción de la respuesta con el token JWT.
 
 ## Modularización aplicada
 
-Se creó el módulo services/respuesta_login.py, responsable
-de construir la respuesta de un usuario autenticado.
+Se creó el módulo `services/respuesta_login.py`, responsable de construir la respuesta de un usuario autenticado.
 
-UsuarioService conserva la validación y autenticación,
-delegando la construcción de la respuesta al nuevo módulo.
+UsuarioService conserva la validación y autenticación, delegando la construcción de la respuesta al nuevo módulo.
 
 ## Operaciones públicas y dependencias
 
@@ -32,9 +24,7 @@ delegando la construcción de la respuesta al nuevo módulo.
 | services/respuesta_login.py | construir_respuesta_login(usuario) | Construye RespuestaLogin |
 | services/security.py | crear_token_acceso(claims) | Genera el token JWT |
 
-El nuevo módulo recibe un UsuarioModelo y devuelve una
-RespuestaLogin. Depende de los modelos de dominio y del
-módulo de seguridad, sin depender de UsuarioService.
+El nuevo módulo recibe un UsuarioModelo y devuelve una RespuestaLogin. Depende de los modelos de dominio y del módulo de seguridad, sin depender de UsuarioService.
 
 ## Colaboración entre módulos
 
@@ -57,29 +47,16 @@ Si las credenciales son inválidas, no se invoca el constructor.
 
 ## Evidencia de pruebas
 
-Resultados obtenidos el 24 de noviembre de 2026,
-utilizando Python 3.12 y el entorno virtual venv.
+Resultados obtenidos el 24 de noviembre de 2026, utilizando Python 3.12 y el entorno virtual venv.
 
 - Antes de modularizar: 2 pruebas exitosas.
 - Después de modularizar: las mismas 2 pruebas exitosas.
 - Pruebas específicas finales: 4 exitosas.
 - Pruebas generales de usuarios: 26 exitosas.
 - Suite general del proyecto: 213 pruebas exitosas, sin errores.
+- Verificaciones automáticas de backend y frontend del PR #126: exitosas.
 
-Se verificó el inicio de sesión para transportistas,
-dadores de carga y administradores, la generación del token,
-la colaboración entre módulos y el rechazo de credenciales
-incorrectas.
-
-## Reproducción de pruebas
-
-Desde la raíz del repositorio:
-
-```bash
-source venv/bin/activate
-python -m unittest -v tests.usuarios.test_iniciar_sesion
-python -m unittest discover -s tests/usuarios -t . -v
-```
+Se verificó el inicio de sesión para transportistas, dadores de carga y administradores, la generación del token, la colaboración entre módulos y el rechazo de credenciales incorrectas.
 
 ## Archivos relacionados
 
@@ -89,34 +66,33 @@ python -m unittest discover -s tests/usuarios -t . -v
 - [Router de autenticación](../routers/auth_router.py)
 - [Pruebas](../tests/usuarios/test_iniciar_sesion.py)
 
-## Conclusión
+## Ubicación exacta de los cambios
 
-La modularización separa responsabilidades mediante
-operaciones públicas y dependencias explícitas.
-Las pruebas ejecutadas demuestran que los módulos colaboran
-correctamente y conservan el comportamiento evaluado.
+| Archivo | Operación | Líneas |
+|---|---|---|
+| routers/auth_router.py | iniciar_sesion | 46-48 |
+| services/usuario_service.py | iniciar_sesion | 193-215 |
+| services/respuesta_login.py | Dependencias | 3-5 |
+| services/respuesta_login.py | construir_respuesta_login | 8 |
+| services/respuesta_login.py | Solicitud del token | 19-25 |
+| services/respuesta_login.py | Construcción de respuesta | 27-37 |
+| services/security.py | crear_token_acceso | 36 |
+| tests/usuarios/test_iniciar_sesion.py | Prueba de caracterización | 33-61 |
+| tests/usuarios/test_iniciar_sesion.py | Prueba de colaboración | 63-98 |
+| tests/usuarios/test_iniciar_sesion.py | Credenciales inválidas | 100-117 |
 
-## Ubicacion exacta de los cambios
+Las líneas corresponden al commit c05f5e1.
 
-| Archivo | Operacion que se debe revisar |
-|---|---|
-| services/usuario_service.py | UsuarioService.iniciar_sesion |
-| services/respuesta_login.py | construir_respuesta_login |
-| services/security.py | crear_token_acceso |
-| routers/auth_router.py | iniciar_sesion |
-| tests/usuarios/test_iniciar_sesion.py | TestIniciarSesion |
-
-### Fragmento principal de la modularizacion
+## Fragmento principal de la modularización
 
 ```python
 usuario = UsuarioService.autenticar_usuario(email, password)
 return construir_respuesta_login(usuario)
 ```
 
-La primera instruccion autentica al usuario.
-La segunda delega la construccion de la respuesta.
+La primera instrucción autentica al usuario. La segunda delega la construcción de la respuesta.
 
-### Contrato de la nueva operacion publica
+## Contrato de la nueva operación pública
 
 ```python
 def construir_respuesta_login(usuario: UsuarioModelo) -> RespuestaLogin:
@@ -124,50 +100,103 @@ def construir_respuesta_login(usuario: UsuarioModelo) -> RespuestaLogin:
 
 - Entrada: un UsuarioModelo previamente autenticado.
 - Salida: RespuestaLogin con los datos del usuario y token JWT.
-- Precondicion: el usuario debe estar autenticado.
+- Precondición: el usuario debe estar autenticado.
 - Dependencias: modelos de dominio y services.security.
 - Consumidor: UsuarioService.iniciar_sesion.
-- Credenciales incorrectas: UsuarioService retorna HTTP 401
-  sin invocar el constructor.
-- El constructor no valida contrasenas ni consulta la base de datos.
-
-## Relacion con los contenidos de la Unidad 3
-
-| Clase | Concepto aplicado |
-|---|---|
-| 3.1 | Extraccion de una operacion y pruebas de caracterizacion |
-| 3.2 | Responsabilidades mezcladas y comparacion antes/despues |
-| 3.3 | Cohesion, interfaz publica y compatibilidad |
+- Credenciales incorrectas: UsuarioService genera un error HTTP 401 sin invocar el constructor.
+- El constructor no valida contraseñas ni consulta la base de datos.
 
 ## Indicadores comparables
 
-Alcance: flujo de inicio de sesion del backend.
+Alcance: flujo de inicio de sesión del backend.
 
-| Indicador | Antes | Despues |
+| Indicador | Antes | Después |
 |---|---|---|
-| Modulo de construccion de respuesta independiente | 0 | 1 |
-| Operacion publica de inicio de sesion conservada | 1 | 1 |
-| Mismas pruebas de caracterizacion aprobadas | 2/2 | 2/2 |
+| Módulo de construcción de respuesta independiente | 0 | 1 |
+| Operación pública de inicio de sesión conservada | 1 | 1 |
+| Mismas pruebas de caracterización aprobadas | 2/2 | 2/2 |
 
-La mejora consiste en separar responsabilidades sin
-modificar el contrato observable del inicio de sesion.
+La mejora consiste en separar responsabilidades sin modificar el contrato observable del inicio de sesión.
 
-## Verificacion general
-
-```bash
-python -m unittest discover -s tests -t . -v
-```
-
-Resultado registrado: 213 pruebas exitosas, sin errores.
-
-## Pruebas que demuestran la colaboracion
+## Pruebas que demuestran la colaboración
 
 - test_inicio_sesion_exitoso_emite_token_y_rol
 - test_inicio_sesion_todos_los_roles
 - test_colaboracion_entre_modulos
 - test_credenciales_invalidas_no_construyen_respuesta
 
-Las pruebas de colaboracion verifican que el servicio
-invoca el nuevo constructor, que este solicita el token
-al modulo de seguridad y que las credenciales incorrectas
-impiden invocar el constructor.
+Las pruebas de colaboración verifican que el servicio invoca el nuevo constructor, que este solicita el token al módulo de seguridad y que las credenciales incorrectas impiden invocar el constructor.
+
+## Conclusión
+
+La modularización separa responsabilidades mediante operaciones públicas y dependencias explícitas. Las pruebas ejecutadas demuestran que los módulos colaboran correctamente y conservan el comportamiento evaluado.
+
+---
+
+## Comandos paso a paso
+
+### 1. Código antes y después
+
+```bash
+git --no-pager diff c3081be c05f5e1 -- services/usuario_service.py
+```
+
+### 2. Activar entorno
+
+```bash
+source venv/bin/activate
+python --version
+```
+
+### 3. Pruebas antes y después
+
+```bash
+(
+set -e
+set -o pipefail
+
+PYTHON="$PWD/venv/bin/python"
+TEMP=$(mktemp -d)
+trap 'rm -rf -- "$TEMP"' EXIT
+
+mkdir -p "$TEMP/antes" "$TEMP/despues"
+
+git archive c3081be | tar -x -C "$TEMP/antes"
+git archive c05f5e1 | tar -x -C "$TEMP/despues"
+
+cp "$TEMP/despues/tests/usuarios/test_iniciar_sesion.py" \
+   "$TEMP/antes/tests/usuarios/test_iniciar_sesion.py"
+
+CASO=tests.usuarios.test_iniciar_sesion.TestIniciarSesion
+
+echo "===== ANTES DE MODULARIZAR ====="
+
+(cd "$TEMP/antes" && "$PYTHON" -m unittest -v \
+ "$CASO.test_inicio_sesion_exitoso_emite_token_y_rol" \
+ "$CASO.test_inicio_sesion_todos_los_roles")
+
+echo "===== DESPUES DE MODULARIZAR ====="
+
+(cd "$TEMP/despues" && "$PYTHON" -m unittest -v \
+ "$CASO.test_inicio_sesion_exitoso_emite_token_y_rol" \
+ "$CASO.test_inicio_sesion_todos_los_roles")
+)
+```
+
+### 4. Pruebas de inicio de sesión (4)
+
+```bash
+python -m unittest -v tests.usuarios.test_iniciar_sesion
+```
+
+### 5. Pruebas de usuarios (26)
+
+```bash
+python -m unittest discover -s tests/usuarios -t . -v
+```
+
+### 6. Pruebas generales (213)
+
+```bash
+python -m unittest discover -s tests -t . -v
+```
