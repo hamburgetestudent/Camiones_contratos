@@ -6,10 +6,10 @@
   "author": "",
   "license": "MIT",
   "scripts": {
-    "build": "tsc && cpx \"codigos/paginas/**/*\" \"dist/paginas\" && cpx \"codigos/imagenes/**/*\" \"dist/imagenes\"",
-    "start": "tsc && cpx \"codigos/paginas/**/*\" \"dist/paginas\" && cpx \"codigos/imagenes/**/*\" \"dist/imagenes\" && electron .",
+    "build": "tsc",
+    "start": "tsc && electron .",
     "dev": "tsc --watch",
-    "test:panel": "node tests/panel.e2e.cjs",
+    "test:panel": "node tests/e2e/panel.e2e.cjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "setup": "npm install --include=dev"

@@ -96,7 +96,7 @@ async function ejecutarLogin(evento) {
     localStorage.setItem("usuario_rol", datos.rol);
 
     mostrarMensajeLogin("Inicio de sesión exitoso. Abriendo tu panel...", "success");
-    window.location.replace("../panel/index.html");
+    window.location.replace("../panel/panel.html");
   } catch (error) {
     console.error("Error al conectar con el backend:", error);
     mostrarMensajeLogin(
@@ -149,5 +149,5 @@ if (recuperarContraseña) {
 inicializarIconosLogin();
 
 if (localStorage.getItem("access_token")) {
-  window.location.replace("../panel/index.html");
+  window.location.replace("../panel/panel.html");
 }

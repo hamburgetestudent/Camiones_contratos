@@ -23,7 +23,7 @@ const funcionesPorRol = {
         titulo: "Buscar contratos",
         descripcion: "Explora los contratos publicados y revisa sus detalles.",
         disponible: true,
-        destino: "../Principal/principal.html",
+        destino: "../catalogo-contratos/catalogo-contratos.html",
       },
       {
         icono: "▤",
@@ -49,7 +49,7 @@ const funcionesPorRol = {
         titulo: "Crear contratos",
         descripcion: "Prepara una nueva publicación de transporte.",
         disponible: true,
-        destino: "../Principal/principal.html",
+        destino: "../catalogo-contratos/catalogo-contratos.html",
       },
       {
         icono: "▤",
@@ -172,19 +172,19 @@ function mostrarPanel(usuario) {
 function cerrarSesion() {
   // Se elimina la misma clave que se utiliza al guardar el inicio de sesión.
   localStorage.removeItem("usuario_actual");
-  window.location.replace("../Login/index.html");
+  window.location.replace("../login/login.html");
 }
 
 function inicializarPanel() {
   if (!usuarioGuardado) {
-    window.location.replace("../Login/index.html");
+    window.location.replace("../login/login.html");
     return;
   }
 
   const usuario = obtenerUsuarioActual();
   if (!usuario) {
     localStorage.removeItem("usuario_actual");
-    window.location.replace("../Login/index.html");
+    window.location.replace("../login/login.html");
     return;
   }
 

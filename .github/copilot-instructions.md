@@ -31,7 +31,7 @@ This is a desktop Electron client backed by a modular FastAPI REST application.
 - `services/` contains application use cases. Contract, auction, onboarding, and user services orchestrate domain validation and persistence; `services/dependencies.py` owns the shared service instances.
 - `domain/` contains Pydantic domain models and business rules. `MaquinaEstadosContrato` is the authoritative finite-state machine for contract lifecycle transitions; contract creation and state changes must go through these rules.
 - `database/` isolates SQLite persistence (`conexion.py` and `schema.sql`).
-- `frontend/src/main.ts` creates the Electron window and loads `frontend/paginas/Login/index.html`; TypeScript is compiled before Electron runs.
+- `frontend/electron/main.ts` creates the Electron window and loads `frontend/src/paginas/login/login.html`; TypeScript is compiled before Electron runs.
 
 For the fuller rationale and module boundaries, consult [`docs_clases/Arquitectura.md`](../docs_clases/Arquitectura.md). For setup details, consult [`README.md`](../README.md).
 

@@ -181,9 +181,9 @@ async function contratosDador(params) {
   const barra = nodo("div", null, "acciones-barra");
   const links = nodo("div", null, "acciones-grupo");
   const btnCrear = nodo("a", "+ Nuevo contrato", "boton btn-primario");
-  btnCrear.href = "../Crear_contrato/crear_contrato.html?desde=panel";
+  btnCrear.href = "../crear-contrato/crear-contrato.html?desde=panel";
   const btnCatalogo = nodo("a", "Abrir vista catálogo", "boton");
-  btnCatalogo.href = "../Principal/principal.html";
+  btnCatalogo.href = "../catalogo-contratos/catalogo-contratos.html";
   btnCatalogo.prepend(icono("catalogo", 15));
   links.append(btnCrear, btnCatalogo);
   barra.append(links);
@@ -259,7 +259,7 @@ async function contratosDador(params) {
 
   const filtrados = estadoFiltro ? propios.filter((c) => c.estado === estadoFiltro) : propios;
   const ctaNuevo = nodo("a", "+ Crear primer contrato", "boton btn-primario");
-  ctaNuevo.href = "../Crear_contrato/crear_contrato.html?desde=panel";
+  ctaNuevo.href = "../crear-contrato/crear-contrato.html?desde=panel";
 
   f.append(
     formFiltro,

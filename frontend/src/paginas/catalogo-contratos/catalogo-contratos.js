@@ -89,7 +89,7 @@ function volverLogin() {
   for (const clave of ["usuario_actual", "access_token", "usuario_rol", "sesion_usuario"]) {
     localStorage.removeItem(clave);
   }
-  window.location.replace("../Login/index.html");
+  window.location.replace("../login/login.html");
 }
 
 async function solicitarApi(ruta, opciones = {}) {
@@ -286,10 +286,10 @@ function abrirDetalleContrato(contrato) {
   }
   const link = document.getElementById("modal-ir-panel");
   if (usuarioActual?.rol === "TRANSPORTISTA") {
-    link.href = `../panel/index.html#subastas?carga=${encodeURIComponent(contrato.id)}`;
+    link.href = `../panel/panel.html#subastas?carga=${encodeURIComponent(contrato.id)}`;
     link.textContent = "Postular en el panel";
   } else {
-    link.href = `../panel/index.html#contratos?detalle=${encodeURIComponent(contrato.id)}`;
+    link.href = `../panel/panel.html#contratos?detalle=${encodeURIComponent(contrato.id)}`;
     link.textContent = "Gestionar en el panel";
   }
   modalDetalle.showModal();
@@ -342,16 +342,16 @@ async function gestionarAccionPerfil(evento) {
   if (accion === "editar") {
     const destino =
       usuarioActual?.rol === "TRANSPORTISTA"
-        ? "../panel/index.html#onboarding"
+        ? "../panel/panel.html#onboarding"
         : usuarioActual?.rol === "DADOR_CARGA"
-          ? "../panel/index.html#tributario"
-          : "../panel/index.html#cuentas";
+          ? "../panel/panel.html#tributario"
+          : "../panel/panel.html#cuentas";
     window.location.href = destino;
   } else if (accion === "configuracion") {
     window.location.href =
       usuarioActual?.rol === "ADMIN_BACKOFFICE"
-        ? "../panel/index.html#configuracion"
-        : "../panel/index.html";
+        ? "../panel/panel.html#configuracion"
+        : "../panel/panel.html";
   } else if (accion === "cerrar") {
     try {
       const respuesta = await fetch(API_BASE_URL + "/auth/logout", {
@@ -396,7 +396,7 @@ async function inicializarPantallaPrincipal() {
   menuPerfil.addEventListener("click", gestionarAccionPerfil);
 
   botonCrear.addEventListener("click", () => {
-    window.location.href = "../Crear_contrato/crear_contrato.html?desde=catalogo";
+    window.location.href = "../crear-contrato/crear-contrato.html?desde=catalogo";
   });
 
   botonMisContratos.addEventListener("click", () => {

@@ -14,7 +14,7 @@ function createWindow(): void {
   });
 
   // Carga el archivo HTML de la interfaz
-  ventana.loadFile(path.join(__dirname, "../codigos/paginas/Login/index.html"));
+  ventana.loadFile(path.join(__dirname, "../src/paginas/login/login.html"));
 }
 
 // Cuando Electron termina de iniciar

@@ -18,12 +18,12 @@ function resolverUrlRetorno() {
   const params = new URLSearchParams(window.location.search);
   const desde = params.get("desde");
   if (desde === "catalogo") {
-    return { href: "../Principal/principal.html", texto: "← Volver al catálogo" };
+    return { href: "../catalogo-contratos/catalogo-contratos.html", texto: "← Volver al catálogo" };
   }
   if (desde === "panel" || document.referrer.includes("/panel/")) {
-    return { href: "../panel/index.html#contratos", texto: "← Volver a mis contratos" };
+    return { href: "../panel/panel.html#contratos", texto: "← Volver a mis contratos" };
   }
-  return { href: "../Principal/principal.html", texto: "← Volver al catálogo" };
+  return { href: "../catalogo-contratos/catalogo-contratos.html", texto: "← Volver al catálogo" };
 }
 
 function inicializarIconosCrear() {
@@ -36,7 +36,7 @@ function volverALogin() {
   for (const clave of ["usuario_actual", "access_token", "usuario_rol", "sesion_usuario"]) {
     localStorage.removeItem(clave);
   }
-  window.location.replace("../Login/index.html");
+  window.location.replace("../login/login.html");
 }
 
 async function solicitarApi(ruta, opciones = {}) {

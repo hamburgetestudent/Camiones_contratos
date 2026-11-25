@@ -52,17 +52,16 @@ app.include_router(admin_router)
 for modulo in (config_router, contratos_router, onboarding_router, subasta_router):
     app.include_router(modulo, dependencies=[Depends(usuario_actual)])
 
-FRONTEND_DIR = Path(__file__).resolve().parent / "frontend" / "codigos"
+FRONTEND_DIR = Path(__file__).resolve().parent / "frontend" / "src"
 FRONTEND_PAGINAS_DIR = FRONTEND_DIR / "paginas"
-if not FRONTEND_PAGINAS_DIR.is_dir():
-    FRONTEND_PAGINAS_DIR = Path(__file__).resolve().parent / "frontend" / "paginas"
-FRONTEND_IMAGENES_DIR = FRONTEND_DIR / "imagenes"
+FRONTEND_COMPARTIDO_DIR = FRONTEND_DIR / "compartido"
+FRONTEND_IMAGENES_DIR = FRONTEND_DIR / "recursos" / "imagenes"
 
 
 @app.get("/", include_in_schema=False)
 def raiz() -> RedirectResponse:
     """Redirige la raíz del sitio web hacia la vista de inicio de sesión."""
-    return RedirectResponse(url="/Login/index.html")
+    return RedirectResponse(url="/login/login.html")
 
 
 if FRONTEND_IMAGENES_DIR.is_dir():
@@ -70,6 +69,14 @@ if FRONTEND_IMAGENES_DIR.is_dir():
         "/imagenes",
         StaticFiles(directory=str(FRONTEND_IMAGENES_DIR)),
         name="imagenes",
+    )
+
+if FRONTEND_COMPARTIDO_DIR.is_dir():
+    # Las páginas piden ../../compartido/..., que en la web se resuelve a /compartido/...
+    app.mount(
+        "/compartido",
+        StaticFiles(directory=str(FRONTEND_COMPARTIDO_DIR)),
+        name="compartido",
     )
 
 if FRONTEND_PAGINAS_DIR.is_dir():

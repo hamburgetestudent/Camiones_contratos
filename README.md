@@ -96,7 +96,7 @@ npm install
 npm start
 ```
 
-* `npm start` compila el código TypeScript (`codigos/` ➔ `dist/`), copia las vistas e imágenes y abre la ventana de **Electron** conectada a `http://127.0.0.1:8000`.
+* `npm start` compila el código TypeScript (`electron/` ➔ `dist/`) y abre la ventana de **Electron** conectada a `http://127.0.0.1:8000`.
 * Para desarrollo continuo del archivo principal de Electron puedes ejecutar `npm run dev` (`tsc --watch`).
 
 ### Paso 4 — Verificar la instalación y cuentas de prueba
@@ -226,16 +226,12 @@ Camiones_contratos/
 │   ├── sesion.py
 │   └── subasta_router.py
 ├── frontend/                     # Cliente de escritorio Electron + TypeScript
-│   ├── codigos/
-│   │   ├── main.ts
-│   │   ├── imagenes/
-│   │   ├── paginas/
-│   │   │   ├── Login/
-│   │   │   ├── Principal/
-│   │   │   ├── Registrar_nuevoUsuario/
-│   │   │   ├── panel/
-│   │   │   └── panel_funciones/
-│   │   └── prueba_coneccion/
+│   ├── electron/             # Proceso principal de Electron (main.ts)
+│   ├── src/
+│   │   ├── paginas/          # login, registro, catalogo-contratos, crear-contrato, panel (+ vistas/)
+│   │   ├── compartido/       # css/tema.css, js/iconos.js
+│   │   └── recursos/imagenes/
+│   ├── tests/e2e/            # Pruebas end-to-end del panel
 │   ├── package.json
 │   └── tsconfig.json
 ├── tests/                        # Suite de pruebas unitarias y de integración
@@ -272,8 +268,9 @@ Camiones_contratos/
 * **Capa de Routers API REST (`routers/`):**
   * `auth_router.py`, `admin_router.py`, `config_router.py`, `contratos_router.py`, `onboarding_router.py`, `subasta_router.py`, junto con `sesion.py` (guardia Bearer y revocación de sesión) y `comun.py` (manejo uniforme de errores HTTP).
 * **Capa de Frontend (`frontend/`):**
-  * `codigos/main.ts`: Proceso principal de Electron que inicia la ventana y carga `codigos/paginas/Login/index.html`.
-  * `codigos/paginas/`: Vistas HTML/CSS/JS para login, registro, vista principal y paneles operativos.
+  * `electron/main.ts`: Proceso principal de Electron que inicia la ventana y carga `src/paginas/login/login.html`.
+  * `src/paginas/`: Una carpeta por pantalla (HTML/CSS/JS) para login, registro, catálogo de contratos, creación de contratos y panel por rol.
+  * `src/compartido/`: Tema CSS e íconos usados por todas las páginas.
 
 ### Ciclo de Vida del Contrato (Máquina de Estados)
 

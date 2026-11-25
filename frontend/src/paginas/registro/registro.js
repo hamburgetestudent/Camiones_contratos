@@ -253,7 +253,7 @@ registroForm.addEventListener("submit", async (event) => {
     );
 
     setTimeout(() => {
-      window.location.href = "../Login/index.html";
+      window.location.href = "../login/login.html";
     }, 1500);
   } catch (error) {
     console.error("Error al conectar con el backend:", error);

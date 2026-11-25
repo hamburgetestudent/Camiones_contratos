@@ -98,7 +98,7 @@ async function subastasTransportista(params) {
   const f = document.createDocumentFragment();
   const barra = nodo("div", null, "acciones-barra");
   const btnCatalogo = nodo("a", "Abrir vista catálogo", "boton");
-  btnCatalogo.href = "../Principal/principal.html";
+  btnCatalogo.href = "../catalogo-contratos/catalogo-contratos.html";
   btnCatalogo.prepend(icono("catalogo", 15));
   barra.append(
     btnCatalogo,

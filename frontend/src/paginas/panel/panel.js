@@ -250,7 +250,7 @@ function confirmarAccion({
 function volverLogin() {
   for (const clave of ["usuario_actual", "usuario_rol", "access_token"])
     localStorage.removeItem(clave);
-  location.replace("../Login/index.html");
+  location.replace("../login/login.html");
 }
 
 function extraerDetalleError(cuerpo) {

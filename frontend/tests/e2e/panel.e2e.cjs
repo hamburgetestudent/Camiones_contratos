@@ -8,7 +8,7 @@ const { spawn } = require("node:child_process");
 const { setTimeout: pausa } = require("node:timers/promises");
 const { chromium } = require("playwright");
 
-const raiz = path.resolve(__dirname, "../..");
+const raiz = path.resolve(__dirname, "../../..");
 const temporal = fs.mkdtempSync(path.join(os.tmpdir(), "camiones-panel-"));
 let servidor, navegador;
 
@@ -52,7 +52,7 @@ async function probar() {
     window.API_BASE_URL = url;
   }, api);
   await pagina.goto(
-    pathToFileURL(path.join(raiz, "frontend/codigos/paginas/Login/index.html")).href
+    pathToFileURL(path.join(raiz, "frontend/src/paginas/login/login.html")).href
   );
   async function login(correo, clave) {
     await pagina.locator("#email").fill(correo);
@@ -222,7 +222,7 @@ async function probar() {
       await pagina.getByText("¡Postulación enviada correctamente!").waitFor();
       await pagina.getByRole("link", { name: "← Volver a cargas disponibles" }).click();
     }
-    await pagina.locator('main a[href="../Principal/principal.html"]').click();
+    await pagina.locator('main a[href="../catalogo-contratos/catalogo-contratos.html"]').click();
     await pagina.locator("#boton-perfil").click();
     await pagina.locator('[data-accion-perfil="cerrar"]').click();
     await pagina.locator("#btnLogin").waitFor();

@@ -19,7 +19,7 @@ En cada enlace, el semicírculo pertenece al componente que requiere la interfaz
 
 | Interfaz del diagrama | Evidencia en la implementación |
 | --- | --- |
-| API REST | [Cliente de login](../../frontend/paginas/Login/script.js) y [registro de routers](../../main.py). |
+| API REST | [Cliente de login](../../frontend/src/paginas/login/login.js) y [registro de routers](../../main.py). |
 | ServicioContrato.crear_contrato | [El router recibe ContratoCrear y delega la creación](../../routers/contratos_router.py). |
 | Modelo y transiciones (ContratoModelo y MaquinaEstadosContrato) | [El servicio trabaja con el modelo y la máquina de estados](../../services/contrato_service.py). |
 | obtener_conexion() | [El servicio importa el acceso a datos](../../services/contrato_service.py). |
