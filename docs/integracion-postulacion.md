@@ -56,7 +56,7 @@ El último caso reproduce una referencia caducada en la conexión panel–API. S
 Desde la raíz, con Python, Node y Microsoft Edge instalados, ejecutar en PowerShell:
 
 ```powershell
-python -m pip install -r requirements.txt pytest httpx
+python -m pip install -r requirements.txt pytest
 npm --prefix frontend ci
 npm --prefix frontend run test:panel
 python -m coverage run -m pytest -q
@@ -64,6 +64,12 @@ python -m coverage report -m
 python -m coverage xml
 ```
 
-El panel imprime un resultado por caso y termina con código 0 si se cumplen todas las aserciones. La suite local registró **216 pruebas y 70 subpruebas aprobadas**. Coverage.py 7.17.2 midió **93,9 %** en las capas Python configuradas, con 1.240 sentencias y 232 ramas. [Reporte local por módulo](cobertura-criterio-6.txt).
+El panel imprime un resultado por caso y termina con código 0 si se cumplen todas las aserciones.
 
-La [ejecución del commit de entrega `c091544`](https://github.com/hamburgetestudent/Camiones_contratos/actions/runs/45510972035) ejecuta la suite con cobertura en el trabajo de backend y los tres casos en el trabajo de frontend. El artefacto `cobertura` contiene el XML de esa ejecución.
+### Alcance de cobertura, suite actual y ejecución de CI
+
+* **Carpetas medidas por Coverage.py ([`.coveragerc`](../.coveragerc)):** `database/`, `domain/`, `routers/` y `services/` con medición de ramas (`branch = True`). Se omiten `tests/`, `.venv/` y `frontend/` (el frontend se verifica de extremo a extremo con `npm run test:panel`); la carpeta `dao/` queda fuera de la medición de `.coveragerc` y se prueba mediante la suite de persistencia e integración.
+* **Suite verificada sobre `Dev` (revisión `00a4a1a`):** `pytest -q` registró **229 pruebas y 76 subpruebas aprobadas** (`unittest` y `ruff check .` sin errores).
+* **Pendiente al hacer push / cierre final:** dado que `coverage` se ejecuta en GitHub Actions (en este entorno local no está instalado en `venv`), tras subir `Dev` / integrar en `main`:
+  1. Actualizar [el reporte por módulo](cobertura-criterio-6.txt) con la salida de `coverage report -m` de la corrida final.
+  2. Reemplazar el enlace histórico (última corrida registrada sobre `c091544`: [ejecución #45510972035](https://github.com/hamburgetestudent/Camiones_contratos/actions/runs/45510972035), con 216 pruebas y 93,9 % de cobertura) por el enlace a la ejecución verde de CI y el porcentaje exacto de la revisión entregada.

@@ -1,10 +1,10 @@
-# Suite de la entrega en RamaSS, en main y en cada pull request.
+# Suite de la entrega en Dev, RamaSS, main y en cada pull request.
 # Corre en Windows porque es el entorno de desarrollo y de uso del sistema.
 name: Tests
 
 on:
   push:
-    branches: [main, RamaSS]
+    branches: [main, Dev, RamaSS]
   pull_request:
   workflow_dispatch:
 
