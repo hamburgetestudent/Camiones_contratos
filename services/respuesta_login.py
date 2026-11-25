@@ -1,8 +1,8 @@
 """Construccion de respuestas de autenticacion."""
 
+from core.security import crear_token_acceso
 from domain.modelos_login import RespuestaLogin
 from domain.modelos_usuario import UsuarioModelo
-from services.security import crear_token_acceso
 
 
 def construir_respuesta_login(usuario: UsuarioModelo) -> RespuestaLogin:

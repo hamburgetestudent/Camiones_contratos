@@ -1,6 +1,7 @@
 [run]
 branch = True
 source =
+    core
     database
     domain
     routers

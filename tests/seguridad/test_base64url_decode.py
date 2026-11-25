@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from services.security import _base64url_decode, _base64url_encode
+from core.security import _base64url_decode, _base64url_encode
 from tests.seguridad.base import BaseTestSeguridad
 
 

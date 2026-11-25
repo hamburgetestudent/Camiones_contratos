@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from services.security import crear_token_acceso, decodificar_token_acceso
+from core.security import crear_token_acceso, decodificar_token_acceso
 from tests.seguridad.base import BaseTestSeguridad
 
 

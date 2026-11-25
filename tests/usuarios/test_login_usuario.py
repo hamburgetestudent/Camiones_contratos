@@ -9,7 +9,7 @@ Criterios de Aceptación:
 Trazabilidad técnica:
 - routers/auth_router.py (POST /auth/login)
 - services/usuario_service.py (autenticar_usuario, iniciar_sesion)
-- services/security.py (crear_token_acceso, decodificar_token_acceso)
+- core/security.py (crear_token_acceso, decodificar_token_acceso)
 - domain/modelos_login.py (CredencialesLogin, RespuestaLogin)
 """
 
@@ -21,6 +21,7 @@ from uuid import UUID, uuid4
 from fastapi import HTTPException
 from pydantic import ValidationError
 
+from core.security import decodificar_token_acceso
 from dao.usuario_dao import UsuarioDAOSQLite
 from database.conexion import obtener_conexion
 from domain.modelos_login import CredencialesLogin, RespuestaLogin
@@ -31,7 +32,6 @@ from domain.modelos_usuario import (
     UsuarioModelo,
 )
 from routers.auth_router import iniciar_sesion as router_iniciar_sesion
-from services.security import decodificar_token_acceso
 from services.usuario_service import UsuarioService, hash_password
 from tests.base import crear_bd_aislada
 

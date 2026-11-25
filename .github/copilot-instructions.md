@@ -28,7 +28,7 @@ This is a desktop Electron client backed by a modular FastAPI REST application.
 
 - `main.py` creates the FastAPI application and registers the authentication, configuration, contracts, onboarding, and auction routers.
 - `routers/` is the HTTP boundary. Routers define Pydantic request/response schemas, translate domain/service failures to HTTP errors, and obtain services through typed dependencies in `routers/comun.py`.
-- `services/` contains application use cases. Contract, auction, onboarding, and user services orchestrate domain validation and persistence; `services/dependencies.py` owns the shared service instances.
+- `services/` contains application use cases. Contract, auction, onboarding, and user services orchestrate domain validation and persistence; `core/dependencies.py` owns the shared service instances.
 - `domain/` contains Pydantic domain models and business rules. `MaquinaEstadosContrato` is the authoritative finite-state machine for contract lifecycle transitions; contract creation and state changes must go through these rules.
 - `database/` isolates SQLite persistence (`conexion.py` and `schema.sql`).
 - `frontend/electron/main.ts` creates the Electron window and loads `frontend/src/paginas/login/login.html`; TypeScript is compiled before Electron runs.
@@ -38,7 +38,7 @@ For setup details, consult [`README.md`](../README.md).
 ## Repository conventions
 
 - Keep the dependency direction `routers -> services -> domain/DAO`; do not put business rules or direct persistence logic in routers.
-- Use dependency injection for DAOs and services. Preserve the shared instances in `services/dependencies.py` unless a change explicitly requires different application lifetime semantics.
+- Use dependency injection for DAOs and services. Preserve the shared instances in `core/dependencies.py` unless a change explicitly requires different application lifetime semantics.
 - Treat `MaquinaEstadosContrato.TRANSICIONES_PERMITIDAS` as the single source of truth for legal contract transitions. Use `cambiar_estado` so transition invariants (publication timestamps and transport assignment) are enforced.
 - Define and validate API payloads with Pydantic at the router/domain boundary. Models use strict field constraints and cross-field validators for dates, capacity, special cargo requirements, and financial totals.
 - Use descriptive Spanish names for domain, DAO, service, and validation methods (`obtener_por_id`, `obtener_todos`, `guardar`, `actualizar`, `eliminar`, `validar_transicion`). Avoid introducing abbreviated names; existing aliases are retained only for backward compatibility.

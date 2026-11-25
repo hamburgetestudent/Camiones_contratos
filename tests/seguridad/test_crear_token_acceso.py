@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-from services.security import _base64url_decode, crear_token_acceso
+from core.security import _base64url_decode, crear_token_acceso
 from tests.seguridad.base import BaseTestSeguridad
 
 

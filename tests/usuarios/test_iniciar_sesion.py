@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from core.security import decodificar_token_acceso
 from domain.modelos_login import CredencialesLogin, RespuestaLogin
 from domain.modelos_usuario import RolUsuario
-from services.security import decodificar_token_acceso
 from services.usuario_service import UsuarioService
 from tests.usuarios.base import BaseTestUsuarios
 
@@ -63,8 +63,8 @@ class TestIniciarSesion(BaseTestUsuarios):
     def test_colaboracion_entre_modulos(self) -> None:
         from unittest.mock import patch
 
+        from core.security import crear_token_acceso
         from services.respuesta_login import construir_respuesta_login
-        from services.security import crear_token_acceso
 
         credenciales = CredencialesLogin(
             usuario=self.usuario_transportista.email,

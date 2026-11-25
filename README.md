@@ -182,7 +182,7 @@ Para agregar una capacidad nueva (por ejemplo, un endpoint o una entidad) sigue 
 1. **Dominio (`domain/`):** define el modelo Pydantic y sus validadores. Si cambia el ciclo de vida de un contrato, agrega el estado y las transiciones en `maquina_estados.py`.
 2. **Esquema (`database/schema.sql`):** agrega la tabla o columna de forma idempotente (`CREATE TABLE IF NOT EXISTS`). Para columnas en una base ya instalada, sigue el patrón de `_asegurar_esquema` en `database/conexion.py`.
 3. **DAO (`dao/`):** crea una clase que herede de `BaseDAO` con el SQL de la entidad.
-4. **Servicio (`services/`):** escribe la regla de negocio recibiendo el DAO por inyección (`services/dependencies.py`) y documenta Precondiciones, Postcondiciones e Invariantes en el docstring.
+4. **Servicio (`services/`):** escribe la regla de negocio recibiendo el DAO por inyección (`core/dependencies.py`) y documenta Precondiciones, Postcondiciones e Invariantes en el docstring.
 5. **Router (`routers/`):** expón el endpoint, protégelo con las dependencias de `routers/sesion.py` y registra el router en `main.py`.
 6. **Pruebas (`tests/`):** agrega pruebas en la carpeta del módulo, ejecuta `python run_tests.py` y `ruff check .`.
 7. **Verificación del flujo:** si el cambio afecta el flujo principal, extiende los casos de `scripts/verificar_flujo_integrado.py` y registra el resultado en [`CHANGELOG.md`](CHANGELOG.md).

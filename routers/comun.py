@@ -7,8 +7,8 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 
+from core.dependencies import get_contrato_service, get_subasta_service
 from services.contrato_service import ContratoService
-from services.dependencies import get_contrato_service, get_subasta_service
 from services.subasta_service import SubastaService
 
 # Inyeccion de dependencias tipada con Annotated

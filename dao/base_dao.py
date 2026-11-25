@@ -2,7 +2,7 @@
 
 Un DAO encapsula todo el SQL de una entidad y expone operaciones en terminos del
 modelo de dominio. Los servicios dependen de la interfaz abstracta y reciben la
-implementacion concreta por inyeccion (ver ``services/dependencies.py``).
+implementacion concreta por inyeccion (ver ``core/dependencies.py``).
 
 Las operaciones reciben una conexion abierta. Asi un servicio puede combinar
 varios DAO (p. ej. contratos y postulaciones) dentro de una misma transaccion

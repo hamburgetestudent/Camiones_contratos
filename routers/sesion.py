@@ -8,9 +8,9 @@ from uuid import UUID
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from core.security import decodificar_token_acceso
 from database.conexion import obtener_conexion
 from domain.modelos_usuario import RolUsuario, UsuarioModelo
-from services.security import decodificar_token_acceso
 from services.usuario_service import UsuarioService
 
 Bearer = Annotated[

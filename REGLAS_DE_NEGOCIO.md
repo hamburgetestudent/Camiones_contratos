@@ -121,7 +121,7 @@ flowchart LR
 
 ## 3. Identidad, Autenticación y Control de Accesos (`RN-IAM`)
 
-Implementado en `domain/modelos_usuario.py`, `domain/modelos_login.py`, `services/usuario_service.py`, `services/security.py` y `routers/auth_router.py`.
+Implementado en `domain/modelos_usuario.py`, `domain/modelos_login.py`, `services/usuario_service.py`, `core/security.py` y `routers/auth_router.py`.
 
 ### RN-IAM-01: Catálogo de Roles y Restricción de Autoregistro
 * **Descripción:** La plataforma reconoce formalmente tres roles de usuario:
@@ -172,7 +172,7 @@ Implementado en `domain/modelos_usuario.py`, `domain/modelos_login.py`, `service
   * `iss`: Emisor de la credencial (`"camiones_contratos_iam"`).
   * `iat`: Marca temporal UNIX de emisión.
   * `exp`: Tiempo de expiración configurado por defecto en **8 horas** (480 minutos).
-* **Trazabilidad:** `services/security.py` (Líneas 19-71), `services/usuario_service.py` (Líneas 117-133).
+* **Trazabilidad:** `core/security.py` (Líneas 19-71), `services/usuario_service.py` (Líneas 117-133).
 
 ---
 
@@ -509,7 +509,7 @@ Implementado en `dao/base_dao.py`, `dao/sqlite_db.py`, `dao/usuario_dao.py` y `d
 | **RN-IAM-04** | Password $\ge 6$ chars y SHA-256 | `domain/modelos_usuario.py` | `POST /auth/registro` | `HTTP 422 ValidationError` |
 | **RN-IAM-05** | Estado inicial `EN_REVISION` | `domain/modelos_usuario.py` | `POST /auth/registro` | Asignación default |
 | **RN-IAM-06** | Prevención de enumeración de usuarios | `services/usuario_service.py` | `POST /auth/login` | `HTTP 401 Unauthorized` |
-| **RN-IAM-07** | Emisión token JWT Bearer (8h) | `services/security.py` | `POST /auth/login` | `HTTP 200 OK` |
+| **RN-IAM-07** | Emisión token JWT Bearer (8h) | `core/security.py` | `POST /auth/login` | `HTTP 200 OK` |
 | **RN-KYC-01** | Legajo de 5 documentos obligatorios | `domain/modelos_onboarding.py` | `POST /onboarding/transportista/documentos` | `HTTP 201 Created` |
 | **RN-KYC-02** | Extensiones `.pdf`, `.jpg`, `.jpeg`, `.png` | `domain/modelos_onboarding.py` | `POST /onboarding/transportista/documentos` | `HTTP 422 ValueError` |
 | **RN-KYC-03** | Recarga reinicia a `PENDIENTE` | `services/onboarding_service.py` | `POST /onboarding/transportista/documentos` | Reinicio de estado |

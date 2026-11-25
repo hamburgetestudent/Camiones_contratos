@@ -30,7 +30,7 @@ delegando la construcción de la respuesta al nuevo módulo.
 | services/usuario_service.py | iniciar_sesion(credenciales) | Valida, autentica y delega |
 | services/usuario_service.py | autenticar_usuario(email, password) | Verifica las credenciales |
 | services/respuesta_login.py | construir_respuesta_login(usuario) | Construye RespuestaLogin |
-| services/security.py | crear_token_acceso(claims) | Genera el token JWT |
+| core/security.py | crear_token_acceso(claims) | Genera el token JWT |
 
 El nuevo módulo recibe un UsuarioModelo y devuelve una
 RespuestaLogin. Depende de los modelos de dominio y del
@@ -85,7 +85,7 @@ python -m unittest discover -s tests/usuarios -t . -v
 
 - [Servicio de usuarios](../services/usuario_service.py)
 - [Constructor de respuesta](../services/respuesta_login.py)
-- [Seguridad](../services/security.py)
+- [Seguridad](../core/security.py)
 - [Router de autenticación](../routers/auth_router.py)
 - [Pruebas](../tests/usuarios/test_iniciar_sesion.py)
 
@@ -102,7 +102,7 @@ correctamente y conservan el comportamiento evaluado.
 |---|---|
 | services/usuario_service.py | UsuarioService.iniciar_sesion |
 | services/respuesta_login.py | construir_respuesta_login |
-| services/security.py | crear_token_acceso |
+| core/security.py | crear_token_acceso |
 | routers/auth_router.py | iniciar_sesion |
 | tests/usuarios/test_iniciar_sesion.py | TestIniciarSesion |
 
@@ -125,7 +125,7 @@ def construir_respuesta_login(usuario: UsuarioModelo) -> RespuestaLogin:
 - Entrada: un UsuarioModelo previamente autenticado.
 - Salida: RespuestaLogin con los datos del usuario y token JWT.
 - Precondicion: el usuario debe estar autenticado.
-- Dependencias: modelos de dominio y services.security.
+- Dependencias: modelos de dominio y core.security.
 - Consumidor: UsuarioService.iniciar_sesion.
 - Credenciales incorrectas: UsuarioService retorna HTTP 401
   sin invocar el constructor.
