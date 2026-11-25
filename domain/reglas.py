@@ -1,3 +1,4 @@
+import threading
 """Modulo de reglas de negocio globales y configuracion parametrizable.
 
 Implementa un patron Singleton thread-safe para asegurar un estado unico en memoria.
