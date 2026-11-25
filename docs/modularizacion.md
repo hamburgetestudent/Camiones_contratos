@@ -152,7 +152,7 @@ cd frontend && npx tsc --noEmit
 | Definiciones duplicadas de URL base (`http://127.0.0.1:8000`) en `frontend/codigos/paginas/` | `5` (una por vista) | `1` (`paginas/comun/api.js`) |
 | Archivos ajenos o carpetas de vistas obsoletas (`2.ts`, `panel_funciones/`, `prueba_coneccion/`) | `3` | `0` |
 | Caso representativo (`tests.test_panel_admin` + `tests.seguridad.test_sesion_service`) | `10` OK (`2.115s`) *(sin pruebas unitarias aisladas de sesión)* | `15` OK (`2.471s`) *(10 de panel/HTTP + 5 nuevas de `sesion_service`)* |
-| Suite completa backend (`unittest discover`) | `222` de `222` OK (`18.850s`) | `231` de `231` OK (`21.832s`) |
+| Suite completa backend (`unittest discover`) | `222` de `222` OK (`18.850s`) | `229` de `229` OK (`21.767s`) |
 | Linter backend (`ruff check .`) | `All checks passed!` | `All checks passed!` |
 | Frontend (`npx tsc --noEmit` y `node --check`) | `0` errores | `0` errores |
 
