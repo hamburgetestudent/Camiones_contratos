@@ -1,96 +1,27 @@
 import hashlib
-import sqlite3
 from uuid import UUID
 
-from fastapi import HTTPException, status
-
-from database.conexion import obtener_conexion, transaccion_exclusiva
+from dao.usuario_dao import UsuarioDAO, UsuarioDAOSQLite
 from domain.modelos_login import CredencialesLogin, RespuestaLogin
 from domain.modelos_onboarding import CrearPerfilDadorDTO
 from domain.modelos_usuario import (
-    EstadoUsuario,
-    RolUsuario,
     UsuarioCrear,
     UsuarioModelo,
 )
 from services.onboarding_service import onboarding_service_instancia
 from services.respuesta_login import construir_respuesta_login
 
-# ---------------------------------------------------------------------------
-# SQL: tabla ``usuarios`` (usa la base de datos por defecto de database.conexion)
-# ---------------------------------------------------------------------------
 
-_SELECT_USUARIO = "SELECT id, nombre, email, rol, password_hash, estado FROM usuarios"
+class CorreoYaRegistradoError(ValueError):
+    """Error de negocio cuando se intenta registrar un correo ya existente."""
 
 
-def _fila_a_usuario(fila: sqlite3.Row) -> UsuarioModelo:
-    """Convierte una fila de SQLite en una instancia de UsuarioModelo."""
-    return UsuarioModelo(
-        id=UUID(fila["id"]),
-        nombre=fila["nombre"],
-        email=fila["email"],
-        rol=RolUsuario(fila["rol"]),
-        password_hash=fila["password_hash"],
-        estado=EstadoUsuario(fila["estado"]),
-    )
+class CredencialesInvalidasError(PermissionError):
+    """Error de autenticación cuando el correo no existe o la clave no coincide."""
 
 
-def buscar_usuario_por_id(
-    conn: sqlite3.Connection, usuario_id: UUID
-) -> UsuarioModelo | None:
-    """Obtiene un usuario por su UUID, o None si no existe."""
-    fila = conn.execute(
-        f"{_SELECT_USUARIO} WHERE id = ? AND eliminado = 0", (str(usuario_id),)
-    ).fetchone()
-    return _fila_a_usuario(fila) if fila else None
-
-
-def _normalizar_correo(email: str) -> str:
-    return email.strip().lower()
-
-
-def buscar_usuario_por_email(
-    conn: sqlite3.Connection, email: str
-) -> UsuarioModelo | None:
-    """Busca un usuario por correo (insensible a mayusculas y espacios extremos)."""
-    fila = conn.execute(
-        f"{_SELECT_USUARIO} WHERE lower(trim(email)) = ? AND eliminado = 0",
-        (_normalizar_correo(email),),
-    ).fetchone()
-    return _fila_a_usuario(fila) if fila else None
-
-
-def buscar_todos_los_usuarios(conn: sqlite3.Connection) -> list[UsuarioModelo]:
-    """Retorna todos los usuarios en orden de creacion."""
-    filas = conn.execute(
-        f"{_SELECT_USUARIO} WHERE eliminado = 0 ORDER BY created_at ASC, rowid ASC"
-    ).fetchall()
-    return [_fila_a_usuario(fila) for fila in filas]
-
-
-def guardar_usuario(conn: sqlite3.Connection, usuario: UsuarioModelo) -> UsuarioModelo:
-    """Inserta el usuario o, si su ID ya existe, actualiza sus campos. El correo se guarda en minusculas."""
-    conn.execute(
-        """
-        INSERT INTO usuarios (id, nombre, email, rol, password_hash, estado)
-        VALUES (?, ?, ?, ?, ?, ?)
-        ON CONFLICT(id) DO UPDATE SET
-            nombre = excluded.nombre,
-            email = excluded.email,
-            rol = excluded.rol,
-            password_hash = excluded.password_hash,
-            estado = excluded.estado
-        """,
-        (
-            str(usuario.id),
-            usuario.nombre,
-            _normalizar_correo(usuario.email),
-            RolUsuario(usuario.rol).value,
-            usuario.password_hash,
-            EstadoUsuario(usuario.estado).value,
-        ),
-    )
-    return usuario
+class UsuarioNoEncontradoError(LookupError):
+    """Error de consulta cuando el identificador de usuario no existe."""
 
 
 def hash_password(password: str) -> str:
@@ -99,6 +30,10 @@ def hash_password(password: str) -> str:
 
 
 class UsuarioService:
+    # Almacen persistente (base por defecto resuelta en cada llamada).
+    # Sustituible por inyeccion: ``UsuarioService.dao = UsuarioDAOSQLite(ruta)``.
+    dao: UsuarioDAO = UsuarioDAOSQLite()
+
     @staticmethod
     def registrar_usuario(usuario_data: UsuarioCrear) -> UsuarioModelo:
         """Registra un usuario nuevo y, si corresponde, sus datos de onboarding.
@@ -113,17 +48,14 @@ class UsuarioService:
             - Si se enviaron documentos o perfil tributario, quedan cargados en PENDIENTE.
 
         Raises:
-            HTTPException: 400 si el email ya existe.
+            CorreoYaRegistradoError: Si el email ya existe en la base de datos.
         """
         # Comprobar unicidad del email y guardar en una sola transaccion (evita
         # que dos registros simultaneos con el mismo email pasen la comprobacion).
-        with transaccion_exclusiva() as conn:
+        with UsuarioService.dao.transaccion() as conn:
             # El correo sigue vinculado a su titular tras una baja lógica.
-            if conn.execute("SELECT 1 FROM usuarios WHERE email = ?", (usuario_data.email.strip(),)).fetchone():
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="El email ya está registrado",
-                )
+            if UsuarioService.dao.existe_email(conn, usuario_data.email):
+                raise CorreoYaRegistradoError("El email ya está registrado")
 
             nuevo_usuario = UsuarioModelo(
                 nombre=usuario_data.nombre,
@@ -131,7 +63,7 @@ class UsuarioService:
                 rol=usuario_data.rol,
                 password_hash=hash_password(usuario_data.password),
             )
-            usuario_guardado = guardar_usuario(conn, nuevo_usuario)
+            usuario_guardado = UsuarioService.dao.guardar(conn, nuevo_usuario)
 
         # Si adjuntó documentos de transportista en el registro, persistirlos en SQLite
         if usuario_data.documentos:
@@ -155,42 +87,31 @@ class UsuarioService:
     @staticmethod
     def listar_usuarios() -> list[UsuarioModelo]:
         """Lista todos los usuarios almacenados en SQLite."""
-        with obtener_conexion() as conn:
-            return buscar_todos_los_usuarios(conn)
+        with UsuarioService.dao.conexion() as conn:
+            return UsuarioService.dao.obtener_todos(conn)
 
     @staticmethod
     def obtener_usuario(usuario_id: UUID) -> UsuarioModelo:
         """Obtiene un usuario por su UUID desde SQLite."""
-        with obtener_conexion() as conn:
-            usuario = buscar_usuario_por_id(conn, usuario_id)
+        with UsuarioService.dao.conexion() as conn:
+            usuario = UsuarioService.dao.obtener_por_id(conn, usuario_id)
         if not usuario:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado"
-            )
+            raise UsuarioNoEncontradoError("Usuario no encontrado")
         return usuario
 
     @staticmethod
     def autenticar_usuario(email: str, password: str) -> UsuarioModelo:
         """Verifica la existencia del usuario y la validez de su contrasena."""
         if not email or not email.strip() or not password or not password.strip():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Correo electrónico y contraseña requeridos",
-            )
+            raise ValueError("Correo electrónico y contraseña requeridos")
 
-        with obtener_conexion() as conn:
-            usuario = buscar_usuario_por_email(conn, email)
+        with UsuarioService.dao.conexion() as conn:
+            usuario = UsuarioService.dao.obtener_por_email(conn, email.strip())
         if not usuario:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Credenciales inválidas",
-            )
+            raise CredencialesInvalidasError("Credenciales inválidas")
 
         if usuario.password_hash != hash_password(password):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Credenciales inválidas",
-            )
+            raise CredencialesInvalidasError("Credenciales inválidas")
 
         return usuario
 
@@ -201,20 +122,13 @@ class UsuarioService:
         password = credenciales.obtener_password_texto()
 
         if not email and not password:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="El correo electrónico y la contraseña son campos obligatorios.",
+            raise ValueError(
+                "El correo electrónico y la contraseña son campos obligatorios."
             )
         if not email:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="El correo electrónico es un campo obligatorio.",
-            )
+            raise ValueError("El correo electrónico es un campo obligatorio.")
         if not password:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="La contraseña es un campo obligatorio.",
-            )
+            raise ValueError("La contraseña es un campo obligatorio.")
 
         usuario = UsuarioService.autenticar_usuario(email, password)
         return construir_respuesta_login(usuario)
@@ -227,10 +141,10 @@ class ValidadorUsuario:
         try:
             UsuarioService.autenticar_usuario(usuario, password)
             return True
-        except HTTPException:
+        except (CredencialesInvalidasError, ValueError):
             return False
 
     def obtener_datos_usuario(self, usuario: str) -> UsuarioModelo | None:
         """Obtiene los datos del usuario autenticado por su email."""
-        with obtener_conexion() as conn:
-            return buscar_usuario_por_email(conn, usuario)
+        with UsuarioService.dao.conexion() as conn:
+            return UsuarioService.dao.obtener_por_email(conn, usuario)

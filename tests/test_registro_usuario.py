@@ -21,9 +21,9 @@ from __future__ import annotations
 import unittest
 from uuid import UUID
 
-from fastapi import HTTPException
 from pydantic import ValidationError
 
+from dao.usuario_dao import UsuarioDAOSQLite
 from database.conexion import obtener_conexion
 from domain.modelos_onboarding import (
     CargarDocumentoDTO,
@@ -38,12 +38,13 @@ from services.onboarding_service import (
     OnboardingService,
 )
 from services.usuario_service import (
+    CorreoYaRegistradoError,
     UsuarioService,
-    buscar_usuario_por_email,
-    buscar_usuario_por_id,
     hash_password,
 )
 from tests.base import crear_bd_aislada
+
+_usuarios = UsuarioDAOSQLite()
 
 
 class BaseTestRegistro(unittest.TestCase):
@@ -60,7 +61,7 @@ class BaseTestRegistro(unittest.TestCase):
     def _leer_usuario(self, usuario_id: UUID):
         """Lee un usuario directamente de SQLite (verifica persistencia real)."""
         with obtener_conexion(self.db_path) as conn:
-            return buscar_usuario_por_id(conn, usuario_id)
+            return _usuarios.obtener_por_id(conn, usuario_id)
 
     def _crear_documentos_transportista_validos(self) -> list[CargarDocumentoDTO]:
         """Genera la lista con los 5 documentos requeridos en formatos válidos."""
@@ -228,11 +229,10 @@ class TestCA02CorreoDuplicado(BaseTestRegistro):
             password="otraPassword123",
         )
 
-        with self.assertRaises(HTTPException) as ctx:
+        with self.assertRaises(CorreoYaRegistradoError) as ctx:
             UsuarioService.registrar_usuario(dto2)
 
-        self.assertEqual(ctx.exception.status_code, 400)
-        self.assertIn("email ya está registrado", ctx.exception.detail)
+        self.assertIn("email ya está registrado", str(ctx.exception))
 
     def test_impedir_registro_con_correo_duplicado_distinto_rol(self) -> None:
         """El correo debe ser único en toda la plataforma independientemente del rol."""
@@ -251,11 +251,10 @@ class TestCA02CorreoDuplicado(BaseTestRegistro):
             password="password123",
         )
 
-        with self.assertRaises(HTTPException) as ctx:
+        with self.assertRaises(CorreoYaRegistradoError) as ctx:
             UsuarioService.registrar_usuario(dto_dador)
 
-        self.assertEqual(ctx.exception.status_code, 400)
-        self.assertIn("email ya está registrado", ctx.exception.detail)
+        self.assertIn("email ya está registrado", str(ctx.exception))
 
     def test_correo_duplicado_es_insensible_a_mayusculas(self) -> None:
         """La detección de correo duplicado no debe ser burlada por diferencias de mayúsculas/minúsculas."""
@@ -274,11 +273,10 @@ class TestCA02CorreoDuplicado(BaseTestRegistro):
             password="password123",
         )
 
-        with self.assertRaises(HTTPException) as ctx:
+        with self.assertRaises(CorreoYaRegistradoError) as ctx:
             UsuarioService.registrar_usuario(dto2)
 
-        self.assertEqual(ctx.exception.status_code, 400)
-        self.assertIn("email ya está registrado", ctx.exception.detail)
+        self.assertIn("email ya está registrado", str(ctx.exception))
 
     def test_intento_duplicado_no_sobreescribe_cuenta_existente(self) -> None:
         """El intento fallido por email duplicado no debe modificar el registro original."""
@@ -297,7 +295,7 @@ class TestCA02CorreoDuplicado(BaseTestRegistro):
             password="passwordNueva999",
         )
 
-        with self.assertRaises(HTTPException):
+        with self.assertRaises(CorreoYaRegistradoError):
             UsuarioService.registrar_usuario(dto2)
 
         en_bd = self._leer_usuario(creado.id)
@@ -651,7 +649,7 @@ class TestPersistenciaSQLiteIntegracion(unittest.TestCase):
 
         # Recuperar directamente desde SQLite
         with obtener_conexion(self.db_path) as conn:
-            recuperado = buscar_usuario_por_id(conn, creado.id)
+            recuperado = _usuarios.obtener_por_id(conn, creado.id)
         self.assertIsNotNone(recuperado)
         assert recuperado is not None
         self.assertEqual(recuperado.nombre, "Transportista SQLite")
@@ -662,7 +660,7 @@ class TestPersistenciaSQLiteIntegracion(unittest.TestCase):
 
         # Recuperar por email insensible a mayúsculas
         with obtener_conexion(self.db_path) as conn:
-            recuperado_email = buscar_usuario_por_email(conn, "SQLITE.TEST@CORREO.CL")
+            recuperado_email = _usuarios.obtener_por_email(conn, "SQLITE.TEST@CORREO.CL")
         self.assertIsNotNone(recuperado_email)
         assert recuperado_email is not None
         self.assertEqual(recuperado_email.id, creado.id)

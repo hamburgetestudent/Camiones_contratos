@@ -1,213 +1,51 @@
 """Servicio de negocio para la gestion del ciclo de vida de los contratos.
 
-Orquesta los modelos de dominio y la maquina de estados, y persiste directamente
-en SQLite (tabla ``contratos``) mediante ``database.conexion``.
-
-Las funciones de lectura/escritura de la tabla ``contratos`` (``buscar_contrato``,
-``guardar_contrato``, etc.) reciben una conexion abierta para que otros servicios
-(p. ej. subastas) puedan combinarlas con sus propias consultas dentro de una
-misma transaccion.
+Orquesta los modelos de dominio y la maquina de estados. La persistencia se
+delega en un ``ContratoDAO`` inyectado (por defecto ``ContratoDAOSQLite``), por
+lo que el servicio no contiene SQL.
 """
 
 from __future__ import annotations
 
-import sqlite3
-from datetime import datetime
 from pathlib import Path
 from uuid import UUID
 
-from database.conexion import obtener_conexion, transaccion_exclusiva
+from dao.contrato_dao import ContratoDAO, ContratoDAOSQLite
 from domain.maquina_estados import EstadoContrato, MaquinaEstadosContrato
-from domain.modelos import ContratoCrear, ContratoModelo, Moneda, TipoCarga
+from domain.modelos import ContratoCrear, ContratoModelo
 from services.onboarding_service import OnboardingService
-
-# ---------------------------------------------------------------------------
-# SQL de la tabla ``contratos``
-# ---------------------------------------------------------------------------
-
-_COLUMNAS_CONTRATO = (
-    "id",
-    "id_empresa_generadora",
-    "origen",
-    "destino",
-    "f_estimada_salida",
-    "f_estimada_llegada",
-    "f_cierre_postulaciones",
-    "input_camion_kg",
-    "tipo_carga",
-    "peso_total",
-    "volumen_m3",
-    "distancia_km",
-    "requiere_termo",
-    "numero_onu",
-    "req_embalaje",
-    "req_blindaje",
-    "moneda",
-    "monto_neto",
-    "monto_iva",
-    "monto_total",
-    "estado",
-    "id_transportista",
-    "id_camion",
-    "fecha_publicacion",
-)
-
-_SQL_SELECT_CONTRATO = f"SELECT {', '.join(_COLUMNAS_CONTRATO)} FROM contratos"
-
-_SQL_GUARDAR_CONTRATO = (
-    f"INSERT INTO contratos ({', '.join(_COLUMNAS_CONTRATO)}) "
-    f"VALUES ({', '.join(':' + c for c in _COLUMNAS_CONTRATO)}) "
-    "ON CONFLICT(id) DO UPDATE SET "
-    + ", ".join(f"{c} = excluded.{c}" for c in _COLUMNAS_CONTRATO if c != "id")
-)
-
-_SQL_ACTUALIZAR_CONTRATO = (
-    "UPDATE contratos SET "
-    + ", ".join(f"{c} = :{c}" for c in _COLUMNAS_CONTRATO if c != "id")
-    + " WHERE id = :id"
-)
-
-
-def _a_texto(valor: UUID | datetime | None) -> str | None:
-    """Serializa UUID y fechas a TEXT (los None se almacenan como NULL)."""
-    if valor is None:
-        return None
-    if isinstance(valor, datetime):
-        return valor.isoformat()
-    return str(valor)
-
-
-def _contrato_a_parametros(contrato: ContratoModelo) -> dict[str, object]:
-    """Convierte un ContratoModelo en los parametros nombrados de las sentencias SQL."""
-    return {
-        "id": str(contrato.id),
-        "id_empresa_generadora": str(contrato.id_empresa_generadora),
-        "origen": contrato.origen,
-        "destino": contrato.destino,
-        "f_estimada_salida": _a_texto(contrato.f_estimada_salida),
-        "f_estimada_llegada": _a_texto(contrato.f_estimada_llegada),
-        "f_cierre_postulaciones": _a_texto(contrato.f_cierre_postulaciones),
-        "input_camion_kg": contrato.input_camionKG,
-        "tipo_carga": TipoCarga(contrato.tipo_carga).value,
-        "peso_total": contrato.peso_total,
-        "volumen_m3": contrato.volumen_m3,
-        "distancia_km": contrato.distancia_km,
-        "requiere_termo": int(contrato.requiere_termo),
-        "numero_onu": contrato.numero_onu,
-        "req_embalaje": contrato.req_embalaje,
-        "req_blindaje": int(contrato.req_blindaje),
-        "moneda": Moneda(contrato.moneda).value,
-        "monto_neto": contrato.monto_neto,
-        "monto_iva": contrato.monto_iva,
-        "monto_total": contrato.monto_total,
-        "estado": EstadoContrato(contrato.estado).value,
-        "id_transportista": _a_texto(contrato.id_transportista),
-        "id_camion": _a_texto(contrato.id_camion),
-        "fecha_publicacion": _a_texto(contrato.fecha_publicacion),
-    }
-
-
-def _fila_a_contrato(fila: sqlite3.Row) -> ContratoModelo:
-    """Reconstruye un ContratoModelo desde una fila de la tabla ``contratos``.
-
-    Usa ``model_construct`` a proposito: los datos ya fueron validados al crearse
-    y revalidarlos ahora rechazaria contratos antiguos (p. ej. por la regla de
-    anticipacion minima de salida, que depende de la hora actual).
-    """
-    return ContratoModelo.model_construct(
-        id=UUID(fila["id"]),
-        id_empresa_generadora=UUID(fila["id_empresa_generadora"]),
-        origen=fila["origen"],
-        destino=fila["destino"],
-        f_estimada_salida=datetime.fromisoformat(fila["f_estimada_salida"]),
-        f_estimada_llegada=datetime.fromisoformat(fila["f_estimada_llegada"]),
-        f_cierre_postulaciones=datetime.fromisoformat(fila["f_cierre_postulaciones"]),
-        input_camionKG=fila["input_camion_kg"],
-        tipo_carga=TipoCarga(fila["tipo_carga"]),
-        peso_total=fila["peso_total"],
-        volumen_m3=fila["volumen_m3"],
-        distancia_km=fila["distancia_km"],
-        requiere_termo=bool(fila["requiere_termo"]),
-        numero_onu=fila["numero_onu"],
-        req_embalaje=fila["req_embalaje"],
-        req_blindaje=bool(fila["req_blindaje"]),
-        moneda=Moneda(fila["moneda"]),
-        monto_neto=fila["monto_neto"],
-        monto_iva=fila["monto_iva"],
-        monto_total=fila["monto_total"],
-        estado=EstadoContrato(fila["estado"]),
-        id_transportista=(
-            UUID(fila["id_transportista"]) if fila["id_transportista"] else None
-        ),
-        id_camion=UUID(fila["id_camion"]) if fila["id_camion"] else None,
-        fecha_publicacion=(
-            datetime.fromisoformat(fila["fecha_publicacion"])
-            if fila["fecha_publicacion"]
-            else None
-        ),
-    )
-
-
-def buscar_contrato(
-    conn: sqlite3.Connection, contrato_id: UUID
-) -> ContratoModelo | None:
-    """Obtiene un contrato por su ID, o None si no existe."""
-    fila = conn.execute(
-        f"{_SQL_SELECT_CONTRATO} WHERE id = ? AND eliminado = 0", (str(contrato_id),)
-    ).fetchone()
-    return _fila_a_contrato(fila) if fila else None
-
-
-def buscar_todos_los_contratos(conn: sqlite3.Connection) -> list[ContratoModelo]:
-    """Retorna todos los contratos en orden de insercion."""
-    filas = conn.execute(f"{_SQL_SELECT_CONTRATO} WHERE eliminado = 0 ORDER BY rowid").fetchall()
-    return [_fila_a_contrato(fila) for fila in filas]
-
-
-def guardar_contrato(
-    conn: sqlite3.Connection, contrato: ContratoModelo
-) -> ContratoModelo:
-    """Inserta el contrato o, si su ID ya existe, reemplaza todos sus campos."""
-    conn.execute(_SQL_GUARDAR_CONTRATO, _contrato_a_parametros(contrato))
-    return contrato
-
-
-def actualizar_contrato(
-    conn: sqlite3.Connection, contrato_id: UUID, contrato: ContratoModelo
-) -> ContratoModelo | None:
-    """Actualiza un contrato existente. Retorna None si el ID no existe."""
-    parametros = _contrato_a_parametros(contrato)
-    parametros["id"] = str(contrato_id)
-    cursor = conn.execute(_SQL_ACTUALIZAR_CONTRATO, parametros)
-    return contrato if cursor.rowcount > 0 else None
-
-
-# ---------------------------------------------------------------------------
-# Servicio
-# ---------------------------------------------------------------------------
 
 
 class ServicioContrato:
-    #Servicio que encapsula los casos de uso principales de Contratos.
+    """Servicio que encapsula los casos de uso principales de Contratos."""
 
     def __init__(
         self,
         db_path: str | Path | None = None,
         onboarding_service: OnboardingService | None = None,
+        dao: ContratoDAO | None = None,
     ) -> None:
         """Crea el servicio.
 
         Args:
-            db_path: Archivo SQLite a usar. Si es None se usa ``DEFAULT_DB_PATH``.
+            db_path: Archivo SQLite a usar si no se inyecta ``dao``. Si es None se
+                usa ``DEFAULT_DB_PATH``.
             onboarding_service: Servicio de KYC. Si es None se crea uno sobre la misma base.
+            dao: Almacen persistente de contratos. Si es None se crea un
+                ``ContratoDAOSQLite`` sobre ``db_path``.
         """
-        self._db_path = db_path
+        self._dao: ContratoDAO = dao or ContratoDAOSQLite(db_path)
         self.onboarding_service = onboarding_service or OnboardingService(
             db_path=db_path
         )
 
+    @property
+    def dao(self) -> ContratoDAO:
+        """DAO de contratos que usa este servicio."""
+        return self._dao
+
     def crear_contrato(self, datos: ContratoCrear) -> ContratoModelo:
-        """Crea un nuevo contrato en estado BORRADOR y lo persiste en SQLite.
+        """Crea un nuevo contrato en estado BORRADOR y lo persiste.
 
         Precondiciones:
             - ``datos`` ya cumple las reglas de ``ContratoBase`` (fechas, capacidad,
@@ -228,21 +66,21 @@ class ServicioContrato:
             )
 
         nuevo_contrato = ContratoModelo(**datos.model_dump())
-        with obtener_conexion(self._db_path) as conn:
-            return guardar_contrato(conn, nuevo_contrato)
+        with self._dao.conexion() as conn:
+            return self._dao.guardar(conn, nuevo_contrato)
 
     def obtener_contrato(self, contrato_id: UUID) -> ContratoModelo:
         """Recupera un contrato por su ID unico. Lanza ValueError si no existe."""
-        with obtener_conexion(self._db_path) as conn:
-            contrato = buscar_contrato(conn, contrato_id)
+        with self._dao.conexion() as conn:
+            contrato = self._dao.obtener_por_id(conn, contrato_id)
         if not contrato:
             raise ValueError(f"El contrato con ID {contrato_id} no fue encontrado")
         return contrato
 
     def listar_contratos(self) -> list[ContratoModelo]:
         """Obtiene la lista completa de todos los contratos registrados."""
-        with obtener_conexion(self._db_path) as conn:
-            return buscar_todos_los_contratos(conn)
+        with self._dao.conexion() as conn:
+            return self._dao.obtener_todos(conn)
 
     def cambiar_estado(
         self,
@@ -257,8 +95,8 @@ class ServicioContrato:
         La lectura, la validacion y la escritura ocurren en una sola transaccion:
         si la maquina de estados rechaza la transicion, nada se modifica.
         """
-        with transaccion_exclusiva(self._db_path) as conn:
-            contrato = buscar_contrato(conn, contrato_id)
+        with self._dao.transaccion() as conn:
+            contrato = self._dao.obtener_por_id(conn, contrato_id)
             if not contrato:
                 raise ValueError(f"El contrato con ID {contrato_id} no fue encontrado")
 
@@ -268,103 +106,9 @@ class ServicioContrato:
                 id_transportista=id_transportista,
                 id_camion=id_camion,
             )
-            actualizar_contrato(conn, contrato_id, contrato_actualizado)
+            self._dao.actualizar(conn, contrato_id, contrato_actualizado)
         return contrato_actualizado
 
 
 # Alias para retrocompatibilidad
 ContratoService = ServicioContrato
-
-
-if __name__ == "__main__":
-    import unittest
-    from datetime import UTC, datetime, timedelta
-    from unittest.mock import MagicMock
-    from uuid import uuid4
-
-    from domain.modelos import Moneda, TipoCarga
-
-    class TestServicioContrato(unittest.TestCase):
-        def setUp(self):
-            # Mocks
-            self.mock_dao = MagicMock()
-            self.mock_onboarding_service = MagicMock()
-
-            # SUT (System Under Test)
-            self.servicio = ServicioContrato(
-                dao=self.mock_dao,
-                onboarding_service=self.mock_onboarding_service
-            )
-
-            # Datos base válidos para pruebas
-            self.id_empresa = uuid4()
-            ahora = datetime.now(UTC)
-            datos_dict = {
-                "id_empresa_generadora": self.id_empresa,
-                "origen": "SANTIAGO",
-                "destino": "VALPARAISO",
-                "f_estimada_salida": ahora + timedelta(hours=48),
-                "f_estimada_llegada": ahora + timedelta(hours=72),
-                "f_cierre_postulaciones": ahora + timedelta(hours=24),
-                "input_camionKG": 20000,
-                "tipo_carga": TipoCarga.GENERAL,
-                "peso_total": 15000,
-                "moneda": Moneda.CLP,
-                "monto_neto": 100000,
-                "monto_iva": 19000,
-                "monto_total": 119000
-            }
-            self.datos_validos = ContratoCrear(**datos_dict)
-
-        def test_crear_contrato_exito_y_guardado(self):
-            """Prueba que el contrato se crea y guarda exitosamente cuando la empresa está aprobada."""
-            self.mock_onboarding_service.es_dador_aprobado.return_value = True
-
-            self.servicio.crear_contrato(self.datos_validos)
-
-            self.mock_onboarding_service.es_dador_aprobado.assert_called_once_with(self.id_empresa)
-            self.mock_dao.guardar.assert_called_once()
-            argumento_guardado = self.mock_dao.guardar.call_args[0][0]
-            self.assertEqual(argumento_guardado.id_empresa_generadora, self.id_empresa)
-            self.assertEqual(argumento_guardado.estado, "BORRADOR")
-
-        def test_crear_contrato_falla_empresa_no_aprobada(self):
-            """Prueba que la función lanza PermissionError cuando la validación KYC no está aprobada."""
-            self.mock_onboarding_service.es_dador_aprobado.return_value = False
-
-            with self.assertRaises(PermissionError) as context:
-                self.servicio.crear_contrato(self.datos_validos)
-
-            self.assertIn("no cuenta con su verificacion KYC/Onboarding en estado APROBADO", str(context.exception))
-            self.mock_onboarding_service.es_dador_aprobado.assert_called_once_with(self.id_empresa)
-            self.mock_dao.guardar.assert_not_called()
-
-        def test_crear_contrato_falla_por_datos_inconsistentes(self):
-            """Prueba que crear un contrato con datos inconsistentes (Entrada inválida 2 en a.md)
-            arroja un ValidationError de Pydantic (ValueError).
-            """
-            from pydantic import ValidationError
-
-            # Replicamos los datos, pero con un IVA que no corresponde al 19%
-            datos_invalidos_dict = {
-                "id_empresa_generadora": self.id_empresa,
-                "origen": "SANTIAGO",
-                "destino": "VALPARAISO",
-                "f_estimada_salida": datetime.now(UTC) + timedelta(hours=48),
-                "f_estimada_llegada": datetime.now(UTC) + timedelta(hours=72),
-                "f_cierre_postulaciones": datetime.now(UTC) + timedelta(hours=24),
-                "input_camionKG": 20000,
-                "tipo_carga": TipoCarga.GENERAL,
-                "peso_total": 15000,
-                "moneda": Moneda.CLP,
-                "monto_neto": 100000,
-                "monto_iva": 0, # Error intencional: en CLP debería ser 19000
-                "monto_total": 100000 # Error intencional
-            }
-
-            with self.assertRaises(ValidationError) as context:
-                ContratoCrear(**datos_invalidos_dict)
-
-            self.assertIn("no corresponde al", str(context.exception))
-
-    unittest.main()

@@ -21,6 +21,7 @@ from uuid import UUID, uuid4
 from fastapi import HTTPException
 from pydantic import ValidationError
 
+from dao.usuario_dao import UsuarioDAOSQLite
 from database.conexion import obtener_conexion
 from domain.modelos_login import CredencialesLogin, RespuestaLogin
 from domain.modelos_usuario import (
@@ -31,8 +32,14 @@ from domain.modelos_usuario import (
 )
 from routers.auth_router import iniciar_sesion as router_iniciar_sesion
 from services.security import decodificar_token_acceso
-from services.usuario_service import UsuarioService, guardar_usuario, hash_password
+from services.usuario_service import (
+    CredencialesInvalidasError,
+    UsuarioService,
+    hash_password,
+)
 from tests.base import crear_bd_aislada
+
+_usuarios = UsuarioDAOSQLite()
 
 
 class _MockResponse:
@@ -139,7 +146,7 @@ class BaseTestLogin(unittest.TestCase):
     def _guardar_usuario(self, usuario: UsuarioModelo) -> None:
         """Persiste un usuario semilla directamente en SQLite."""
         with obtener_conexion(self.db_path) as conn:
-            guardar_usuario(conn, usuario)
+            _usuarios.guardar(conn, usuario)
 
 
 class TestCA01InicioSesionExitoso(BaseTestLogin):
@@ -247,33 +254,31 @@ class TestCA01InicioSesionExitoso(BaseTestLogin):
 
 
 class TestCA02CredencialesIncorrectas(BaseTestLogin):
-    """CA2: Rechazo ante credenciales incorrectas con HTTP 401 «Credenciales inválidas»."""
+    """CA2: Rechazo ante credenciales incorrectas con error de negocio y HTTP 401 «Credenciales inválidas»."""
 
     def test_rechazo_usuario_no_registrado_servicio(self) -> None:
-        """Intento con correo no registrado lanza HTTP 401 con 'Credenciales inválidas'."""
+        """Intento con correo no registrado lanza CredencialesInvalidasError con 'Credenciales inválidas'."""
         credenciales = CredencialesLogin(
             usuario="desconocido@correo.cl",
             password=self.password_comun,
         )
 
-        with self.assertRaises(HTTPException) as ctx:
+        with self.assertRaises(CredencialesInvalidasError) as ctx:
             UsuarioService.iniciar_sesion(credenciales)
 
-        self.assertEqual(ctx.exception.status_code, 401)
-        self.assertEqual(ctx.exception.detail, "Credenciales inválidas")
+        self.assertEqual(str(ctx.exception), "Credenciales inválidas")
 
     def test_rechazo_password_incorrecta_servicio(self) -> None:
-        """Intento con password incorrecta lanza HTTP 401 con 'Credenciales inválidas'."""
+        """Intento con password incorrecta lanza CredencialesInvalidasError con 'Credenciales inválidas'."""
         credenciales = CredencialesLogin(
             usuario="juan.chofer@transporte.cl",
             password="claveCompletamenteErronea999",
         )
 
-        with self.assertRaises(HTTPException) as ctx:
+        with self.assertRaises(CredencialesInvalidasError) as ctx:
             UsuarioService.iniciar_sesion(credenciales)
 
-        self.assertEqual(ctx.exception.status_code, 401)
-        self.assertEqual(ctx.exception.detail, "Credenciales inválidas")
+        self.assertEqual(str(ctx.exception), "Credenciales inválidas")
 
     def test_cliente_http_rechazo_correo_no_registrado_retorna_401(self) -> None:
         """Endpoint HTTP retorna 401 Unauthorized con detalle «Credenciales inválidas»."""

@@ -1,18 +1,15 @@
-"""Tests unitarios de la persistencia de usuarios (SQL directo en usuario_service)."""
+"""Tests unitarios de la persistencia de usuarios (UsuarioDAOSQLite)."""
 
 from __future__ import annotations
 
 from uuid import uuid4
 
+from dao.usuario_dao import UsuarioDAOSQLite
 from database.conexion import obtener_conexion
 from domain.modelos_usuario import EstadoUsuario, RolUsuario, UsuarioModelo
-from services.usuario_service import (
-    buscar_todos_los_usuarios,
-    buscar_usuario_por_email,
-    buscar_usuario_por_id,
-    guardar_usuario,
-)
 from tests.persistencia.base import BaseTestPersistencia
+
+_usuarios = UsuarioDAOSQLite()
 
 
 class TestPersistenciaUsuarios(BaseTestPersistencia):
@@ -20,7 +17,7 @@ class TestPersistenciaUsuarios(BaseTestPersistencia):
 
     def _guardar(self, usuario: UsuarioModelo) -> UsuarioModelo:
         with obtener_conexion(self.db_path) as conn:
-            return guardar_usuario(conn, usuario)
+            return _usuarios.guardar(conn, usuario)
 
     def test_guardar_y_obtener_por_id(self) -> None:
         user = UsuarioModelo(
@@ -35,7 +32,7 @@ class TestPersistenciaUsuarios(BaseTestPersistencia):
         self.assertEqual(guardado.id, user.id)
 
         with obtener_conexion(self.db_path) as conn:
-            recuperado = buscar_usuario_por_id(conn, user.id)
+            recuperado = _usuarios.obtener_por_id(conn, user.id)
         self.assertIsNotNone(recuperado)
         assert recuperado is not None
         self.assertEqual(recuperado.nombre, "Juan Chofer")
@@ -45,7 +42,7 @@ class TestPersistenciaUsuarios(BaseTestPersistencia):
 
     def test_obtener_por_id_inexistente_retorna_none(self) -> None:
         with obtener_conexion(self.db_path) as conn:
-            self.assertIsNone(buscar_usuario_por_id(conn, uuid4()))
+            self.assertIsNone(_usuarios.obtener_por_id(conn, uuid4()))
 
     def test_obtener_por_email_insensible_a_mayusculas(self) -> None:
         user = UsuarioModelo(
@@ -59,7 +56,7 @@ class TestPersistenciaUsuarios(BaseTestPersistencia):
         self._guardar(user)
 
         with obtener_conexion(self.db_path) as conn:
-            recuperado = buscar_usuario_por_email(conn, "  PEDRO@EMPRESA.CL ")
+            recuperado = _usuarios.obtener_por_email(conn, "  PEDRO@EMPRESA.CL ")
         self.assertIsNotNone(recuperado)
         assert recuperado is not None
         self.assertEqual(recuperado.id, user.id)
@@ -76,7 +73,7 @@ class TestPersistenciaUsuarios(BaseTestPersistencia):
         self._guardar(user)
 
         with obtener_conexion(self.db_path) as conn:
-            todos = buscar_todos_los_usuarios(conn)
+            todos = _usuarios.obtener_todos(conn)
         self.assertEqual(len(todos), 1)
         self.assertEqual(todos[0].estado, EstadoUsuario.APROBADO)
 
@@ -89,7 +86,7 @@ class TestPersistenciaUsuarios(BaseTestPersistencia):
                 UsuarioModelo(nombre=nombre, email=correo, rol=rol, password_hash="h")
             )
         with obtener_conexion(self.db_path) as conn:
-            todos = buscar_todos_los_usuarios(conn)
+            todos = _usuarios.obtener_todos(conn)
         self.assertEqual([u.nombre for u in todos], ["U1", "U2"])
 
     def test_el_correo_se_guarda_en_minusculas(self) -> None:
@@ -103,3 +100,34 @@ class TestPersistenciaUsuarios(BaseTestPersistencia):
         )
         filas = self.consultar("SELECT email FROM usuarios")
         self.assertEqual(filas[0]["email"], "mayus@test.cl")
+
+
+class TestSupervivenciaAReinicioUsuarios(BaseTestPersistencia):
+    """Nuevas instancias de DAO sobre el mismo archivo conservan usuarios y KYC."""
+
+    def test_usuario_y_documento_sobreviven_a_nuevas_instancias(self) -> None:
+        from dao.onboarding_dao import DocumentoDAOSQLite
+        from domain.modelos_onboarding import TipoDocumento
+        from services.onboarding_service import OnboardingService
+
+        usuario = UsuarioModelo(
+            nombre="Ana",
+            email="ana@empresa.cl",
+            rol=RolUsuario.TRANSPORTISTA,
+            password_hash="h",
+        )
+        with obtener_conexion(self.db_path) as conn:
+            UsuarioDAOSQLite(self.db_path).guardar(conn, usuario)
+        OnboardingService(db_path=self.db_path).cargar_documento(
+            usuario.id, TipoDocumento.LICENCIA_CONDUCIR, "licencia.pdf"
+        )
+
+        with obtener_conexion(self.db_path) as conn:
+            recuperado = UsuarioDAOSQLite(self.db_path).obtener_por_email(
+                conn, " ANA@empresa.cl "
+            )
+            documentos = DocumentoDAOSQLite(self.db_path).obtener_por_usuario(
+                conn, usuario.id
+            )
+        self.assertEqual(recuperado.id, usuario.id)
+        self.assertEqual([d.archivo for d in documentos], ["licencia.pdf"])
