@@ -5,6 +5,7 @@ en los servicios, de modo que todo el estado de negocio (usuarios, onboarding,
 contratos y subastas) sobrevive a un reinicio de la aplicacion.
 """
 
+from dao.admin_dao import AdminDAO, AdminDAOSQLite
 from dao.contrato_dao import ContratoDAO, ContratoDAOSQLite
 from dao.onboarding_dao import (
     DadorCargaDAO,
@@ -13,7 +14,9 @@ from dao.onboarding_dao import (
     DocumentoDAOSQLite,
 )
 from dao.postulacion_dao import PostulacionDAO, PostulacionDAOSQLite
+from dao.sesion_dao import SesionDAO, SesionDAOSQLite
 from dao.usuario_dao import UsuarioDAO, UsuarioDAOSQLite
+from services import admin_service, sesion_service
 from services.contrato_service import ServicioContrato
 from services.onboarding_service import OnboardingService
 from services.subasta_service import ServicioSubasta
@@ -25,9 +28,14 @@ postulacion_dao: PostulacionDAO = PostulacionDAOSQLite()
 usuario_dao: UsuarioDAO = UsuarioDAOSQLite()
 documento_dao: DocumentoDAO = DocumentoDAOSQLite()
 dador_dao: DadorCargaDAO = DadorCargaDAOSQLite()
+sesion_dao: SesionDAO = SesionDAOSQLite()
+admin_dao: AdminDAO = AdminDAOSQLite()
 
-# Usuarios y onboarding usan los mismos DAO compartidos
+# Usuarios, sesiones, administración y onboarding usan los mismos DAO compartidos
 UsuarioService.dao = usuario_dao
+sesion_service.sesion_dao = sesion_dao
+admin_service.admin_dao = admin_dao
+admin_service._contratos = contrato_dao
 servicio_onboarding = OnboardingService(
     documento_dao=documento_dao, dador_dao=dador_dao
 )
