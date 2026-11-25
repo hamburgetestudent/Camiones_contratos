@@ -13,6 +13,9 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Falló la instalación de dependencias Python.' }
     npm.cmd --prefix frontend ci
     if ($LASTEXITCODE -ne 0) { throw 'Falló npm ci.' }
+    # Electron 44 instala su runtime bajo demanda, incluso después de npm ci.
+    & .\frontend\node_modules\.bin\install-electron.cmd
+    if ($LASTEXITCODE -ne 0) { throw 'Falló la preparación del runtime y sus avisos de Electron.' }
     & $python scripts/build_backend.py
     if ($LASTEXITCODE -ne 0) { throw 'Falló la construcción del backend.' }
     & $python scripts/preparar_entrega.py

@@ -107,7 +107,7 @@ Antes de descargar y ejecutar el proyecto, asegúrate de contar con:
 
 * **Git**
 * **Python:** `3.12` *(probado en CI con Python `3.12`)*
-* **Node.js:** `v20+` *(recomendado `v24` LTS, versión usada en GitHub Actions)* y **npm** `v10+`
+* **Node.js:** `v24` en GitHub Actions; construcción local comprobada con `v26.13.0` y **npm** `v10+`
 
 ---
 
