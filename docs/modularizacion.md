@@ -112,7 +112,10 @@ Camiones_contratos/
 3. **Cliente HTTP y sesión compartidos en Frontend (`5` vistas ➔ `frontend/codigos/paginas/comun/api.js`):**
    * **Antes:** La resolución de `API_BASE_URL`, el borrado de claves de `localStorage`, el parseo del campo `detail` de FastAPI y los envoltorios `fetch` con `Authorization: Bearer` estaban duplicados en `Login/script.js`, `Registrar_nuevoUsuario/registro.js`, `Principal/principal.js`, `Crear_contrato/crear_contrato.js` y `panel/panel.js`.
    * **Después:** [`frontend/codigos/paginas/comun/api.js`](../frontend/codigos/paginas/comun/api.js) expone `window.MVApi` y preserva la resolución automática tanto en Electron (`file://` ➔ `http://127.0.0.1:8000`) como servido por FastAPI (`window.location.origin`) o sobrescrito en pruebas (`window.API_BASE_URL`). Las 5 vistas cargan `../comun/api.js` y delegan en él.
-4. **Limpieza estructural (`454781b`):**
+4. **Desacoplamiento de errores HTTP en `UsuarioService` (`services/usuario_service.py` ➔ `routers/auth_router.py`):**
+   * **Antes:** `UsuarioService` importaba `fastapi.HTTPException` y decidía directamente los códigos HTTP (`400`, `401`, `404`) ante correo duplicado, credenciales inválidas, campos vacíos o usuario inexistente.
+   * **Después:** `UsuarioService` comunica errores puros de negocio (`CorreoYaRegistradoError`, `CredencialesInvalidasError`, `UsuarioNoEncontradoError`, `ValueError`) sin importar `fastapi`, y [`routers/auth_router.py`](../routers/auth_router.py) los traduce mediante `_ejecutar_usuario_http` conservando exactamente los mismos códigos y mensajes HTTP (verificado en pruebas del servicio y del endpoint en [`tests/usuarios/test_router_auth.py`](../tests/usuarios/test_router_auth.py)).
+5. **Limpieza estructural (`454781b`):**
    * Se retiraron `2.ts` (ejercicio académico ajeno a la plataforma), `frontend/codigos/paginas/panel_funciones/` (vista reemplazada por `panel/` sin referencias) y `frontend/codigos/prueba_coneccion/` (script exploratorio obsoleto).
 
 ---
@@ -145,10 +148,11 @@ cd frontend && npx tsc --noEmit
 | Consultas SQL directas (`conn.execute` / `obtener_conexion`) en `routers/` | `3` (`routers/sesion.py`) | `0` |
 | Consultas SQL directas (`conn.execute` / `obtener_conexion` / `transaccion_exclusiva`) en `services/` | `9` (`services/admin_service.py`) | `0` |
 | Consultas SQL directas en `domain/` | `0` | `0` |
+| Dependencias/lanzamientos de `HTTPException` (`fastapi`) en `services/` | `7` (`services/usuario_service.py`) | `0` |
 | Definiciones duplicadas de URL base (`http://127.0.0.1:8000`) en `frontend/codigos/paginas/` | `5` (una por vista) | `1` (`paginas/comun/api.js`) |
 | Archivos ajenos o carpetas de vistas obsoletas (`2.ts`, `panel_funciones/`, `prueba_coneccion/`) | `3` | `0` |
 | Caso representativo (`tests.test_panel_admin` + `tests.seguridad.test_sesion_service`) | `10` OK (`2.115s`) *(sin pruebas unitarias aisladas de sesión)* | `15` OK (`2.471s`) *(10 de panel/HTTP + 5 nuevas de `sesion_service`)* |
-| Suite completa backend (`unittest discover`) | `222` de `222` OK (`18.850s`) | `227` de `227` OK (`18.889s`) |
+| Suite completa backend (`unittest discover`) | `222` de `222` OK (`18.850s`) | `231` de `231` OK (`21.832s`) |
 | Linter backend (`ruff check .`) | `All checks passed!` | `All checks passed!` |
 | Frontend (`npx tsc --noEmit` y `node --check`) | `0` errores | `0` errores |
 
@@ -167,4 +171,6 @@ Todos los cambios se aplicaron en pasos pequeños sobre la rama `feat/criterio3-
 | `4ea0782` | `refactor(frontend-auth): conectar vistas de Login y Registro al módulo comun/api.js` | Conecta `Login/` y `Registrar_nuevoUsuario/` al cliente compartido `window.MVApi`. |
 | `8c8a7b3` | `refactor(frontend-vistas): centralizar llamadas autenticadas de Catálogo, Crear contrato y Panel en comun/api.js` | Conecta `Principal/`, `Crear_contrato/` y `panel/` a `window.MVApi`. |
 | `454781b` | `chore(limpieza): eliminar archivo de ejercicio 2.ts y vistas obsoletas del frontend` | Elimina `2.ts`, `frontend/codigos/paginas/panel_funciones/` y `frontend/codigos/prueba_coneccion/`. |
-| Commit de documentación | `docs(criterio-3): registrar modularización de estructura, responsabilidades y trazabilidad en docs y README` | Agrega este documento y actualiza la arquitectura y enlaces del Hito 3 en [`README.md`](../README.md). |
+| `9ffd1fa` | `docs(criterio-3): registrar modularización de estructura, responsabilidades y trazabilidad en docs y README` | Agrega este documento y actualiza la arquitectura y enlaces del Hito 3 en [`README.md`](../README.md). |
+| `refactor(usuarios)` | `refactor(usuarios): desacoplar errores de negocio de UsuarioService de las respuestas HTTP en auth_router` | Elimina `HTTPException` de `services/usuario_service.py`, traduce errores en `routers/auth_router.py` y verifica servicio + endpoints HTTP. |
+| Commit de documentación | `docs(usuarios): actualizar contrato de UsuarioService y evidencias de modularización` | Actualiza `docs/contrato-usuario-service.md` y este registro de modularización. |
