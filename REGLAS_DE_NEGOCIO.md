@@ -434,7 +434,7 @@ Implementado en `domain/postulacion.py`, `services/subasta_service.py` y `router
   1. **Subasta Desierta:** Si el plazo expiró y no se recibieron postulaciones previas, la subasta se declara `DESIERTA` y el contrato transiciona automáticamente al estado terminal `EstadoContrato.CANCELADO`.
   2. **Subasta Cerrada:** Si el plazo expiró pero la carga ya contaba con al menos una oferta registrada, la subasta se declara `CERRADA`. Se rechaza cualquier nuevo intento de postulación, pero se mantiene la facultad del dador de carga de adjudicar el flete seleccionando a una de las ofertas recibidas.
 * **Comportamiento ante Infracción al Postular Fuera de Plazo:** Arroja `ValueError("El plazo para postular ha expirado (...). La subasta se declara desierta.")` o `ValueError("El plazo para postular ha expirado (...). La subasta se encuentra cerrada.")` (`HTTP 400 Bad Request`).
-* **Trazabilidad:** `services/subasta_service.py` (Líneas 135-150, 225-262), `tests/test_subasta_expiracion.py`.
+* **Trazabilidad:** `services/subasta_service.py` (Líneas 135-150, 225-262), `tests/subastas/test_subasta_expiracion.py`.
 
 ---
 

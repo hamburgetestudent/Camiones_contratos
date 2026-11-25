@@ -58,9 +58,5 @@ coverage.xml
 *.log
 
 # Carpetas y archivos de desarrollo no necesarios para despliegue
-Smells/
-Cosas_que_se_suben/
-docs_clases/
-thunder-tests/
 2.ts
 tarea2-2_tabla_3.md

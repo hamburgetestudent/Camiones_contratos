@@ -49,7 +49,7 @@ Las llamadas a las rutas de negocio requieren el encabezado `Authorization: Bear
 Desde la raíz, con las dependencias del proyecto y pytest instalados, ejecuta los siguientes comandos.
 
 ```powershell
-python -m pytest tests/test_panel_admin.py -v
+python -m pytest tests/admin/test_panel_admin.py -v
 python -m pytest -q
 ```
 

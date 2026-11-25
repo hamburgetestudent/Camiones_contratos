@@ -33,7 +33,7 @@ This is a desktop Electron client backed by a modular FastAPI REST application.
 - `database/` isolates SQLite persistence (`conexion.py` and `schema.sql`).
 - `frontend/electron/main.ts` creates the Electron window and loads `frontend/src/paginas/login/login.html`; TypeScript is compiled before Electron runs.
 
-For the fuller rationale and module boundaries, consult [`docs_clases/Arquitectura.md`](../docs_clases/Arquitectura.md). For setup details, consult [`README.md`](../README.md).
+For setup details, consult [`README.md`](../README.md).
 
 ## Repository conventions
 

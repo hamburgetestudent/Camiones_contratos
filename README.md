@@ -15,7 +15,6 @@ La arquitectura separa claramente las responsabilidades entre cliente y servidor
 * **Modelado UML (Entrega 3):** [`docs/modelado/`](docs/modelado/) *(y carpeta de trabajo del equipo [`docs/modelados/`](docs/modelados/))*
 * **Panel de administración:** [Navegación, bajas lógicas, auditoría y pruebas](docs/panel-administracion.md)
 * **Reglas de Negocio:** [`REGLAS_DE_NEGOCIO.md`](REGLAS_DE_NEGOCIO.md)
-* **Documento de Arquitectura:** [`docs_clases/Arquitectura.md`](docs_clases/Arquitectura.md)
 * **Changelog, verificación del flujo y cierre de la entrega:** [`CHANGELOG.md`](CHANGELOG.md)
 * **Guía de Pruebas y Cobertura:** [`tests/README.md`](tests/README.md)
 * **Prototipo UI (Figma):** [Contratos camioneros centralizados](https://www.figma.com/design/leoA2Ejoi6cJi13esWBsXQ/Contratos_camioneros_centralizados?node-id=0-1&t=v76XFzFL7hSGl8TY-1)
