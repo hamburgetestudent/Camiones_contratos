@@ -336,9 +336,10 @@ async function navegar() {
   try {
     const params = new URLSearchParams(query);
     let vista;
-    if (usuario.rol === "ADMIN_BACKOFFICE") vista = await vistaAdmin(ruta, params);
-    else if (usuario.rol === "DADOR_CARGA") vista = await vistaDador(ruta, params);
-    else if (usuario.rol === "TRANSPORTISTA") vista = await vistaTransportista(ruta, params);
+    if (usuario.rol === "ADMIN_BACKOFFICE") vista = await window.PanelVistas.admin(ruta, params);
+    else if (usuario.rol === "DADOR_CARGA") vista = await window.PanelVistas.dador(ruta, params);
+    else if (usuario.rol === "TRANSPORTISTA")
+      vista = await window.PanelVistas.transportista(ruta, params);
     else vista = tarjetas(opciones);
     // Una respuesta anterior no debe sobrescribir la pestaña recién seleccionada.
     if (actual === versionVista) contenido.replaceChildren(vista);
