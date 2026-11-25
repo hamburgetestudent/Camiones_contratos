@@ -7,12 +7,90 @@ La arquitectura separa claramente las responsabilidades entre cliente y servidor
 * **Frontend (`frontend/`):** Aplicación de escritorio desarrollada con **Electron** y **TypeScript**, con vistas por rol para autenticación, registro y operación comercial.
 * **Backend (`main.py`, `routers/`, `services/`, `domain/`, `database/`):** API REST modular construida con **FastAPI** y **Pydantic**, lógica de negocio gobernada por una máquina de estados finitos y persistencia directa en **SQLite** (`camiones.db`).
 
+## Entrega 1.0.0 para Windows x64
+
+### Instalar y ejecutar
+
+1. Obtén `MansoViaje-1.0.0-win-x64.exe`, `SHA256SUMS.txt` y `VERSION.txt` de la carpeta de entrega compartida por el equipo. En la copia de construcción están en `release/`. El primer archivo contiene la aplicación, FastAPI, SQLite, las vistas y las cuentas de demostración. El SHA identifica el instalador exacto. `VERSION.txt` identifica el commit y sus comprobaciones en GitHub.
+2. En una carpeta nueva, abre PowerShell y ejecuta los comandos de abajo. Compara el hash con el listado antes de abrir el instalador. Elige una carpeta de instalación para tu usuario. Abre **MansoViaje** desde Inicio. Requiere Windows x64, permiso de escritura en el perfil y el puerto local 8000 libre. La instalación y el flujo funcionan localmente. La descarga inicial y el acceso a GitHub requieren conexión. Los usuarios de prueba vienen incluidos.
+3. Al ver Login ya puedes operar. La primera apertura crea `camiones.db` en los datos de usuario de la aplicación. Para usar un perfil aislado, cierra la aplicación, define `MANSOVIAJE_DATA_DIR` con una ruta absoluta nueva y arranca el ejecutable desde esa misma terminal. Los archivos de datos y `backend.log` estarán allí. La [configuración de ejemplo](.env.example) documenta las variables de entorno.
+
+```powershell
+Get-FileHash -Algorithm SHA256 .\MansoViaje-1.0.0-win-x64.exe
+Get-Content .\SHA256SUMS.txt
+.\MansoViaje-1.0.0-win-x64.exe
+```
+
+Para reproducir el ensayo interno en un usuario de Windows sin una instalación previa, se puede instalar el mismo archivo en una carpeta nueva desde PowerShell. Copia el instalador a la carpeta actual y comprueba su hash con el comando anterior:
+
+```powershell
+$destino = Join-Path $env:LOCALAPPDATA 'MansoViaje-Hito3'
+$instalacion = Start-Process .\MansoViaje-1.0.0-win-x64.exe -ArgumentList "/S /D=$destino" -Wait -PassThru
+if ($instalacion.ExitCode -ne 0) { throw "Error de instalación: $($instalacion.ExitCode)" }
+```
+
+Abre `MansoViaje.exe` desde esa carpeta para la revisión manual. Para la aceptación automatizada, cierra primero la aplicación, extrae las fuentes en otra carpeta y ejecuta desde la raíz de esas fuentes, en la misma sesión de PowerShell:
+
+```powershell
+npm.cmd --prefix frontend ci
+node frontend/tests/entrega.e2e.cjs "$destino\MansoViaje.exe"
+```
+
+El guion usa un perfil temporal independiente y conserva la base de prueba para inspección.
+
+### Postular a una carga y comprobar la persistencia
+
+1. Entra con `contacto@logisticasur.cl` y `dador123`. Abre **Registrar Contrato de Carga → + Nuevo contrato**. Usa origen Valparaíso, destino Concepción, carga general, camión de 12.000 kg, peso de 6.000 kg, CLP y neto de 200.000. Conserva las fechas futuras y los importes calculados. Pulsa **Crear y publicar contrato** y anota el ID.
+2. Cierra sesión. Entra con `juan.perez@rutanorte.cl` y `camion123`. En **Subastas y Cargas Disponibles**, elige la carga y **Ver detalle y postular**. Intenta ofertar 4.900 CLP: el formulario exige al menos 5.000. Corrige a **180.000 CLP**, indica 6 horas y pulsa **Enviar postulación**. Debe aparecer la confirmación.
+3. Vuelve a entrar como dador. En **Gestión de Subastas y Adjudicación → Revisar ofertas**, comprueba una oferta de 180.000 CLP en `POSTULADA` y el contrato en `EN_POSTULACION`. Cierra MansoViaje y vuelve a abrirlo con el mismo perfil. Inicia sesión de nuevo y comprueba los mismos datos.
+
+### Resolver problemas frecuentes
+
+| Síntoma | Qué comprobar |
+|---|---|
+| La pantalla de inicio indica que la API no está disponible | Cierra el Uvicorn de desarrollo si estaba abierto. Consulta `Get-NetTCPConnection -LocalPort 8000 -State Listen` y revisa el propietario antes de detener procesos. Pulsa **Reintentar** cuando el puerto esté disponible. |
+| Falló la inicialización de datos | Comprueba permisos de escritura en la carpeta de datos y revisa `backend.log`. Conserva una copia de la base cerrando primero la aplicación. |
+| Aparece Login de nuevo tras reiniciar | Inicia sesión con la cuenta del mismo rol y comprueba el contrato por ID. La clave de sesión puede renovarse al reiniciar. |
+| El equipo bloquea el instalador | Comprueba el SHA y consulta al responsable del laboratorio si admite instaladores académicos sin firma. |
+| Busco el código o las licencias | Junto al ejecutable instalado está `resources/entrega/` con `fuentes.zip`, `VERSION.txt`, `.env.example` y `THIRD_PARTY_LICENSES.txt`. Extrae el ZIP para seguir los enlaces relativos de este README. |
+
+### Extender el comentario de una oferta y probarlo
+
+Extrae `fuentes.zip` en una carpeta nueva. Para preparar desarrollo en Windows usa Python 3.12 x64, Node 24 con npm y la red para instalar dependencias. Desde la carpeta donde está este README:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt pytest httpx
+npm.cmd --prefix frontend ci
+npm.cmd start
+```
+
+Para admitir comentarios de hasta 600 caracteres, cambia `PostulacionBase.comentario` de 500 a 600 en [el modelo](domain/postulacion.py) y `iComentario.maxLength` al mismo valor en [el formulario](frontend/codigos/paginas/panel/transportista.js). SQLite ya guarda texto. Añade dos casos junto a [las validaciones de postulación](tests/subastas/test_modelos_postulacion.py): construir `PostulacionCrear` con 600 caracteres debe conservar el comentario completo y con 601 debe producir `ValidationError`. Ejecuta la prueba desde la raíz:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests/subastas/test_modelos_postulacion.py -q
+```
+
+### Reconstruir el instalador desde Git
+
+En Windows x64, clona el repositorio, selecciona el commit completo que figura en `VERSION.txt` y ejecuta desde la raíz:
+
+```powershell
+python -m venv .venv
+.\scripts\construir-entrega.ps1
+```
+
+El script usa el lock de Python para Windows y el lockfile npm, genera el backend con PyInstaller y produce el instalador NSIS y su SHA-256 en `release/`. La [suite y cobertura](.github/workflows/tests.yml), la [prueba del ejecutable](frontend/tests/entrega.e2e.cjs), las [notas y cierre](CHANGELOG.md), los [tres casos del panel](docs/integracion-postulacion.md) y la [ficha para otro equipo](docs/revision-externa.md) documentan aspectos distintos de la entrega.
+
 ### Enlaces Rápidos
+
+* **Estructura modular:** [Antes, después y responsabilidades](docs/modularizacion.md)
+* **Contrato reutilizable:** [Servicio de usuarios](docs/contrato-usuario-service.md)
 
 * **Hito 3 · Intervenciones:** [Diagnóstico, tres refactorizaciones y pruebas (criterios 1 y 2)](docs/hito3-intervenciones.md)
 * **Hito 3 · Modularización:** [Criterio 4: modularización de interfaces y dependencias](docs/criterio-4-modularizacion.md)
 * **Hito 3 · Punto 6 (dependencia externa):** [Revisión de `email-validator`: utilidad, mantenimiento, licencia, riesgo y mitigación](docs/revision-dependencia-email-validator.md)
-* **Modelado UML (Entrega 3):** [`docs/modelado/`](docs/modelado/) *(y carpeta de trabajo del equipo [`docs/modelados/`](docs/modelados/))*
+* **Modelado UML (Entrega 3):** [Índice de diagramas](docs/README.md)
 * **Panel de administración:** [Navegación, bajas lógicas, auditoría y pruebas](docs/panel-administracion.md)
 * **Reglas de Negocio:** [`REGLAS_DE_NEGOCIO.md`](REGLAS_DE_NEGOCIO.md)
 * **Documento de Arquitectura:** [`docs_clases/Arquitectura.md`](docs_clases/Arquitectura.md)
@@ -23,17 +101,17 @@ La arquitectura separa claramente las responsabilidades entre cliente y servidor
 
 ---
 
-## Requisitos Previos
+## Requisitos previos para desarrollo
 
 Antes de descargar y ejecutar el proyecto, asegúrate de contar con:
 
 * **Git**
-* **Python:** `3.10` o superior *(probado en CI con Python `3.12`)*
+* **Python:** `3.12` *(probado en CI con Python `3.12`)*
 * **Node.js:** `v20+` *(recomendado `v24` LTS, versión usada en GitHub Actions)* y **npm** `v10+`
 
 ---
 
-## Descarga, Instalación y Ejecución (Paso a Paso)
+## Desarrollo con dos terminales
 
 > [!IMPORTANT]
 > La aplicación funciona en arquitectura cliente-servidor local: el **Backend** debe permanecer ejecutándose en una terminal (`http://127.0.0.1:8000`) mientras utilizas el **Frontend de Electron** desde una segunda terminal.
@@ -92,7 +170,7 @@ Con el backend ya corriendo en la Terminal 1, abre **una nueva terminal** en la 
 
 ```bash
 cd frontend
-npm install
+npm ci
 npm start
 ```
 
@@ -132,9 +210,6 @@ Todos los comandos se ejecutan desde la raíz `Camiones_contratos/` con el entor
 ```bash
 # Ejecutar toda la suite unittest y ver cobertura en consola
 python run_tests.py
-
-# En Windows PowerShell también puedes usar:
-.\run_tests.ps1
 
 # Generar reporte interactivo HTML (queda en htmlcov/index.html)
 python run_tests.py --html
