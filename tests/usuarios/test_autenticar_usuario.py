@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from services.usuario_service import UsuarioService
+from services.usuario_service import CredencialesInvalidasError, UsuarioService
 from tests.usuarios.base import BaseTestUsuarios
 
 
@@ -17,22 +17,27 @@ class TestAutenticarUsuario(BaseTestUsuarios):
         self.assertEqual(usuario.email, "juan.chofer@transporte.cl")
 
     def test_rechazo_usuario_no_registrado(self) -> None:
-        with self.assertHttpException(401, "credenciales inválidas"):
+        with self.assertRaises(CredencialesInvalidasError) as ctx:
             UsuarioService.autenticar_usuario(
                 "no_existe@correo.cl", self.password_comun
             )
+        self.assertEqual(str(ctx.exception), "Credenciales inválidas")
 
     def test_rechazo_password_incorrecta(self) -> None:
-        with self.assertHttpException(401, "credenciales inválidas"):
+        with self.assertRaises(CredencialesInvalidasError) as ctx:
             UsuarioService.autenticar_usuario(
                 "juan.chofer@transporte.cl", "passwordTotalmenteErronea"
             )
+        self.assertEqual(str(ctx.exception), "Credenciales inválidas")
 
     def test_rechazo_campos_vacios_o_espacios(self) -> None:
-        with self.assertHttpException(400, "requeridos"):
+        with self.assertRaises(ValueError) as ctx_email:
             UsuarioService.autenticar_usuario("", self.password_comun)
-        with self.assertHttpException(400, "requeridos"):
+        self.assertIn("requeridos", str(ctx_email.exception))
+
+        with self.assertRaises(ValueError) as ctx_pass:
             UsuarioService.autenticar_usuario("juan.chofer@transporte.cl", "   ")
+        self.assertIn("requeridos", str(ctx_pass.exception))
 
     def test_busca_el_correo_sin_distinguir_mayusculas_ni_espacios(self) -> None:
         usuario = UsuarioService.autenticar_usuario(

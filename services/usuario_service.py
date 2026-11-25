@@ -1,8 +1,6 @@
 import hashlib
 from uuid import UUID
 
-from fastapi import HTTPException, status
-
 from dao.usuario_dao import UsuarioDAO, UsuarioDAOSQLite
 from domain.modelos_login import CredencialesLogin, RespuestaLogin
 from domain.modelos_onboarding import CrearPerfilDadorDTO
@@ -12,6 +10,18 @@ from domain.modelos_usuario import (
 )
 from services.onboarding_service import onboarding_service_instancia
 from services.respuesta_login import construir_respuesta_login
+
+
+class CorreoYaRegistradoError(ValueError):
+    """Error de negocio cuando se intenta registrar un correo ya existente."""
+
+
+class CredencialesInvalidasError(PermissionError):
+    """Error de autenticación cuando el correo no existe o la clave no coincide."""
+
+
+class UsuarioNoEncontradoError(LookupError):
+    """Error de consulta cuando el identificador de usuario no existe."""
 
 
 def hash_password(password: str) -> str:
@@ -38,17 +48,14 @@ class UsuarioService:
             - Si se enviaron documentos o perfil tributario, quedan cargados en PENDIENTE.
 
         Raises:
-            HTTPException: 400 si el email ya existe.
+            CorreoYaRegistradoError: Si el email ya existe en la base de datos.
         """
         # Comprobar unicidad del email y guardar en una sola transaccion (evita
         # que dos registros simultaneos con el mismo email pasen la comprobacion).
         with UsuarioService.dao.transaccion() as conn:
             # El correo sigue vinculado a su titular tras una baja lógica.
             if UsuarioService.dao.existe_email(conn, usuario_data.email):
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="El email ya está registrado",
-                )
+                raise CorreoYaRegistradoError("El email ya está registrado")
 
             nuevo_usuario = UsuarioModelo(
                 nombre=usuario_data.nombre,
@@ -89,33 +96,22 @@ class UsuarioService:
         with UsuarioService.dao.conexion() as conn:
             usuario = UsuarioService.dao.obtener_por_id(conn, usuario_id)
         if not usuario:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado"
-            )
+            raise UsuarioNoEncontradoError("Usuario no encontrado")
         return usuario
 
     @staticmethod
     def autenticar_usuario(email: str, password: str) -> UsuarioModelo:
         """Verifica la existencia del usuario y la validez de su contrasena."""
         if not email or not email.strip() or not password or not password.strip():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Correo electrónico y contraseña requeridos",
-            )
+            raise ValueError("Correo electrónico y contraseña requeridos")
 
         with UsuarioService.dao.conexion() as conn:
             usuario = UsuarioService.dao.obtener_por_email(conn, email.strip())
         if not usuario:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Credenciales inválidas",
-            )
+            raise CredencialesInvalidasError("Credenciales inválidas")
 
         if usuario.password_hash != hash_password(password):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Credenciales inválidas",
-            )
+            raise CredencialesInvalidasError("Credenciales inválidas")
 
         return usuario
 
@@ -126,20 +122,13 @@ class UsuarioService:
         password = credenciales.obtener_password_texto()
 
         if not email and not password:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="El correo electrónico y la contraseña son campos obligatorios.",
+            raise ValueError(
+                "El correo electrónico y la contraseña son campos obligatorios."
             )
         if not email:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="El correo electrónico es un campo obligatorio.",
-            )
+            raise ValueError("El correo electrónico es un campo obligatorio.")
         if not password:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="La contraseña es un campo obligatorio.",
-            )
+            raise ValueError("La contraseña es un campo obligatorio.")
 
         usuario = UsuarioService.autenticar_usuario(email, password)
         return construir_respuesta_login(usuario)
@@ -152,7 +141,7 @@ class ValidadorUsuario:
         try:
             UsuarioService.autenticar_usuario(usuario, password)
             return True
-        except HTTPException:
+        except (CredencialesInvalidasError, ValueError):
             return False
 
     def obtener_datos_usuario(self, usuario: str) -> UsuarioModelo | None:
