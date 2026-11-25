@@ -211,7 +211,7 @@ Camiones_contratos/
 ├── frontend/                         # Cliente de escritorio Electron + TypeScript
 │   ├── electron/                     # Proceso principal de Electron (main.ts)
 │   ├── src/
-│   │   ├── paginas/                  # login, registro, catalogo-contratos, crear-contrato, panel (+ vistas/)
+│   │   ├── paginas/                  # login, registro, catalogo-contratos, crear-contrato, panel (+ vistas/<rol>/)
 │   │   ├── compartido/               # css/tema.css, js/{iconos,sesion,api}.js
 │   │   └── recursos/imagenes/
 │   ├── tests/e2e/                    # Pruebas end-to-end del panel
@@ -239,7 +239,7 @@ Cada módulo de `backend/app/modules/` agrupa sus capas:
 * **Capa de Frontend (`frontend/`):**
   * `electron/main.ts`: Proceso principal de Electron que inicia la ventana y carga `src/paginas/login/login.html`.
   * `src/paginas/`: Una carpeta por pantalla (HTML/CSS/JS) para login, registro, catálogo de contratos, creación de contratos y panel por rol.
-  * `src/compartido/`: Tema CSS, íconos, sesión (`sesion.js`) y cliente de la API (`api.js`) usados por todas las páginas.
+  * `src/compartido/`: Tema CSS, íconos, sesión (`sesion.js`) y cliente de la API (`api.js`) usados por todas las páginas. Todo el JS son **módulos ES** (`<script type="module">`): cada página importa `MVApi`, `MVSesion` y `MVIconos` en lugar de usar globales de `window`. En el panel, `estado.js` guarda el usuario y `ui.js` las utilidades de interfaz; cada rol tiene su carpeta en `vistas/` con un `index.js` enrutador y un archivo por pantalla.
 
 ### Ciclo de Vida del Contrato (Máquina de Estados)
 

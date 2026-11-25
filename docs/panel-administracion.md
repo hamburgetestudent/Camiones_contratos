@@ -27,8 +27,8 @@ La identidad del responsable se obtiene de la sesión y de la cuenta vigente. Un
 | Ubicación | Responsabilidad |
 |---|---|
 | `frontend/src/paginas/login/` | Autenticación y entrada al panel. |
-| `frontend/src/paginas/panel/roles.js` y `panel.js` | Opciones por rol, navegación con teclado, barra colapsable y sesión. |
-| `frontend/src/paginas/panel/vistas/administracion.js` | Resumen, listados, confirmaciones y consultas al historial. |
+| `frontend/src/paginas/panel/roles.js`, `panel.js`, `estado.js` y `ui.js` | Opciones por rol, navegación con teclado, barra colapsable, sesión, estado compartido y utilidades de interfaz (módulos ES). |
+| `frontend/src/paginas/panel/vistas/administracion/` (`index.js`, `inicio.js`, `listados.js`, `historial.js`, …) | Resumen, listados, confirmaciones y consultas al historial. |
 | `backend/app/modules/admin/router.py` y `backend/app/modules/usuarios/sesion.py` | API del panel, permisos y verificación de sesiones. |
 | `backend/app/modules/admin/service.py` | Consultas, bajas y registro dentro de una transacción. |
 | `backend/app/modules/contratos/service.py`, `subasta_service.py` y `usuario_service.py` | Aplicación de la baja en los flujos operativos habituales. |

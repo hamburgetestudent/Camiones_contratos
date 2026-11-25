@@ -1,4 +1,6 @@
 /* Catálogo principal conectado a la API real de FastAPI — MansoViaje */
+import { MVApi } from "../../compartido/js/api.js";
+import { MVIconos } from "../../compartido/js/iconos.js";
 
 let usuarioActual = null;
 let contratosCargados = [];
@@ -24,17 +26,16 @@ const subtituloListado = document.getElementById("subtitulo-listado");
 const modalDetalle = document.getElementById("modal-detalle");
 
 function inicializarIconosPrincipal() {
-  if (!window.MVIconos) return;
   const logo = document.getElementById("logo-principal");
-  if (logo) logo.replaceChildren(window.MVIconos.crear("isotipo", { size: 20 }));
+  if (logo) logo.replaceChildren(MVIconos.crear("isotipo", { size: 20 }));
 
   const tituloFiltros = document.getElementById("titulo-filtros-principal");
   if (tituloFiltros) {
-    tituloFiltros.prepend(window.MVIconos.crear("filtro", { size: 14 }));
+    tituloFiltros.prepend(MVIconos.crear("filtro", { size: 14 }));
   }
 
   const icoVacio = document.getElementById("icono-sin-resultados");
-  if (icoVacio) icoVacio.replaceChildren(window.MVIconos.crear("bandejaVacia", { size: 22 }));
+  if (icoVacio) icoVacio.replaceChildren(MVIconos.crear("bandejaVacia", { size: 22 }));
 }
 
 function mostrarAvisoPrincipal(texto, tipo = "error") {
@@ -47,8 +48,8 @@ function mostrarAvisoPrincipal(texto, tipo = "error") {
   avisoPrincipal.className = "aviso-banner aviso-" + tipo;
   const cuerpo = document.createElement("div");
   cuerpo.className = "aviso-banner-contenido";
-  if (window.MVIconos) {
-    cuerpo.append(window.MVIconos.crear(tipo === "exito" ? "exito" : "error", { size: 17 }));
+  if (MVIconos) {
+    cuerpo.append(MVIconos.crear(tipo === "exito" ? "exito" : "error", { size: 17 }));
   }
   const span = document.createElement("span");
   span.textContent = texto;
@@ -58,7 +59,7 @@ function mostrarAvisoPrincipal(texto, tipo = "error") {
   cerrar.type = "button";
   cerrar.className = "aviso-cerrar";
   cerrar.setAttribute("aria-label", "Cerrar aviso");
-  if (window.MVIconos) cerrar.append(window.MVIconos.crear("cerrar", { size: 15 }));
+  if (MVIconos) cerrar.append(MVIconos.crear("cerrar", { size: 15 }));
   cerrar.addEventListener("click", () => mostrarAvisoPrincipal(""));
 
   avisoPrincipal.append(cuerpo, cerrar);
@@ -81,7 +82,7 @@ function mostrarSkeletonCatalogo() {
 }
 
 function solicitarApi(ruta, opciones = {}) {
-  return window.MVApi.solicitar(ruta, opciones, {
+  return MVApi.solicitar(ruta, opciones, {
     sinSesion: "Debes iniciar sesión.",
     expirada: "Sesión expirada.",
     error: "Error al cargar datos.",
@@ -110,7 +111,7 @@ function formatearFecha(iso) {
 }
 
 function obtenerIniciales(nombre) {
-  return window.MVIconos ? window.MVIconos.iniciales(nombre) : "MV";
+  return MVIconos ? MVIconos.iniciales(nombre) : "MV";
 }
 
 function escaparTexto(valor) {
@@ -136,9 +137,7 @@ function crearTarjetaContrato(contrato) {
     `Ver detalles del contrato ${contrato.origen} a ${contrato.destino}`
   );
 
-  const claseEstado = window.MVIconos
-    ? window.MVIconos.claseBadgeEstado(contrato.estado)
-    : "badge-info";
+  const claseEstado = MVIconos ? MVIconos.claseBadgeEstado(contrato.estado) : "badge-info";
 
   tarjeta.innerHTML = `
     <div class="tarjeta-superior">
@@ -224,9 +223,7 @@ function abrirDetalleContrato(contrato) {
   const badgeWrap = document.getElementById("modal-badge-wrap");
   if (badgeWrap) {
     badgeWrap.replaceChildren(
-      window.MVIconos
-        ? window.MVIconos.badgeEstado(contrato.estado)
-        : document.createTextNode(contrato.estado)
+      MVIconos ? MVIconos.badgeEstado(contrato.estado) : document.createTextNode(contrato.estado)
     );
   }
 
@@ -325,7 +322,7 @@ async function gestionarAccionPerfil(evento) {
         : "../panel/panel.html";
   } else if (accion === "cerrar") {
     try {
-      await window.MVApi.cerrarSesion();
+      await MVApi.cerrarSesion();
     } catch {
       mostrarAvisoPrincipal("No se pudo cerrar la sesión. Vuelve a intentarlo.", "error");
     }

@@ -1,4 +1,4 @@
-const FUNCIONALIDADES_POR_ROL = {
+export const FUNCIONALIDADES_POR_ROL = {
   TRANSPORTISTA: [
     {
       icono: "subastas",

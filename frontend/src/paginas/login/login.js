@@ -2,8 +2,11 @@
 // LOGIN — MansoViaje
 // Redirige al panel según el rol entregado por el backend.
 // =============================================
+import { MVApi } from "../../compartido/js/api.js";
+import { MVIconos } from "../../compartido/js/iconos.js";
+import { MVSesion } from "../../compartido/js/sesion.js";
 
-const API_BASE_URL = window.MVApi.baseUrl;
+const API_BASE_URL = MVApi.baseUrl;
 
 const loginForm = document.getElementById("loginForm");
 const btnLogin = document.getElementById("btnLogin");
@@ -13,21 +16,20 @@ const mensajeLogin = document.getElementById("mensajeLogin");
 const togglePassword = document.getElementById("togglePassword");
 
 function inicializarIconosLogin() {
-  if (!window.MVIconos) return;
   const logo = document.getElementById("logoMarca");
-  if (logo) logo.replaceChildren(window.MVIconos.crear("isotipo", { size: 22 }));
+  if (logo) logo.replaceChildren(MVIconos.crear("isotipo", { size: 22 }));
 
   if (btnLogin) {
-    btnLogin.append(window.MVIconos.crear("flechaDer", { size: 16 }));
+    btnLogin.append(MVIconos.crear("flechaDer", { size: 16 }));
   }
 
   if (togglePassword) {
-    togglePassword.replaceChildren(window.MVIconos.crear("ojo", { size: 17 }));
+    togglePassword.replaceChildren(MVIconos.crear("ojo", { size: 17 }));
   }
 
   document.querySelectorAll("[data-icono]").forEach((el) => {
     const nombre = el.getAttribute("data-icono");
-    el.replaceChildren(window.MVIconos.crear(nombre, { size: 15 }));
+    el.replaceChildren(MVIconos.crear(nombre, { size: 15 }));
   });
 }
 
@@ -87,10 +89,10 @@ async function ejecutarLogin(evento) {
       return;
     }
 
-    window.MVSesion.guardar(datos);
+    MVSesion.guardar(datos);
 
     mostrarMensajeLogin("Inicio de sesión exitoso. Abriendo tu panel...", "success");
-    window.location.replace(window.MVSesion.RUTA_PANEL);
+    window.location.replace(MVSesion.RUTA_PANEL);
   } catch (error) {
     console.error("Error al conectar con el backend:", error);
     mostrarMensajeLogin(
@@ -121,10 +123,8 @@ if (togglePassword && passwordInput) {
       "aria-label",
       mostrar ? "Ocultar contraseña" : "Mostrar contraseña"
     );
-    if (window.MVIconos) {
-      togglePassword.replaceChildren(
-        window.MVIconos.crear(mostrar ? "ojoCerrado" : "ojo", { size: 17 })
-      );
+    if (MVIconos) {
+      togglePassword.replaceChildren(MVIconos.crear(mostrar ? "ojoCerrado" : "ojo", { size: 17 }));
     }
   });
 }
@@ -142,6 +142,6 @@ if (recuperarContraseña) {
 
 inicializarIconosLogin();
 
-if (window.MVSesion.token()) {
-  window.location.replace(window.MVSesion.RUTA_PANEL);
+if (MVSesion.token()) {
+  window.location.replace(MVSesion.RUTA_PANEL);
 }

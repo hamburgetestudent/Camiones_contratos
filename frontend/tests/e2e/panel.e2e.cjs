@@ -19,7 +19,7 @@ async function iniciarApi() {
     [
       "-u",
       "-c",
-      "import socket,uvicorn; s=socket.socket(); s.bind(('127.0.0.1',0)); print(s.getsockname()[1],flush=True); uvicorn.Server(uvicorn.Config('app.main:app',app_dir='backend',log_level='error')).run(sockets=[s])",
+      "import sys; sys.path.insert(0,'backend'); import socket,uvicorn; s=socket.socket(); s.bind(('127.0.0.1',0)); print(s.getsockname()[1],flush=True); uvicorn.Server(uvicorn.Config('app.main:app',log_level='error')).run(sockets=[s])",
     ],
     {
       cwd: raiz,
@@ -48,10 +48,17 @@ async function probar() {
   navegador = await chromium.launch({ channel: process.env.PANEL_BROWSER || "msedge" });
   const pagina = await navegador.newPage({ viewport: { width: 980, height: 680 } });
   pagina.setDefaultTimeout(8000);
+  const erroresPagina = [];
+  pagina.on("pageerror", (error) => {
+    console.error("Error en la página:", error.message);
+    erroresPagina.push(error.message);
+  });
+  pagina.on("console", (m) => m.type() === "error" && console.error("Consola:", m.text()));
   await pagina.addInitScript((url) => {
     window.API_BASE_URL = url;
   }, api);
-  await pagina.goto(pathToFileURL(path.join(raiz, "frontend/src/paginas/login/login.html")).href);
+  // Los módulos ES no se cargan desde file:// en Chromium: se usa el propio servidor FastAPI.
+  await pagina.goto(api + "/login/login.html");
   async function login(correo, clave) {
     await pagina.locator("#email").fill(correo);
     await pagina.locator("#password").fill(clave);
@@ -225,6 +232,14 @@ async function probar() {
     await pagina.locator('[data-accion-perfil="cerrar"]').click();
     await pagina.locator("#btnLogin").waitFor();
   }
+  // Páginas fuera del panel: deben cargar sus módulos ES sin errores de ejecución.
+  await pagina.goto(api + "/registro/registro.html");
+  await pagina.locator("form").first().waitFor();
+  await pagina.goto(api + "/login/login.html");
+  await login("contacto@logisticasur.cl", "dador123");
+  await pagina.goto(api + "/crear-contrato/crear-contrato.html");
+  await pagina.locator("form").first().waitFor();
+  assert.deepEqual(erroresPagina, []);
   console.log(
     "OK: tres roles, resumen, KYC, configuración, subastas, baja, historial, menú con teclado y cierre de sesión."
   );

@@ -1,3 +1,6 @@
+import { MVApi } from "../../compartido/js/api.js";
+import { MVIconos } from "../../compartido/js/iconos.js";
+
 const $ = (id) => document.getElementById(id);
 
 let usuarioSesion = null;
@@ -21,13 +24,12 @@ function resolverUrlRetorno() {
 }
 
 function inicializarIconosCrear() {
-  if (!window.MVIconos) return;
   const logo = $("logo-crear");
-  if (logo) logo.replaceChildren(window.MVIconos.crear("isotipo", { size: 20 }));
+  if (logo) logo.replaceChildren(MVIconos.crear("isotipo", { size: 20 }));
 }
 
 function solicitarApi(ruta, opciones = {}) {
-  return window.MVApi.solicitar(ruta, opciones, {
+  return MVApi.solicitar(ruta, opciones, {
     sinSesion: "Debes iniciar sesión para continuar.",
     error: "No se pudo procesar la solicitud.",
   });
@@ -414,9 +416,7 @@ async function cargarEstadoKyc() {
     });
     const badge = $("etiqueta-kyc");
     badge.classList.remove("oculto");
-    const clase = window.MVIconos
-      ? window.MVIconos.claseBadgeEstado(perfil.estado_validacion)
-      : "badge-info";
+    const clase = MVIconos ? MVIconos.claseBadgeEstado(perfil.estado_validacion) : "badge-info";
     badge.className = "badge " + clase;
     badge.textContent =
       perfil.estado_validacion === "APROBADO" ? "KYC Aprobado" : `KYC: ${perfil.estado_validacion}`;

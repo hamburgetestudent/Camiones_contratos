@@ -26,6 +26,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 ### Cambiado
 
 - Tres refactorizaciones con comportamiento conservado: decisión administrativa unificada, estado y faltantes del transportista, normalización del correo ([diagnóstico y mediciones](docs/hito3-intervenciones.md)).
+- Reorganización estructural sin cambios de comportamiento: backend por módulos de dominio en `backend/app/modules/<dominio>/` con `core/` y `db/` (la máquina de estados genérica pasa a `core/maquina_estados.py`), tests en `backend/tests/` y frontend con módulos ES (`<script type="module">`), vistas del panel partidas por pantalla y estado compartido en `estado.js`/`ui.js`. Los comandos de las tablas siguientes corresponden a la estructura anterior: ahora son `python run_tests.py` o `pytest`, y `uvicorn app.main:app --app-dir backend`.
 - Validación de correo: de una regex a `email-validator.validate_email` con `check_deliverability=False` (rechaza `a..b@x.cl` o `.a@x.cl`, que la regex aceptaba).
 
 ### Pruebas, cobertura e integración continua (esta entrega)
@@ -95,6 +96,63 @@ sequenceDiagram
     SV->>DAO: una SELECCIONADA, resto RECHAZADA, contrato ADJUDICADO
     DAO->>DB: una sola transacción exclusiva
     API-->>UI: 200 SELECCIONADA
+```
+
+### Diagrama del script de verificación
+
+Estructura de [`scripts/verificar_flujo_integrado.py`](scripts/verificar_flujo_integrado.py): crea una base temporal, ejecuta los tres casos en orden y registra cada comprobación.
+
+```mermaid
+flowchart TD
+    A([Inicio: python scripts/verificar_flujo_integrado.py]) --> B[Crear directorio temporal<br/>SQLITE_DB_PATH = integracion.db]
+    B --> C[Importar app FastAPI y inicializar_bd<br/>con semilla]
+    C --> D[Crear TestClient]
+
+    D --> E1
+
+    subgraph C1 [Caso 1: datos válidos]
+        direction TB
+        E1[1.1 POST /auth/registro<br/>espera 201] --> E2[1.2 POST /auth/login dador<br/>espera token Bearer]
+        E2 --> E3[1.3 POST /contratos<br/>espera 201, BORRADOR]
+        E3 --> E4[1.4 PATCH estado a PUBLICADO<br/>espera 200]
+        E4 --> E5[1.5 GET /subastas/cargas<br/>la carga aparece]
+        E5 --> E6[1.6 Login transportista<br/>POST /subastas/postular<br/>espera 201, POSTULADA]
+        E6 --> E7[1.7 POST /subastas/adjudicar<br/>espera 200, SELECCIONADA]
+        E7 --> E8[1.8 GET /contratos/id<br/>espera ADJUDICADO]
+    end
+
+    E8 --> F0
+
+    subgraph C2 [Caso 2: datos inválidos]
+        direction TB
+        F0[Contar usuarios y contratos<br/>antes] --> F1[2.1 Correo ana@@empresa.cl<br/>espera 422]
+        F1 --> F2[2.2 neto + IVA ≠ total<br/>espera 400/422]
+        F2 --> F3[2.3 peso > capacidad camión<br/>espera 400/422]
+        F3 --> F4[2.4 Login con clave errónea<br/>espera 401]
+        F4 --> F5[2.5 Contar después<br/>el estado no cambió]
+    end
+
+    F5 --> G1
+
+    subgraph C3 [Caso 3: recurso ausente]
+        direction TB
+        G1[3.1 GET contrato inexistente<br/>espera 404] --> G2[3.2 Postular a carga inexistente<br/>espera 404]
+        G2 --> G3[3.3 GET /contratos sin token<br/>espera 401/403]
+        G3 --> G4[Cerrar cliente y borrar<br/>el archivo .db]
+        G4 --> G5[3.4 Login con la BD eliminada<br/>espera 401, sin caída]
+        G5 --> G6[3.5 La BD se recrea<br/>el archivo existe]
+    end
+
+    G6 --> H[Resumen: N/M comprobaciones OK]
+    H --> I{¿Hay fallos?}
+    I -- No --> J([Código de salida 0])
+    I -- Sí --> K([Código de salida 1])
+    J --> L[Limpiar directorio temporal]
+    K --> L
+
+    E1 -.-> R[(comprobar: registra cada paso<br/>en REGISTRO e imprime OK o FALLO)]
+    F1 -.-> R
+    G1 -.-> R
 ```
 
 ### Participantes

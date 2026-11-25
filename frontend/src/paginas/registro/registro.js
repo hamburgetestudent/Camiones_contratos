@@ -1,4 +1,7 @@
-const API_BASE_URL = window.MVApi.baseUrl;
+import { MVApi } from "../../compartido/js/api.js";
+import { MVIconos } from "../../compartido/js/iconos.js";
+
+const API_BASE_URL = MVApi.baseUrl;
 
 const registroForm = document.getElementById("registroForm");
 const empresaSection = document.getElementById("empresaSection");
@@ -10,23 +13,22 @@ const textoFortaleza = document.getElementById("textoFortaleza");
 const camposEmpresaIds = ["razon_social", "rut_empresa", "direccion_empresa"];
 
 function inicializarIconosRegistro() {
-  if (!window.MVIconos) return;
   const logo = document.getElementById("logoRegistro");
-  if (logo) logo.replaceChildren(window.MVIconos.crear("isotipo", { size: 20 }));
+  if (logo) logo.replaceChildren(MVIconos.crear("isotipo", { size: 20 }));
 
   document.querySelectorAll("[data-icono]").forEach((el) => {
-    el.replaceChildren(window.MVIconos.crear(el.getAttribute("data-icono"), { size: 18 }));
+    el.replaceChildren(MVIconos.crear(el.getAttribute("data-icono"), { size: 18 }));
   });
 
   document.querySelectorAll("[data-toggle-target]").forEach((btn) => {
-    btn.replaceChildren(window.MVIconos.crear("ojo", { size: 17 }));
+    btn.replaceChildren(MVIconos.crear("ojo", { size: 17 }));
     btn.addEventListener("click", () => {
       const target = document.getElementById(btn.getAttribute("data-toggle-target"));
       if (!target) return;
       const mostrar = target.type === "password";
       target.type = mostrar ? "text" : "password";
       btn.setAttribute("aria-pressed", String(mostrar));
-      btn.replaceChildren(window.MVIconos.crear(mostrar ? "ojoCerrado" : "ojo", { size: 17 }));
+      btn.replaceChildren(MVIconos.crear(mostrar ? "ojoCerrado" : "ojo", { size: 17 }));
     });
   });
 }
@@ -231,7 +233,7 @@ registroForm.addEventListener("submit", async (event) => {
 
     if (!respuesta.ok) {
       mostrarMensajeGeneral(
-        window.MVApi.extraerMensajeError(datos, "Datos inválidos al registrar el usuario."),
+        MVApi.extraerMensajeError(datos, "Datos inválidos al registrar el usuario."),
         "error"
       );
       return;
