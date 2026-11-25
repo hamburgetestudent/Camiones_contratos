@@ -1,9 +1,4 @@
 /* Estructura, sesión y utilidades compartidas por los tres roles — MansoViaje */
-const API =
-  window.API_BASE_URL ||
-  (window.location.protocol.startsWith("http")
-    ? window.location.origin
-    : "http://127.0.0.1:8000");
 const $ = (id) => document.getElementById(id);
 const contenido = $("contenido");
 const nombresRol = {
@@ -247,47 +242,15 @@ function confirmarAccion({
   });
 }
 
-function volverLogin() {
-  for (const clave of ["usuario_actual", "usuario_rol", "access_token"])
-    localStorage.removeItem(clave);
-  location.replace("../login/login.html");
-}
-
-function extraerDetalleError(cuerpo) {
-  if (!cuerpo || typeof cuerpo !== "object") return "No se pudo completar la solicitud.";
-  if (typeof cuerpo.detail === "string") return cuerpo.detail;
-  if (Array.isArray(cuerpo.detail) && cuerpo.detail.length > 0) {
-    return cuerpo.detail.map((item) => item.msg || JSON.stringify(item)).join(" | ");
-  }
-  return "No se pudo completar la solicitud.";
-}
-
 async function api(ruta, datos, opcionesExtra = {}) {
-  const token = localStorage.getItem("access_token");
-  if (!token) {
-    volverLogin();
-    throw Error("Inicia sesión.");
-  }
   const method = opcionesExtra.method || (datos !== undefined ? "POST" : "GET");
-  const headers = {
-    Authorization: "Bearer " + token,
-    ...(opcionesExtra.headers || {}),
-  };
-  const opciones = { method, headers, cache: "no-store" };
-  if (datos !== undefined) {
-    opciones.headers["Content-Type"] = "application/json";
-    opciones.body = JSON.stringify(datos);
-  }
-  const r = await fetch(API + ruta, opciones);
-  if (r.status === 401) {
-    volverLogin();
-    throw Error("La sesión terminó.");
-  }
-  if (!r.ok) {
-    const cuerpo = await r.json().catch(() => ({}));
-    throw Error(extraerDetalleError(cuerpo));
-  }
-  return r.status === 204 ? null : r.json();
+  const opciones = { method, headers: opcionesExtra.headers };
+  if (datos !== undefined) opciones.body = JSON.stringify(datos);
+  return window.MVApi.solicitar(ruta, opciones, {
+    sinSesion: "Inicia sesión.",
+    expirada: "La sesión terminó.",
+    error: "No se pudo completar la solicitud.",
+  });
 }
 
 function mostrarError(error, reintentar) {
@@ -404,8 +367,7 @@ $("menu").onclick = () => {
 
 $("salir").onclick = async () => {
   try {
-    await api("/auth/logout", {});
-    volverLogin();
+    await window.MVApi.cerrarSesion();
   } catch (error) {
     mostrarAviso("No se pudo cerrar la sesión. Vuelve a intentarlo.", "error");
   }

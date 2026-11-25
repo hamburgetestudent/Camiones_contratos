@@ -1,9 +1,3 @@
-const API_BASE_URL =
-  window.API_BASE_URL ||
-  (window.location.protocol.startsWith("http")
-    ? window.location.origin
-    : "http://127.0.0.1:8000");
-
 const $ = (id) => document.getElementById(id);
 
 let usuarioSesion = null;
@@ -32,49 +26,11 @@ function inicializarIconosCrear() {
   if (logo) logo.replaceChildren(window.MVIconos.crear("isotipo", { size: 20 }));
 }
 
-function volverALogin() {
-  for (const clave of ["usuario_actual", "access_token", "usuario_rol", "sesion_usuario"]) {
-    localStorage.removeItem(clave);
-  }
-  window.location.replace("../login/login.html");
-}
-
-async function solicitarApi(ruta, opciones = {}) {
-  const token = localStorage.getItem("access_token");
-  if (!token) {
-    volverALogin();
-    throw new Error("Debes iniciar sesión para continuar.");
-  }
-
-  const respuesta = await fetch(API_BASE_URL + ruta, {
-    ...opciones,
-    headers: {
-      Authorization: "Bearer " + token,
-      ...(opciones.body ? { "Content-Type": "application/json" } : {}),
-      ...(opciones.headers || {}),
-    },
+function solicitarApi(ruta, opciones = {}) {
+  return window.MVApi.solicitar(ruta, opciones, {
+    sinSesion: "Debes iniciar sesión para continuar.",
+    error: "No se pudo procesar la solicitud.",
   });
-
-  if (respuesta.status === 401) {
-    volverALogin();
-    throw new Error("Tu sesión ha expirado.");
-  }
-
-  const cuerpo = await respuesta.json().catch(() => ({}));
-  if (!respuesta.ok) {
-    const detalle = extraerMensajeError(cuerpo);
-    throw new Error(detalle);
-  }
-  return cuerpo;
-}
-
-function extraerMensajeError(cuerpo) {
-  if (!cuerpo || typeof cuerpo !== "object") return "No se pudo procesar la solicitud.";
-  if (typeof cuerpo.detail === "string") return cuerpo.detail;
-  if (Array.isArray(cuerpo.detail) && cuerpo.detail.length > 0) {
-    return cuerpo.detail.map((err) => err.msg || JSON.stringify(err)).join(" | ");
-  }
-  return "No se pudo completar la operación.";
 }
 
 function mostrarAlerta(mensaje, tipo = "error") {

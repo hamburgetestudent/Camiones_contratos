@@ -1,8 +1,4 @@
-const API_BASE_URL =
-  window.API_BASE_URL ||
-  (window.location.protocol.startsWith("http")
-    ? window.location.origin
-    : "http://127.0.0.1:8000");
+const API_BASE_URL = window.MVApi.baseUrl;
 
 const registroForm = document.getElementById("registroForm");
 const empresaSection = document.getElementById("empresaSection");
@@ -111,15 +107,6 @@ function evaluarFortaleza(valor) {
   barraFortaleza.style.width = nivel.ancho;
   barraFortaleza.style.background = nivel.color;
   textoFortaleza.textContent = "Seguridad: " + nivel.texto;
-}
-
-function extraerMensajeError(datos) {
-  if (!datos) return "No se pudo completar el registro.";
-  if (typeof datos.detail === "string") return datos.detail;
-  if (Array.isArray(datos.detail) && datos.detail.length > 0) {
-    return datos.detail.map((item) => item.msg || JSON.stringify(item)).join(" | ");
-  }
-  return "Datos inválidos al registrar el usuario.";
 }
 
 function validarFormulario() {
@@ -243,7 +230,10 @@ registroForm.addEventListener("submit", async (event) => {
     const datos = await respuesta.json().catch(() => ({}));
 
     if (!respuesta.ok) {
-      mostrarMensajeGeneral(extraerMensajeError(datos), "error");
+      mostrarMensajeGeneral(
+        window.MVApi.extraerMensajeError(datos, "Datos inválidos al registrar el usuario."),
+        "error"
+      );
       return;
     }
 

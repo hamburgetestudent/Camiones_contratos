@@ -229,7 +229,7 @@ Camiones_contratos/
 │   ├── electron/             # Proceso principal de Electron (main.ts)
 │   ├── src/
 │   │   ├── paginas/          # login, registro, catalogo-contratos, crear-contrato, panel (+ vistas/)
-│   │   ├── compartido/       # css/tema.css, js/iconos.js
+│   │   ├── compartido/       # css/tema.css, js/{iconos,sesion,api}.js
 │   │   └── recursos/imagenes/
 │   ├── tests/e2e/            # Pruebas end-to-end del panel
 │   ├── package.json
@@ -270,7 +270,7 @@ Camiones_contratos/
 * **Capa de Frontend (`frontend/`):**
   * `electron/main.ts`: Proceso principal de Electron que inicia la ventana y carga `src/paginas/login/login.html`.
   * `src/paginas/`: Una carpeta por pantalla (HTML/CSS/JS) para login, registro, catálogo de contratos, creación de contratos y panel por rol.
-  * `src/compartido/`: Tema CSS e íconos usados por todas las páginas.
+  * `src/compartido/`: Tema CSS, íconos, sesión (`sesion.js`) y cliente de la API (`api.js`) usados por todas las páginas.
 
 ### Ciclo de Vida del Contrato (Máquina de Estados)
 

@@ -3,11 +3,7 @@
 // Redirige al panel según el rol entregado por el backend.
 // =============================================
 
-const API_BASE_URL =
-  window.API_BASE_URL ||
-  (window.location.protocol.startsWith("http")
-    ? window.location.origin
-    : "http://127.0.0.1:8000");
+const API_BASE_URL = window.MVApi.baseUrl;
 
 const loginForm = document.getElementById("loginForm");
 const btnLogin = document.getElementById("btnLogin");
@@ -91,12 +87,10 @@ async function ejecutarLogin(evento) {
       return;
     }
 
-    localStorage.setItem("usuario_actual", JSON.stringify(datos));
-    localStorage.setItem("access_token", datos.access_token);
-    localStorage.setItem("usuario_rol", datos.rol);
+    window.MVSesion.guardar(datos);
 
     mostrarMensajeLogin("Inicio de sesión exitoso. Abriendo tu panel...", "success");
-    window.location.replace("../panel/panel.html");
+    window.location.replace(window.MVSesion.RUTA_PANEL);
   } catch (error) {
     console.error("Error al conectar con el backend:", error);
     mostrarMensajeLogin(
@@ -148,6 +142,6 @@ if (recuperarContraseña) {
 
 inicializarIconosLogin();
 
-if (localStorage.getItem("access_token")) {
-  window.location.replace("../panel/panel.html");
+if (window.MVSesion.token()) {
+  window.location.replace(window.MVSesion.RUTA_PANEL);
 }
