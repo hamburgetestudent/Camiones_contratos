@@ -9,10 +9,11 @@ La arquitectura separa claramente las responsabilidades entre cliente y servidor
 
 ### Enlaces Rápidos
 
-* [Hito 3 · Diagnóstico, tres refactorizaciones y pruebas (criterios 1 y 2)](docs/hito3-intervenciones.md)
-
+* **Hito 3 · Intervenciones:** [Diagnóstico, tres refactorizaciones y pruebas (criterios 1 y 2)](docs/hito3-intervenciones.md)
+* **Hito 3 · Modularización:** [Criterio 4: modularización de interfaces y dependencias](docs/criterio-4-modularizacion.md)
+* **Hito 3 · Punto 6 (dependencia externa):** [Revisión de `email-validator`: utilidad, mantenimiento, licencia, riesgo y mitigación](docs/revision-dependencia-email-validator.md)
 * **Modelado UML (Entrega 3):** [`docs/modelado/`](docs/modelado/) *(y carpeta de trabajo del equipo [`docs/modelados/`](docs/modelados/))*
-* **Panel de administración:** [Panel de administración: navegación, bajas lógicas, auditoría y pruebas](docs/panel-administracion.md)
+* **Panel de administración:** [Navegación, bajas lógicas, auditoría y pruebas](docs/panel-administracion.md)
 * **Reglas de Negocio:** [`REGLAS_DE_NEGOCIO.md`](REGLAS_DE_NEGOCIO.md)
 * **Documento de Arquitectura:** [`docs_clases/Arquitectura.md`](docs_clases/Arquitectura.md)
 * **Guía de Pruebas y Cobertura:** [`tests/README.md`](tests/README.md)
@@ -317,79 +318,3 @@ Las reglas de uso de las operaciones principales están documentadas en el docst
 | Configuración de reglas de negocio | [`domain/reglas.py`](domain/reglas.py) · `ReglasNegocio.actualizar_configuracion` (línea 48) | `PATCH /configuracion` | Pre: IVA entre 0 y 1, tolerancia y anticipación no negativas. Post: configuración vigente retornada. |
 
 Las pruebas que verifican estos contratos están en `tests/contratos/`, `tests/subastas/`, `tests/onboarding/`, `tests/usuarios/` y `tests/configuracion/`. Las pruebas de regresión de la adjudicación son `test_regresion_adjudicar_con_transicion_invalida_no_deja_estado_a_medias` ([`tests/subastas/test_adjudicar_subasta.py`](tests/subastas/test_adjudicar_subasta.py)) y `test_rechazo_carga_en_borrador` ([`tests/subastas/test_postular_a_carga.py`](tests/subastas/test_postular_a_carga.py)).
-
----
-
-## Contexto del Proyecto (Hito 1 y Equipo)
-
-### Actores y Arquetipos
-
-* **Dador de Carga (Generador/Cliente):** Empresas consolidadas, PYMEs, brokers o particulares que publican necesidades de transporte (origen, destino, tipo de carga, fechas y requerimientos técnicos), evalúan postulaciones y adjudican el contrato.
-* **Transportista (Oferente):** Conductores independientes o empresas de transporte que cargan su documentación de habilitación (KYC) y postulan con tarifas competitivas a las cargas publicadas.
-* **Administrador Backoffice:** Revisa y aprueba/rechaza perfiles tributarios de dadores, valida documentos de transportistas y gestiona bajas lógicas e indicadores en el panel administrativo.
-
-### Historias de Usuario Principales
-
-| ID | Nombre | Issue |
-|---|---|---|
-| `HU-IAM-01` | Registro de Usuarios por Rol | #50 |
-| `HU-IAM-02` | Inicio de Sesión y Emisión de Credenciales | #51 |
-| `HU-IAM-03` | Interfaz de Inicio de Sesión y Autenticación Federada (UI) | #52 |
-| `HU-ONB-01` | Carga y Reemplazo de Documentos del Transportista | #53 |
-| `HU-UI-01` | Configuración y Empaquetado de la Aplicación Electron | #54 |
-| `HU-ONB-02` | Consulta de Estado Global de Habilitación del Transportista | #55 |
-| `HU-CFG-02` | Modificación en Caliente de Políticas del Negocio | #56 |
-| `HU-ONB-03` | Registro y Actualización del Perfil Tributario del Dador de Carga | #57 |
-| `HU-ONB-04` | Panel Backoffice de Revisión y Validación Documental | #58 |
-| `HU-CFG-01` | Consulta de Configuración de Negocio Vigente | #59 |
-
-### Mapa de Épicas del Dominio
-
-```mermaid
-mindmap
-  root((Plataforma Camiones))
-    EP-01: Autenticación, Identidad y Accesos (IAM)
-      Registro por rol
-      Inicio de sesión y tokens
-      Sesión vigente y cierre
-    EP-02: Onboarding y Cumplimiento Legal (KYC & Fleet Compliance)
-      Carga documental transportista
-      Verificación tributaria dador
-      Panel backoffice de aprobación
-      Gating de seguridad y bloqueos
-    EP-03: Gestión y Ciclo de Vida del Contrato de Carga
-      Publicación y especificaciones
-      Validación de carga y capacidades
-      Cálculo financiero e IVA
-      Máquina de estados del contrato
-    EP-04: Motor de Postulaciones y Subasta de Fletes
-      Buscador de cargas disponibles
-      Postulación de transportistas
-      Revisión y adjudicación
-    EP-05: Seguimiento Operacional, Entrega y Disputas
-      Confirmación de tránsito
-      Constancia de entrega
-      Gestión y resolución de disputas
-    EP-06: Configuración Global y Reglas de Negocio
-      Parámetros tributarios y tolerancias
-      Tiempos de anticipación
-      Auditoría de configuraciones
-    EP-07: Experiencia de Usuario y Cliente de Escritorio (Desktop Electron)
-      Interfaz Electron modular
-      Dashboards por rol
-      Panel administrativo
-```
-
-### Responsabilidades del Equipo
-
-| Integrante | Rol | Ítems de la rúbrica a cargo |
-|---|---|---|
-| Benjamín Ponce | PM | 1.2 |
-| Cristian Palma | Backend | 1.2, Issue del profesor |
-| Santiago Sanchez | Backend | 1.2, 2.1, 2.2 |
-| Fabian Ahumada | Backend | 1.1, 2.4 |
-| Gabriel Alvares | Frontend | 2.3, 2.4 |
-
-## Evidencia del Hito 3
-
-- [Criterio 4: Modularización de las interfaces y dependencias](docs/criterio-4-modularizacion.md)
