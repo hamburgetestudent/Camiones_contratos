@@ -5,17 +5,15 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
+from dao.contrato_dao import ContratoDAOSQLite
 from database.conexion import obtener_conexion
 from domain.maquina_estados import EstadoContrato
 from domain.modelos import ContratoModelo, Moneda, TipoCarga
 from domain.postulacion import PostulacionCrear, PostulacionModelo
-from services.contrato_service import (
-    actualizar_contrato,
-    buscar_contrato,
-    guardar_contrato,
-)
 from services.subasta_service import ServicioSubasta
 from tests.base import BaseTestCase
+
+_dao = ContratoDAOSQLite()
 
 
 class BaseTestSubastas(BaseTestCase):
@@ -65,20 +63,20 @@ class BaseTestSubastas(BaseTestCase):
             estado=estado,
         )
         with obtener_conexion(self.db_path) as conn:
-            return guardar_contrato(conn, contrato)
+            return _dao.guardar(conn, contrato)
 
     def leer_contrato_bd(self, contrato_id: UUID) -> ContratoModelo | None:
         """Lee un contrato directamente de SQLite (verifica persistencia real)."""
         with obtener_conexion(self.db_path) as conn:
-            return buscar_contrato(conn, contrato_id)
+            return _dao.obtener_por_id(conn, contrato_id)
 
     def forzar_estado_contrato(self, contrato_id: UUID, estado: EstadoContrato) -> None:
         """Fuerza el estado de un contrato en SQLite, saltandose la maquina de estados."""
         with obtener_conexion(self.db_path) as conn:
-            contrato = buscar_contrato(conn, contrato_id)
+            contrato = _dao.obtener_por_id(conn, contrato_id)
             assert contrato is not None
             contrato.estado = estado
-            actualizar_contrato(conn, contrato_id, contrato)
+            _dao.actualizar(conn, contrato_id, contrato)
 
     def leer_postulacion_bd(
         self, carga_id: UUID, postulacion_id: UUID
