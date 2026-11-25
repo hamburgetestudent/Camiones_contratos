@@ -9,6 +9,8 @@ La arquitectura separa claramente las responsabilidades entre cliente y servidor
 
 ### Enlaces Rápidos
 
+* [Hito 3 · Postulación de un transportista a una carga publicada (criterio 6)](docs/integracion-postulacion.md)
+
 * [Hito 3 · Diagnóstico, tres refactorizaciones y pruebas (criterios 1 y 2)](docs/hito3-intervenciones.md)
 
 * **Modelado UML (Entrega 3):** [`docs/modelado/`](docs/modelado/) *(y carpeta de trabajo del equipo [`docs/modelados/`](docs/modelados/))*
