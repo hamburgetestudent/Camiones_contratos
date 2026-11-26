@@ -5,9 +5,12 @@ directories:
   output: ../release
 files:
   - dist/**/*
-  - src/**/*
+  - src/paginas/Inicio/**/*
+  - src/compartido/css/**/*
   - "!dist/**/*.map"
 extraResources:
+  - from: src
+    to: frontend
   - from: ../build/backend/mansoviaje-api
     to: backend
   - from: ../build/entrega

@@ -22,6 +22,7 @@ export function launchBackend(
       env: {
         ...process.env,
         MV_INSTANCE_ID: instance,
+        MV_FRONTEND_DIR: path.join(process.resourcesPath, "frontend"),
         SQLITE_DB_PATH: path.join(userData, "camiones.db"),
       },
     });

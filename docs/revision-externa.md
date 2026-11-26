@@ -1,4 +1,4 @@
-# Revisión de MansoViaje 1.0.0 por otro equipo
+# Revisión de MansoViaje 1.0.1 por otro equipo
 
 **Estado: pendiente de revisión externa.** Una persona de otro equipo completa esta ficha después de descargar el instalador exacto. La prueba interna y la CI se registran por separado.
 

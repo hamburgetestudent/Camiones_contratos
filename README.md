@@ -7,27 +7,27 @@ La arquitectura separa claramente las responsabilidades entre cliente y servidor
 * **Frontend (`frontend/`):** Aplicación de escritorio desarrollada con **Electron** y **TypeScript**, con vistas por rol para autenticación, registro y operación comercial.
 * **Backend (`backend/app/`, organizado por módulos de dominio):** API REST modular construida con **FastAPI** y **Pydantic**, lógica de negocio gobernada por una máquina de estados finitos y persistencia directa en **SQLite** (`camiones.db`).
 
-## Entrega 1.0.0 para Windows x64
+## Entrega 1.0.1 para Windows x64
 
 [Acta de aceptación del instalador 1.0.0: SHA-256, commit, instalación, CI y pruebas](docs/aceptacion-escritorio-1.0.0.md) · [Ficha para la revisión por otro equipo](docs/revision-externa.md)
 
 ### Instalar y ejecutar
 
-1. Obtén `MansoViaje-1.0.0-win-x64.exe`, `SHA256SUMS.txt` y `VERSION.txt` de la carpeta de entrega compartida por el equipo. En la copia de construcción están en `release/`. El primer archivo contiene la aplicación, FastAPI, SQLite, las vistas y las cuentas de demostración. El SHA identifica el instalador exacto. `VERSION.txt` identifica el commit y sus comprobaciones en GitHub.
+1. Obtén `MansoViaje-1.0.1-win-x64.exe`, `SHA256SUMS.txt` y `VERSION.txt` de la [release v1.0.1](https://github.com/hamburgetestudent/Camiones_contratos/releases/tag/v1.0.1) o de la carpeta de entrega compartida por el equipo. En la copia de construcción están en `release/`. El primer archivo contiene la aplicación, FastAPI, SQLite, las vistas y las cuentas de demostración. El SHA identifica el instalador exacto. `VERSION.txt` identifica el commit y sus comprobaciones en GitHub.
 2. En una carpeta nueva, abre PowerShell y ejecuta los comandos de abajo. Compara el hash con el listado antes de abrir el instalador. Elige una carpeta de instalación para tu usuario. Abre **MansoViaje** desde Inicio. Requiere Windows x64, permiso de escritura en el perfil y el puerto local 8000 libre. La instalación y el flujo funcionan localmente. La descarga inicial y el acceso a GitHub requieren conexión. Los usuarios de prueba vienen incluidos.
 3. Al ver Login ya puedes operar. La primera apertura crea `camiones.db` en los datos de usuario de la aplicación. Para usar un perfil aislado, cierra la aplicación, define `MANSOVIAJE_DATA_DIR` con una ruta absoluta nueva y arranca el ejecutable desde esa misma terminal. Los archivos de datos y `backend.log` estarán allí. La [configuración de ejemplo](.env.example) documenta las variables de entorno.
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\MansoViaje-1.0.0-win-x64.exe
+Get-FileHash -Algorithm SHA256 .\MansoViaje-1.0.1-win-x64.exe
 Get-Content .\SHA256SUMS.txt
-.\MansoViaje-1.0.0-win-x64.exe
+.\MansoViaje-1.0.1-win-x64.exe
 ```
 
 Para reproducir el ensayo interno en un usuario de Windows sin una instalación previa, se puede instalar el mismo archivo en una carpeta nueva desde PowerShell. Copia el instalador a la carpeta actual y comprueba su hash con el comando anterior:
 
 ```powershell
 $destino = Join-Path $env:LOCALAPPDATA 'MansoViaje-Hito3'
-$instalacion = Start-Process .\MansoViaje-1.0.0-win-x64.exe -ArgumentList "/S /D=$destino" -Wait -PassThru
+$instalacion = Start-Process .\MansoViaje-1.0.1-win-x64.exe -ArgumentList "/S /D=$destino" -Wait -PassThru
 if ($instalacion.ExitCode -ne 0) { throw "Error de instalación: $($instalacion.ExitCode)" }
 ```
 
@@ -67,10 +67,10 @@ npm.cmd --prefix frontend ci
 npm.cmd start
 ```
 
-Para admitir comentarios de hasta 600 caracteres, cambia `PostulacionBase.comentario` de 500 a 600 en [el modelo](domain/postulacion.py) y `iComentario.maxLength` al mismo valor en [el formulario](frontend/codigos/paginas/panel/transportista.js). SQLite ya guarda texto. Añade dos casos junto a [las validaciones de postulación](tests/subastas/test_modelos_postulacion.py): construir `PostulacionCrear` con 600 caracteres debe conservar el comentario completo y con 601 debe producir `ValidationError`. Ejecuta la prueba desde la raíz:
+Para admitir comentarios de hasta 600 caracteres, cambia `PostulacionBase.comentario` de 500 a 600 en [el modelo](backend/app/modules/subastas/models.py) y `iComentario.maxLength` al mismo valor en [el formulario](frontend/src/paginas/panel/vistas/transportista/subastas.js). SQLite ya guarda texto. Añade dos casos junto a [las validaciones de postulación](backend/tests/subastas/test_modelos_postulacion.py): construir `PostulacionCrear` con 600 caracteres debe conservar el comentario completo y con 601 debe producir `ValidationError`. Ejecuta la prueba desde la raíz:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest tests/subastas/test_modelos_postulacion.py -q
+.\.venv\Scripts\python.exe -m pytest backend/tests/subastas/test_modelos_postulacion.py -q
 ```
 
 ### Reconstruir el instalador desde Git

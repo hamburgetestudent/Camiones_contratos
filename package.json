@@ -1,6 +1,6 @@
 {
   "name": "camiones-contratos",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Plataforma de gestión de contratos de transporte y subastas (FastAPI + Electron)",
   "scripts": {

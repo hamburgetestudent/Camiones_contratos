@@ -2,6 +2,12 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Este documento reúne las notas de la entrega, la verificación del flujo principal (rúbrica 6 y apartado «Integración y verificación» del punto 7) y el cierre del paquete (rúbrica 7).
 
+## [1.0.1] — Windows x64 · 2026-11-25
+
+Esta revisión incluye la reorganización del PR #137 de Dev. El instalador incorpora el backend modular y las vistas con módulos ES. Electron abre el login a través de la API local para cargar los módulos desde el mismo origen. El backend sigue usando SQLite en el perfil del usuario y el puerto 8000. La versión de parche conserva el contrato público de postulación y el esquema de datos.
+
+Para actualizar desde 1.0.0, cierra la aplicación, respalda la base y ejecuta el nuevo instalador con el mismo usuario. Para la revisión independiente, usa un perfil nuevo y sigue el README. Distribución académica sin firma comercial. La comprobación de otro equipo se registra en [su ficha](docs/revision-externa.md).
+
 ## [1.0.0] — Entrega Hito 3 · 2026-11-25
 
 ### Identificación del paquete

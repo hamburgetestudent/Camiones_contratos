@@ -4,7 +4,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { launchBackend } from "./backend";
 
-const login = path.join(__dirname, "../src/paginas/login/login.html");
+const login = "http://127.0.0.1:8000/login/login.html";
 const errorPage = path.join(__dirname, "../src/paginas/Inicio/error.html");
 const retry = pathToFileURL(path.join(__dirname, "../src/paginas/Inicio/reintentar")).href;
 
@@ -36,7 +36,7 @@ async function openProduct() {
       );
       await backend.waitUntilReady();
     }
-    if (!quitting && !window.isDestroyed()) await window.loadFile(login);
+    if (!quitting && !window.isDestroyed()) await window.loadURL(login);
   } catch (error) {
     if (backend) await backend.stop();
     await showError(error instanceof Error ? error.message : String(error));
