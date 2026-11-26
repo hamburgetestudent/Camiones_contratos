@@ -33,7 +33,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(
     lifespan=lifespan,
     title="API - Contratos Camiones y Motor de Subastas",
-    version="0.1.4",
+    version="1.0.1",
     description="Backend modular con Autenticación, Motor de Contratos, Postulaciones y Subastas",
 )
 
@@ -52,10 +52,16 @@ app.include_router(admin_router)
 for modulo in (config_router, contratos_router, onboarding_router, subasta_router):
     app.include_router(modulo, dependencies=[Depends(usuario_actual)])
 
-FRONTEND_DIR = Path(__file__).resolve().parents[2] / "frontend" / "src"
+FRONTEND_DIR = Path(os.environ.get("MV_FRONTEND_DIR", Path(__file__).resolve().parents[2] / "frontend" / "src"))
 FRONTEND_PAGINAS_DIR = FRONTEND_DIR / "paginas"
 FRONTEND_COMPARTIDO_DIR = FRONTEND_DIR / "compartido"
 FRONTEND_IMAGENES_DIR = FRONTEND_DIR / "recursos" / "imagenes"
+
+
+@app.get("/health", include_in_schema=False)
+def salud() -> dict[str, str]:
+    """El servidor atiende después de inicializar el esquema y los datos semilla."""
+    return {"instance": os.environ.get("MV_INSTANCE_ID", ""), "version": app.version}
 
 
 @app.get("/", include_in_schema=False)

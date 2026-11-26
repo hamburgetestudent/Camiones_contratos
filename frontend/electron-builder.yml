@@ -1,0 +1,29 @@
+appId: cl.mansoviaje.escritorio
+productName: MansoViaje
+artifactName: MansoViaje-${version}-win-${arch}.${ext}
+directories:
+  output: ../release
+files:
+  - dist/**/*
+  - src/paginas/Inicio/**/*
+  - src/compartido/css/**/*
+  - "!dist/**/*.map"
+extraResources:
+  - from: src
+    to: frontend
+  - from: ../build/backend/mansoviaje-api
+    to: backend
+  - from: ../build/entrega
+    to: entrega
+    filter:
+      - "**/*"
+      - ".env.example"
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+nsis:
+  oneClick: false
+  perMachine: false
+  allowElevation: false
+  allowToChangeInstallationDirectory: true

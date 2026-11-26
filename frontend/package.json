@@ -1,9 +1,9 @@
 {
   "name": "Camiones_contratos",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Aplicación de escritorio desarrollada con Electron, Node.js, TypeScript y python",
   "main": "dist/main.js",
-  "author": "",
+  "author": "Equipo MansoViaje",
   "license": "MIT",
   "scripts": {
     "build": "tsc",
@@ -12,14 +12,16 @@
     "test:panel": "node tests/e2e/panel.e2e.cjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "setup": "npm install --include=dev"
+    "setup": "npm install --include=dev",
+    "dist:win": "npm run build && electron-builder --win nsis --x64 --publish never"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "cpx": "^1.5.0",
     "electron": "^44.0.0",
-    "typescript": "^7.0.2",
+    "electron-builder": "26.18.0",
     "playwright": "^1.65.1",
-    "prettier": "^3.9.10"
+    "prettier": "^3.9.10",
+    "typescript": "^7.0.2"
   }
 }

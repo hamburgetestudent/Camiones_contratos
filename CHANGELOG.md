@@ -2,6 +2,12 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Este documento reúne las notas de la entrega, la verificación del flujo principal (rúbrica 6 y apartado «Integración y verificación» del punto 7) y el cierre del paquete (rúbrica 7).
 
+## [1.0.1] — Windows x64 · 2026-11-25
+
+Esta revisión incluye la reorganización del PR #137 de Dev. El instalador incorpora el backend modular y las vistas con módulos ES. Electron abre el login a través de la API local para cargar los módulos desde el mismo origen. El backend sigue usando SQLite en el perfil del usuario y el puerto 8000. La versión de parche conserva el contrato público de postulación y el esquema de datos.
+
+Para actualizar desde 1.0.0, cierra la aplicación, respalda la base y ejecuta el nuevo instalador con el mismo usuario. Para la revisión independiente, usa un perfil nuevo y sigue el README. Distribución académica sin firma comercial. La comprobación de otro equipo se registra en [su ficha](docs/revision-externa.md).
+
 ## [1.0.0] — Entrega Hito 3 · 2026-11-25
 
 ### Identificación del paquete
@@ -10,10 +16,20 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 |---|---|
 | Producto | MansoViaje — Camiones Contratos (API FastAPI + cliente Electron) |
 | Versión | `1.0.0` (`package.json` y `frontend/package.json`) |
-| Rama de la entrega | `ayudante_taller` (integra `Dev`) |
-| Commit de referencia | el commit que lleve la etiqueta `v1.0.0` (ver *Pendientes*) |
+| Rama de la entrega | `RamaSS`, con `origin/Dev` integrado en `125ac1d` |
+| Commit de referencia | SHA completo en `VERSION.txt` dentro de la distribución. Etiqueta prevista: `v1.0.0` |
 | Repositorio | https://github.com/hamburgetestudent/Camiones_contratos |
 | Entorno verificado | Windows 11, Python 3.14.8 (CI: Python 3.12), SQLite, Node 24 en CI |
+
+### Distribución de escritorio
+
+- Primer instalador integrado para Windows x64. El producto alcanza 1.0.0 con un flujo reproducible desde la publicación de una carga hasta la recuperación de la oferta. Los metadatos de FastAPI pasan de 0.1.4 a 1.0.0 para identificar el mismo producto. Se añade el endpoint de salud, conservando las operaciones de negocio.
+- **Compatibilidad y actualización.** Instalación por usuario. La aplicación guarda su base en el perfil del usuario, fuera de la carpeta del programa. Al actualizar, conserva el directorio de datos. Para trasladar una base de desarrollo compatible, cierra ambas aplicaciones, conserva una copia de seguridad y copia el archivo a una carpeta de datos nueva antes de abrir la versión instalada con ese perfil. Inicia sesión de nuevo.
+- **Limitaciones conocidas.** Entrega Windows x64 sin firma comercial. El puerto 8000 debe estar libre. Cada perfil tiene datos locales independientes. Los usuarios de demostración están destinados a una evaluación local.
+- **Decisión y efecto.** El instalador NSIS permite al docente operar sin preparar runtimes. Electron inicia el backend PyInstaller en formato directorio, espera una respuesta de salud identificada y cierra el proceso mediante su entrada estándar. Esto suma peso y una construcción específica para Windows, pero permite verificar los dos subsistemas juntos. El ZIP de fuentes incluido facilita localizar y probar extensiones.
+- **Ensayo desde fuentes limpias.** Electron 44 descarga su runtime bajo demanda. El primer build se detuvo al recopilar los avisos de Chromium. El script ahora ejecuta el instalador de runtime incluido en el lockfile antes de recopilar avisos.
+- **Dependencias de desarrollo.** El diagnóstico de npm en el árbol de construcción informó 18 alertas transitivas (10 moderadas, 7 altas y 1 crítica). Queda revisar las cadenas afectadas y probar las actualizaciones de herramientas antes de la próxima distribución.
+- **Reproducción.** Cada instalador lleva su commit y fuentes en `resources/entrega/`. El listado SHA-256 se genera después de construir el instalador. La consulta de CI para el SHA aparece en `VERSION.txt`. El registro de aceptación y la ficha externa se conservan junto al instalador.
 
 ### Agregado
 
@@ -29,7 +45,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 - Reorganización estructural sin cambios de comportamiento: backend por módulos de dominio en `backend/app/modules/<dominio>/` con `core/` y `db/` (la máquina de estados genérica pasa a `core/maquina_estados.py`), tests en `backend/tests/` y frontend con módulos ES (`<script type="module">`), vistas del panel partidas por pantalla y estado compartido en `estado.js`/`ui.js`. Los comandos de las tablas siguientes corresponden a la estructura anterior: ahora son `python run_tests.py` o `pytest`, y `uvicorn app.main:app --app-dir backend`.
 - Validación de correo: de una regex a `email-validator.validate_email` con `check_deliverability=False` (rechaza `a..b@x.cl` o `.a@x.cl`, que la regex aceptaba).
 
-### Pruebas, cobertura e integración continua (esta entrega)
+### Registro histórico de la verificación de API previa al instalador
 
 | Verificación | Comando | Resultado (2026-11-25) |
 |---|---|---|
@@ -39,7 +55,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). E
 | Flujo integrado | `python scripts/verificar_flujo_integrado.py` | **18 de 18** comprobaciones OK |
 | CI | [`.github/workflows/tests.yml`](.github/workflows/tests.yml) | Ejecuta ruff, pytest con cobertura (sube `coverage.xml` como artefacto) y typecheck del frontend en cada push a `main` y en cada pull request |
 
-> El enlace a la ejecución concreta de CI de esta entrega se agrega en *Pendientes* (no pude consultarlo desde este entorno).
+> Estas cifras pertenecen a la verificación anterior. Para la suite y la cobertura de la distribución, consulta los checks del SHA de VERSION.txt y el artefacto `cobertura` del job backend.
 
 ---
 
@@ -229,18 +245,7 @@ Entorno de todos los casos: Windows 11, Python 3.14.8, FastAPI `TestClient` sobr
 
 ### Cómo ejecutar la entrega (otro equipo)
 
-Los pasos completos están en el [README](README.md#descarga-instalación-y-ejecución-paso-a-paso). Resumen mínimo:
-
-```bash
-git clone https://github.com/hamburgetestudent/Camiones_contratos.git
-cd Camiones_contratos
-git checkout v1.0.0          # cuando la etiqueta esté publicada
-python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn main:app --host 127.0.0.1 --port 8000       # Terminal 1
-cd frontend && npm install && npm start             # Terminal 2
-python scripts/verificar_flujo_integrado.py         # comprobación rápida del flujo
-```
+El [README de la entrega](README.md#entrega-100-para-windows-x64) indica cómo instalar, publicar la carga, postular, consultar y reiniciar. El revisor registra sus observaciones en la [ficha externa](docs/revision-externa.md).
 
 ### Cómo extenderlo
 
@@ -268,11 +273,9 @@ La guía está en la sección «Cómo extender el proyecto» del [README](README
 
 ### Pendientes
 
-- [ ] **Crear y publicar la etiqueta `v1.0.0`** sobre el commit final (`git tag -a v1.0.0 -m "Entrega Hito 3"` y `git push origin v1.0.0`) y, si se desea, un *Release* en GitHub con estas notas.
-- [ ] **Alinear la versión de la API:** `main.py` declara `version="0.1.4"` mientras los `package.json` declaran `1.0.0`.
-- [ ] **Enlazar la ejecución de CI** de la rama o del pull request de la entrega (Actions → Tests).
-- [ ] Ejecutar `npm start` en una máquina limpia y registrar el resultado del cliente Electron contra el backend.
-- [ ] Llevar la verificación del flujo a CI (hoy solo se ejecuta a mano).
+1. **Revisión externa.** Entregar el instalador identificado por SHA-256 y recoger la ficha completada por otro equipo. Corregir y repetir cualquier paso que requiera ayuda.
+2. **Distribución.** Confirmar el destino accesible al docente y obtener autorización para subir la etiqueta y publicar los archivos. Usar el mismo instalador verificado.
+3. **Continuidad.** Evaluar otra arquitectura o firma del instalador si el laboratorio las requiere. La suite y la cobertura automática están en [Actions](.github/workflows/tests.yml). La aceptación del instalador se puede repetir con [el guion de Electron](frontend/tests/entrega.e2e.cjs).
 
 ---
 

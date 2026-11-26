@@ -60,3 +60,7 @@ coverage.xml
 # Carpetas y archivos de desarrollo no necesarios para despliegue
 2.ts
 tarea2-2_tabla_3.md
+
+# Archivos generados por la construcción de escritorio
+/build/
+/release/
