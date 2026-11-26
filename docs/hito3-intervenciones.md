@@ -1,76 +1,78 @@
-# Hito 3 · Diagnóstico, refactorización y pruebas
+# Hito 3 · Diagnóstico de deuda técnica y refactorización
 
-Las tres intervenciones conservan el comportamiento de operaciones del backend: revisión administrativa, consulta de habilitación del transportista y acceso por correo. El responsable técnico registrado en Git para las tres es **santiagosanchezgarcia10-byte** (RamaSS). La base de comparación es [883b8d2](https://github.com/hamburgetestudent/Camiones_contratos/commit/883b8d2), que ya contiene los cambios publicados previamente por RamaSS.
+Revisamos tres operaciones del backend de Camiones Contratos: cómo se aprueba un documento o perfil, cómo se determina si un transportista está habilitado y cómo se busca una cuenta por correo. Para el **criterio 1**, identificamos dónde se repetía una regla, qué problema podía causar y cuánto trabajo requería cambiarla. Para el **criterio 2**, registramos el comportamiento inicial con pruebas y aplicamos cada refactorización en un commit independiente.
 
-## 1. Decisión administrativa sobre documentos y perfiles
+**Responsable de las tres intervenciones:** santiagosanchezgarcia10-byte, rama `RamaSS`. **Versión inicial:** [883b8d2](https://github.com/hamburgetestudent/Camiones_contratos/commit/883b8d2). En cada tabla comparamos el commit de la intervención con su padre y contamos solo el código de la operación descrita. Los enlaces a líneas distinguen la versión del cambio de la organización posterior del backend.
 
-**Prioridad alta.** En [OnboardingService.validar_documento y validar_dador](../backend/app/modules/onboarding/service.py), cada operación definía qué estados podía asignar el revisor. Una edición parcial permitiría resolver un perfil y un documento con criterios distintos. El esfuerzo era bajo porque ambos ya aplicaban la misma condición después de localizar el recurso.
+## 1. Aprobar o rechazar un documento o un perfil
 
-Se extrajo una función privada que comprueba el estado solicitado. Los dos servicios siguen localizando el recurso antes de validar y persisten la decisión dentro de su transacción. Se conservan el error, su mensaje y el estado guardado cuando se intenta volver a PENDIENTE. [Cambio I1](https://github.com/hamburgetestudent/Camiones_contratos/commit/0f13942) · [Pruebas de documentos](../backend/tests/onboarding/test_validar_documento.py) · [Pruebas de perfiles](../backend/tests/onboarding/test_validar_perfil_dador.py).
+**Qué encontramos y por qué lo priorizamos.** El administrador revisa tanto documentos de transportistas como perfiles tributarios de dadores de carga. Cada operación tenía su propia condición para admitir únicamente `APROBADO` o `RECHAZADO`, además de su propia copia del mensaje de error. Cambiar una sola copia podía dejar dos criterios para la misma decisión. Le dimos **prioridad alta** y lo hicimos primero porque la regla ya era idéntica y extraerla requería poco esfuerzo.
 
-## 2. Estado global y documentos faltantes del transportista
+**Qué cambiamos.** Extrajimos la condición a `_validar_decision_revision()`. Cada operación busca primero el registro, llama al mismo validador y guarda la decisión dentro de su transacción. Si alguien intenta devolver un perfil rechazado a `PENDIENTE`, recibe el mismo error y el perfil sigue rechazado.
 
-**Prioridad alta, segunda en el orden de ejecución.** En [OnboardingService.obtener_estado_transportista](../backend/app/modules/onboarding/service.py), el método comprobaba la presencia de los documentos requeridos y volvía a calcular esa información al construir la lista de faltantes. Si las comprobaciones evolucionaran por separado, la respuesta podría informar un estado incompatible con su propia lista. La modificación afecta una sola consulta, pero requiere verificar la precedencia del rechazo y el orden de los documentos.
+| Qué medimos en las dos operaciones | Antes | Después |
+|---|---:|---:|
+| Condiciones que definen qué decisiones acepta el administrador | 2 | 1 |
+| Lugares donde se define el mensaje por decisión inválida | 2 | 1 |
 
-El método calcula los faltantes una vez. Un rechazo prevalece incluso si faltan documentos. La aprobación exige una lista vacía de faltantes y que todos los requeridos estén aprobados. La respuesta mantiene el orden de los tipos requeridos. [Cambio I2](https://github.com/hamburgetestudent/Camiones_contratos/commit/d2c77ed) · [Pruebas del estado y de la lista](../backend/tests/onboarding/test_obtener_estado_transportista.py).
+**Dónde verlo.** En `backend/app/modules/onboarding/service.py` se puede seguir la regla y sus dos llamadas. El commit muestra los dos bloques originales que se reemplazaron. [Regla, líneas 42–44](https://github.com/hamburgetestudent/Camiones_contratos/blob/7858b4b/backend/app/modules/onboarding/service.py#L42-L44) · [Revisión del documento, línea 221](https://github.com/hamburgetestudent/Camiones_contratos/blob/7858b4b/backend/app/modules/onboarding/service.py#L221) · [Revisión del perfil, línea 241](https://github.com/hamburgetestudent/Camiones_contratos/blob/7858b4b/backend/app/modules/onboarding/service.py#L241) · [0f13942](https://github.com/hamburgetestudent/Camiones_contratos/commit/0f13942)
 
-## 3. Normalización del correo en persistencia y acceso
+**Cómo lo comprobamos.** Las pruebas cubren la aprobación y el rechazo de documentos, el recurso inexistente y el intento de volver a pendiente. En este último caso se vuelve a consultar el perfil para comprobar el estado guardado. [Pruebas de documentos](../backend/tests/onboarding/test_validar_documento.py) · [Prueba del perfil, líneas 44–53](https://github.com/hamburgetestudent/Camiones_contratos/blob/7858b4b/backend/tests/onboarding/test_validar_perfil_dador.py#L44-L53)
 
-**Prioridad media.** En [guardar_usuario, buscar_usuario_por_email y autenticar_usuario](../backend/app/modules/usuarios/service.py), la escritura y la búsqueda repetían el recorte y la conversión a minúsculas. Además, el acceso volvía a recortar el correo al delegar la búsqueda. Una divergencia entre escritura y lectura podría impedir que una persona encuentre su cuenta con el mismo correo. El esfuerzo era bajo y ya existían pruebas de persistencia.
+## 2. Determinar el estado del transportista y explicar qué documentos faltan
 
-Ambas operaciones llaman a la misma función privada. La autenticación conserva la validación de campos vacíos y delega la normalización del valor de búsqueda. La consulta SQL sigue admitiendo filas existentes con diferencias de formato. [Cambio I3](https://github.com/hamburgetestudent/Camiones_contratos/commit/e19568b) · [Pruebas de persistencia](../backend/tests/persistencia/test_persistencia_usuarios.py) · [Pruebas de acceso](../backend/tests/usuarios/test_autenticar_usuario.py).
+**Qué encontramos y por qué lo priorizamos.** La consulta devuelve dos datos relacionados: el estado global del transportista y la lista de documentos que le faltan. Primero comprobaba si estaban todos los requeridos y luego recorría la lista otra vez para identificar los ausentes. Si esas comprobaciones evolucionaban por separado, la respuesta podía contradecirse. Le dimos **prioridad alta** por su impacto en la habilitación. La abordamos en segundo lugar porque, aunque el cambio se concentra en un método, había que comprobar la prioridad del rechazo y el orden de los faltantes.
 
-## Deuda técnica postergada
+**Qué cambiamos.** En `obtener_estado_transportista()` calculamos los faltantes una sola vez y usamos esa lista para decidir el estado y construir la respuesta. Si hay un rechazo, el estado es `RECHAZADO`. Si la lista de faltantes está vacía y todos los requeridos están aprobados, es `APROBADO`. En los demás casos queda `PENDIENTE`.
 
-**Validación incompleta del formato y la longitud del RUT de empresa.** En el registro del perfil tributario, [`CrearPerfilDadorDTO.validar_rut_formato`](../domain/modelos_onboarding.py) acepta `00000000000-0`, cuyo cuerpo tiene once dígitos. También acepta y devuelve `76--123456-0` porque elimina los guiones para calcular el dígito verificador, pero los conserva en el valor devuelto. Así pueden llegar al perfil identificadores mal formados. Las [pruebas de registro](../tests/test_registro_usuario.py) cubren el dígito verificador incorrecto y las entradas demasiado cortas; faltan casos para el exceso de longitud y los guiones repetidos.
+| Qué medimos dentro del método | Antes | Después |
+|---|---:|---:|
+| Recorridos escritos sobre la lista de documentos requeridos | 3 | 2 |
+| Comprobaciones explícitas de presencia o ausencia de un tipo de documento | 2 | 1 |
 
-**Prioridad alta.** Ambos casos ya pasan la validación. Se posterga la corrección hasta aclarar con el equipo si el máximo de nueve caracteres incluye el dígito verificador. La descripción de [RN-KYC-05](../REGLAS_DE_NEGOCIO.md#rn-kyc-05-validación-algorítmica-del-rut-chileno-módulo-11) y su mensaje de error cuentan ese límite de forma distinta. Cambiarlo sin resolver esa diferencia podría rechazar perfiles que el equipo considera válidos.
+**Dónde verlo y cómo lo comprobamos.** La decisión y la respuesta están juntas en `backend/app/modules/onboarding/service.py`. La prueba más ilustrativa carga solo el seguro y lo rechaza: espera `RECHAZADO` y comprueba cuáles son los otros cuatro documentos faltantes y en qué orden aparecen. [Cálculo y respuesta, líneas 120–142](https://github.com/hamburgetestudent/Camiones_contratos/blob/7858b4b/backend/app/modules/onboarding/service.py#L120-L142) · [Prueba, líneas 49–59](https://github.com/hamburgetestudent/Camiones_contratos/blob/7858b4b/backend/tests/onboarding/test_obtener_estado_transportista.py#L49-L59) · [d2c77ed](https://github.com/hamburgetestudent/Camiones_contratos/commit/d2c77ed)
 
-**Seguimiento.** Responsable: santiagosanchezgarcia10-byte (RamaSS). Fecha propuesta de revisión: **2 de diciembre de 2026**. En esa revisión se acordarán el largo permitido y la posición del guion, y se definirán los resultados esperados para el largo máximo, un dígito adicional y un guion repetido.
+## 3. Usar el mismo formato de correo al guardar y buscar una cuenta
 
-**Validación duplicada de las extensiones de archivo.** En [los modelos de onboarding](../domain/modelos_onboarding.py), `CargarDocumentoDTO.validar_archivo` y `DocumentoTransportistaBase.validar_archivo` declaran por separado las mismas cuatro extensiones y el mismo mensaje de error. Agregar un formato exige editar ambos validadores. Si solo se actualiza uno, la solicitud de carga puede aceptar un archivo que el modelo del documento rechace.
+**Qué encontramos y por qué lo priorizamos.** El guardado y la búsqueda quitaban espacios y convertían el correo a minúsculas por separado. Durante el inicio de sesión también se recortaba el correo antes de pasarlo a la búsqueda. Si registro y acceso trataran el mismo correo de forma distinta, el usuario podría tener una cuenta y aun así no encontrarla al entrar. La prioridad fue **media**: ambas reglas todavía coincidían, el cambio era pequeño y ya había pruebas de persistencia.
 
-**Motivo de la postergación y prioridad.** La prioridad es baja porque hoy ambas listas coinciden. El riesgo aparece al cambiar los formatos admitidos. Unificar los validadores requiere comprobar los dos modelos Pydantic por separado y conservar el valor de archivo que devuelve cada uno. Esa tarea queda para una intervención posterior a las tres verificadas en este hito.
+**Qué cambiamos en el hito.** En `services/usuario_service.py` extrajimos `_normalizar_correo()` y la usamos tanto al guardar como al buscar. La autenticación siguió rechazando campos vacíos y delegó la limpieza a la búsqueda. La consulta SQL conservó el tratamiento de correos ya almacenados. [Función y búsqueda, líneas 48–59](https://github.com/hamburgetestudent/Camiones_contratos/blob/e19568b/services/usuario_service.py#L48-L59) · [Guardado, línea 87](https://github.com/hamburgetestudent/Camiones_contratos/blob/e19568b/services/usuario_service.py#L87) · [Autenticación, línea 182](https://github.com/hamburgetestudent/Camiones_contratos/blob/e19568b/services/usuario_service.py#L182) · [e19568b](https://github.com/hamburgetestudent/Camiones_contratos/commit/e19568b)
 
-**Responsable de seguimiento:** santiagosanchezgarcia10-byte (RamaSS). **Fecha propuesta de revisión:** 2 de diciembre de 2026. En esa revisión se comprobará que ambos modelos acepten un nombre como `licencia.PDF`, rechacen `licencia.exe` con el mismo mensaje y conserven el nombre original. Esos casos servirán para verificar la extracción de una regla común.
+| Qué medimos en el commit de la intervención | Antes | Después |
+|---|---:|---:|
+| Implementaciones Python de `strip().lower()` para el correo en guardado y búsqueda | 2 | 1 |
+| Recortes del correo durante un acceso exitoso, incluida la comprobación inicial de campo vacío | 3 | 2 |
 
-**Estimación fija de distancia al explorar cargas.** Cuando un contrato carece de distancia registrada, [el servicio de subastas](../services/subasta_service.py) asigna 150 km a cualquier trayecto entre dos localidades distintas. Por ejemplo, con un máximo de 100 km el filtro excluye todas esas cargas, incluso si alguna ruta real es más corta. Una [prueba de distancia](../tests/subastas/test_estimar_distancia.py) documenta la estimación actual para Santiago y Concepción.
-
-**Prioridad media.** La aproximación afecta la selección de cargas cuando se filtra por distancia y el contrato carece de kilometraje. Se posterga el cambio porque el equipo debe acordar cómo tratar una distancia desconocida antes de alterar los resultados que recibe el transportista.
-
-**Seguimiento.** Se propone que santiagosanchezgarcia10-byte revise esta decisión el **2 de diciembre de 2026**. Para esa revisión se compararán dos cargas con el mismo filtro, una con kilometraje registrado y otra sin él, y se acordará el resultado esperado para ambas.
-
-## Medición reproducible
-
-Se comparó cada commit con su padre. Los conteos son estáticos y abarcan únicamente las operaciones y las funciones extraídas que se describen arriba. Para revisar las dos versiones, ejecutar `git show <commit> -- <archivo>`.
-
-| Intervención | Indicador dentro del alcance | Antes | Después |
-|---|---|---:|---:|
-| 1 | Condiciones que definen las decisiones de revisión admitidas | 2 | 1 |
-| 1 | Lugares donde se define el mensaje por decisión inválida | 2 | 1 |
-| 2 | Recorridos escritos sobre DOCUMENTOS_REQUERIDOS_TRANSPORTISTA | 3 | 2 |
-| 2 | Comprobaciones explícitas de presencia o ausencia de un tipo en docs_por_tipo | 2 | 1 |
-| 3 | Implementaciones Python de la secuencia strip().lower() para el correo | 2 | 1 |
-| 3 | Recortes aplicados al correo no vacío durante una autenticación exitosa, incluida la validación inicial | 3 | 2 |
+**Cómo lo comprobamos y dónde verlo hoy.** La prueba inicia sesión con `"  JUAN.CHOFER@TRANSPORTE.CL  "` y comprueba que obtiene la misma cuenta. Después del hito la persistencia pasó a `backend/app/modules/usuarios/dao.py`. En la revisión `7858b4b` el guardado y la búsqueda vuelven a contener la limpieza por separado. Por eso la tabla mide el resultado del commit original; para explicar el estado posterior hay que mostrar las dos líneas del DAO. [Prueba de acceso, líneas 42–46](https://github.com/hamburgetestudent/Camiones_contratos/blob/7858b4b/backend/tests/usuarios/test_autenticar_usuario.py#L42-L46) · [Pruebas de persistencia](../backend/tests/persistencia/test_persistencia_usuarios.py) · [Guardado, línea 47](https://github.com/hamburgetestudent/Camiones_contratos/blob/7858b4b/backend/app/modules/usuarios/dao.py#L47) · [Búsqueda, línea 84](https://github.com/hamburgetestudent/Camiones_contratos/blob/7858b4b/backend/app/modules/usuarios/dao.py#L84)
 
 ## Evidencia de ejecución
 
-Entorno de verificación: Windows, Python 3.15, FastAPI y SQLite. En la base, el cliente ASGI ejecutó el arranque de la aplicación y obtuvo HTTP 200 en `GET /openapi.json`.
+La verificación original se hizo en Windows con Python 3.15, FastAPI y SQLite. Antes de editar, se inició la aplicación con el cliente ASGI y `GET /openapi.json` respondió HTTP 200.
 
-| Revisión | Verificación | Resultado |
+| Cuándo se verificó | Qué se ejecutó | Resultado |
 |---|---|---|
-| 883b8d2 | Suite del backend antes de editar | 210 de 210 |
-| [7c823b4](https://github.com/hamburgetestudent/Camiones_contratos/commit/7c823b4) | Tres módulos de caracterización sobre el código original | 13 de 13 |
-| Cambio I1 | Suite del backend | 213 de 213 |
-| Cambio I2 | Suite del backend | 213 de 213 |
-| Cambio I3 | Suite del backend | 213 de 213 |
+| Antes de editar, [883b8d2](https://github.com/hamburgetestudent/Camiones_contratos/commit/883b8d2) | Suite completa del backend | 210 de 210 |
+| Antes de refactorizar, [7c823b4](https://github.com/hamburgetestudent/Camiones_contratos/commit/7c823b4) | Tres módulos con las nuevas pruebas de caracterización sobre la implementación original | 13 de 13 |
+| Después de la intervención 1, [0f13942](https://github.com/hamburgetestudent/Camiones_contratos/commit/0f13942) | Suite completa | 213 de 213 |
+| Después de la intervención 2, [d2c77ed](https://github.com/hamburgetestudent/Camiones_contratos/commit/d2c77ed) | Suite completa | 213 de 213 |
+| Después de la intervención 3, [e19568b](https://github.com/hamburgetestudent/Camiones_contratos/commit/e19568b) | Suite completa | 213 de 213 |
 
-Desde la raíz, con el entorno Python activo:
+**Comprobación por otro integrante.** El compañero que usó la cuenta local `f4cks` comprobó la versión inicial `883b8d2`. Obtuvo los tres resultados esperados: pendiente con documentación incompleta, aprobado con cinco documentos aprobados y rechazado con al menos uno rechazado. La salida fue `Ran 3 tests in 0.301s`, `OK`. [Captura de la ejecución](comprobacion-transportista.png)
+
+Para revisar una medición histórica, ejecutar `git show <commit>` y comparar las líneas eliminadas y añadidas. Para ejecutar las pruebas con la **estructura actual** de la rama, desde la raíz y con el entorno Python activo:
 
 ```powershell
 python -m pip install -r requirements.txt httpx pytest
-python -m unittest tests.onboarding.test_validar_perfil_dador tests.onboarding.test_obtener_estado_transportista tests.usuarios.test_autenticar_usuario -v
-python -m unittest discover -s backend/tests -t backend
+python -m pytest backend/tests/onboarding/test_validar_perfil_dador.py backend/tests/onboarding/test_obtener_estado_transportista.py backend/tests/usuarios/test_autenticar_usuario.py
+python -m pytest backend/tests
 ```
 
-**Comprobación inicial por otro integrante.** El compañero ejecutó la revisión desde la cuenta local `f4cks`. La salida de Git compartida previamente situó la copia en `883b8d2`. La captura muestra los tres resultados esperados: APROBADO con cinco documentos aprobados, PENDIENTE cuando faltan documentos y RECHAZADO cuando al menos uno está rechazado. Resultado de unittest: `Ran 3 tests in 0.301s`, `OK`. [Ver captura de la ejecución](comprobacion-transportista.png).
+## Deuda técnica postergada
+
+El responsable de seguimiento de los tres pendientes es **santiagosanchezgarcia10-byte** y la fecha propuesta de revisión es el **2 de diciembre de 2026**.
+
+| Pendiente y prioridad | Qué ocurre y por qué se postergó | Qué revisar el 2 de diciembre |
+|---|---|---|
+| **Formato y longitud del RUT · Alta** | El validador acepta `00000000000-0` y devuelve `76--123456-0` con ambos guiones. La descripción de RN-KYC-05 y el mensaje de error cuentan el largo máximo de forma distinta. Antes de restringir el registro hay que acordar qué formatos se admitirán. | Aclarar si el máximo incluye el dígito verificador y dónde puede ir el guion. Definir casos para el máximo, un dígito extra y guiones repetidos, además de los casos existentes de entradas cortas y dígito incorrecto. [Validador](../backend/app/modules/onboarding/models.py#L134-L164) · [Regla RN-KYC-05](../REGLAS_DE_NEGOCIO.md#rn-kyc-05-validación-algorítmica-del-rut-chileno-módulo-11) · [Pruebas de registro](../backend/tests/usuarios/test_registro_usuario.py) |
+| **Extensiones de archivo duplicadas · Baja** | La solicitud de carga y el modelo del documento repiten las cuatro extensiones y el mensaje de error. Hoy coinciden; el riesgo aparece al agregar un formato en un solo lugar. Se priorizaron las tres intervenciones anteriores. | Probar ambos modelos con `licencia.PDF` y `licencia.exe`. Verificar que conservan el nombre original cuando aceptan el archivo y dan el mismo mensaje cuando lo rechazan, antes de extraer la regla común. [Ambos validadores](../backend/app/modules/onboarding/models.py#L43-L70) |
+| **Distancia estimada al buscar cargas · Media** | Cuando falta el kilometraje y las localidades difieren, el filtro usa 150 km. Un máximo de 100 km excluye así una carga que podría estar más cerca. Cambiar la estimación exige acordar cómo mostrar rutas de distancia desconocida. | Comparar dos cargas bajo el mismo filtro, una con kilometraje registrado y otra sin él, y acordar qué debe ver el transportista. [Estimación](../backend/app/modules/subastas/service.py#L38-L50) · [Filtro](../backend/app/modules/subastas/service.py#L114-L121) · [Prueba Santiago–Concepción](../backend/tests/subastas/test_estimar_distancia.py) |
